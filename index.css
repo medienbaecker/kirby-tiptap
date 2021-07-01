@@ -9,6 +9,13 @@
 .k-tiptap-field .k-toolbar {
   margin-bottom: 0;
 }
+.k-tiptap-field .k-button {
+  transition-property: color, background;
+}
+.k-tiptap-field .k-button.is-active {
+  background: #ecf1f7;
+  color: #4271ae;
+}
 
 .k-tiptap-field .k-textarea-input-wrapper {
   width: 100%;
