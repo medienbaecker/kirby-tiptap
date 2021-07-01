@@ -8,8 +8,18 @@
             <nav class="k-toolbar" v-if="editor">
               <div class="k-toolbar-wrapper">
                 <div class="k-toolbar-buttons">
-                  <button @click="editor.chain().focus().toggleBold().run()" tabindex="-1" title="Fetter Text" type="button" class="k-button k-toolbar-button"><span aria-label="Fetter Text" role="img" class="k-button-icon k-icon k-icon-bold"><svg viewBox="0 0 16 16"><use xlink:href="#icon-bold"></use></svg></span><!----></button>
-                  <button @click="editor.chain().focus().toggleItalic().run()" tabindex="-1" title="Kursiver Text" type="button" class="k-button k-toolbar-button"><span aria-label="Kursiver Text" role="img" class="k-button-icon k-icon k-icon-italic"><svg viewBox="0 0 16 16"><use xlink:href="#icon-italic"></use></svg></span><!----></button>
+                  <k-button icon="bold"
+                  :tooltip="label"
+                  tabindex="-1"
+                  :class="['k-toolbar-button', 'k-markdown-button', {'is-active': editor.isActive('bold')}]"
+                  @mousedown.prevent
+                  @click="editor.chain().focus().toggleBold().run()" />
+                  <k-button icon="italic"
+                  :tooltip="label"
+                  tabindex="-1"
+                  :class="['k-toolbar-button', 'k-markdown-button', {'is-active': editor.isActive('italic')}]"
+                  @mousedown.prevent
+                  @click="editor.chain().focus().toggleBold().run()" />
                 </div>
               </div>
             </nav>
