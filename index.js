@@ -39844,7 +39844,7 @@ exports.default = _default;
                                       _vm.editor
                                         .chain()
                                         .focus()
-                                        .toggleBold()
+                                        .toggleItalic()
                                         .run()
                                     }
                                   }

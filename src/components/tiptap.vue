@@ -19,7 +19,7 @@
                   tabindex="-1"
                   :class="['k-toolbar-button', 'k-markdown-button', {'is-active': editor.isActive('italic')}]"
                   @mousedown.prevent
-                  @click="editor.chain().focus().toggleBold().run()" />
+                  @click="editor.chain().focus().toggleItalic().run()" />
                 </div>
               </div>
             </nav>
