@@ -3,7 +3,7 @@
     
     <k-field class="k-tiptap-field" data-theme="field" :label="label">
       <span class="k-input-element">
-        <div data-theme="field" class="k-input">
+        <div data-theme="field" class="k-input k-textarea-input">
           <div class="k-textarea-input-wrapper">
             <nav class="k-toolbar" v-if="editor">
               <div class="k-toolbar-wrapper">

@@ -9,9 +9,6 @@
 .k-tiptap-field .k-toolbar {
   margin-bottom: 0;
 }
-.k-tiptap-field:focus-within .k-toolbar {
-  color: inherit;
-}
 
 .k-tiptap-field .k-textarea-input-wrapper {
   width: 100%;
