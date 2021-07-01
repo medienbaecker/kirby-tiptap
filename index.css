@@ -2,6 +2,15 @@
   padding: .5rem;
   outline: none;
   width: 100%;
+  min-height: 4rem;
+  line-height: 1.5rem;
+}
+
+.k-tiptap-field .k-toolbar {
+  margin-bottom: 0;
+}
+.k-tiptap-field:focus-within .k-toolbar {
+  color: inherit;
 }
 
 .k-tiptap-field .k-textarea-input-wrapper {
