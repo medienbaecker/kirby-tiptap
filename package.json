@@ -1,23 +1,13 @@
 {
   "scripts": {
-    "dev": "parcel watch src/index.js --no-source-maps -d ./",
-    "build": "parcel build src/index.js --no-source-maps --experimental-scope-hoisting -d ./"
-  },
-  "posthtml": {
-    "recognizeSelfClosing": true
+    "dev": "kirbyup src/index.js --watch",
+    "build": "kirbyup src/index.js"
   },
   "devDependencies": {
-    "@vue/component-compiler-utils": "^3.2.0",
-    "cssnano": "^5.0.6",
-    "sass": "^1.32.8",
-    "vue-template-compiler": "^2.6.12"
+    "kirbyup": "^0.17.3"
   },
   "dependencies": {
-    "@tiptap/core": "^2.0.0-alpha.19",
-    "@tiptap/starter-kit": "*",
-    "@tiptap/vue-2": "*",
-    "@tiptap/vue-starter-kit": "^2.0.0-alpha.15",
-    "vue": "^2.6.12",
-    "vue-hot-reload-api": "^2.3.4"
+    "@tiptap/starter-kit": "^2.0.0-beta.121",
+    "@tiptap/vue-2": "^2.0.0-beta.58"
   }
 }
