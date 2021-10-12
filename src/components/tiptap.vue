@@ -1,39 +1,45 @@
 <template>
-  <div>
-    
-    <k-field class="k-tiptap-field" data-theme="field" :label="label">
-      <span class="k-input-element">
-        <div data-theme="field" class="k-input k-textarea-input">
-          <div class="k-textarea-input-wrapper">
-            <nav class="k-toolbar" v-if="editor">
-              <div class="k-toolbar-wrapper">
-                <div class="k-toolbar-buttons">
-                  <k-button icon="bold"
-                  :tooltip="label"
-                  tabindex="-1"
-                  :class="['k-toolbar-button', 'k-markdown-button', {'is-active': editor.isActive('bold')}]"
-                  @mousedown.prevent
-                  @click="editor.chain().focus().toggleBold().run()" />
-                  <k-button icon="italic"
-                  :tooltip="label"
-                  tabindex="-1"
-                  :class="['k-toolbar-button', 'k-markdown-button', {'is-active': editor.isActive('italic')}]"
-                  @mousedown.prevent
-                  @click="editor.chain().focus().toggleItalic().run()" />
-                </div>
+  
+  <k-field class="k-tiptap-field" data-theme="field" :label="label">
+    <span class="k-input-element">
+      <div data-theme="field" class="k-input k-textarea-input">
+        <div class="k-textarea-input-wrapper">
+          <nav class="k-toolbar" v-if="editor">
+            <div class="k-toolbar-wrapper">
+              <div class="k-toolbar-buttons">
+                <k-button icon="bold"
+                :tooltip="label"
+                tabindex="-1"
+                :class="['k-toolbar-button', 'k-markdown-button', {'is-active': editor.isActive('bold')}]"
+                @mousedown.prevent
+                @click="editor.chain().focus().toggleBold().run()" />
+                <k-button icon="italic"
+                :tooltip="label"
+                tabindex="-1"
+                :class="['k-toolbar-button', 'k-markdown-button', {'is-active': editor.isActive('italic')}]"
+                @mousedown.prevent
+                @click="editor.chain().focus().toggleBulletList().run()" />
+                <span class="k-toolbar-divider"></span>
+                <k-button icon="list-bullet"
+                :tooltip="label"
+                tabindex="-1"
+                :class="['k-toolbar-button', 'k-markdown-button', {'is-active': editor.isActive('bulletList')}]"
+                @mousedown.prevent
+                @click="editor.chain().focus().toggleBulletList().run()" />
+                <k-button icon="list-numbers"
+                :tooltip="label"
+                tabindex="-1"
+                :class="['k-toolbar-button', 'k-markdown-button', {'is-active': editor.isActive('orderedList')}]"
+                @mousedown.prevent
+                @click="editor.chain().focus().toggleOrderedList().run()" />
               </div>
-            </nav>
-            <editor-content :editor="editor" v-model="value"/>
-          </div>
+            </div>
+          </nav>
+          <editor-content :editor="editor" v-model="value"/>
         </div>
-      </span>
-    </k-field>
-    
-    <!-- <code>
-      {{ value }}
-    </code> -->
-    
-  </div>
+      </div>
+    </span>
+  </k-field>
   
 </template>
 

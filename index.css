@@ -20,3 +20,17 @@
 .k-tiptap-field .k-textarea-input-wrapper {
   width: 100%;
 }
+
+.k-tiptap-field ul {
+  padding-left: 1.25rem;
+}
+.k-tiptap-field ul li {
+  list-style: disc;
+}
+
+.k-tiptap-field ol {
+  padding-left: 1.25rem;
+}
+.k-tiptap-field ol li {
+  list-style: decimal;
+}
