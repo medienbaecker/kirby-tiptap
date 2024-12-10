@@ -27,7 +27,7 @@ export default {
     value: String,
     buttons: {
       type: Array,
-      default: () => ['bold', 'italic', 'strike', 'code', '|', 'link', 'email', '|', 'bulletList', 'orderedList']
+      default: () => ['bold', 'italic', 'strike', 'code', '|', 'link', '|', 'bulletList', 'orderedList']
     }
   },
 

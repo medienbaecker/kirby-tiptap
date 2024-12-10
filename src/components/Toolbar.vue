@@ -15,8 +15,7 @@ const buttonComponents = {
   code: () => import('./buttons/CodeButton.vue'),
   link: () => import('./buttons/LinkButton.vue'),
   bulletList: () => import('./buttons/BulletListButton.vue'),
-  orderedList: () => import('./buttons/OrderedListButton.vue'),
-  email: () => import('./buttons/EmailButton.vue')
+  orderedList: () => import('./buttons/OrderedListButton.vue')
 };
 
 export default {

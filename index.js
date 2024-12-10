@@ -18245,10 +18245,9 @@ img.ProseMirror-separator {
     code: () => Promise.resolve().then(() => CodeButton$1),
     link: () => Promise.resolve().then(() => LinkButton$1),
     bulletList: () => Promise.resolve().then(() => BulletListButton$1),
-    orderedList: () => Promise.resolve().then(() => OrderedListButton$1),
-    email: () => Promise.resolve().then(() => EmailButton$1)
+    orderedList: () => Promise.resolve().then(() => OrderedListButton$1)
   };
-  const _sfc_main$a = {
+  const _sfc_main$9 = {
     components: buttonComponents,
     props: {
       editor: { type: Object, required: true },
@@ -18264,22 +18263,22 @@ img.ProseMirror-separator {
       }
     }
   };
-  var _sfc_render$a = function render() {
+  var _sfc_render$9 = function render() {
     var _vm = this, _c = _vm._self._c;
     return _vm.editor ? _c("nav", { staticClass: "k-toolbar" }, [_vm._l(_vm.buttons, function(button) {
       return [button !== "|" ? _c(_vm.buttonComponents[button], { key: button, tag: "component", attrs: { "editor": _vm.editor } }) : _c("hr")];
     })], 2) : _vm._e();
   };
-  var _sfc_staticRenderFns$a = [];
-  _sfc_render$a._withStripped = true;
-  var __component__$a = /* @__PURE__ */ normalizeComponent(
-    _sfc_main$a,
-    _sfc_render$a,
-    _sfc_staticRenderFns$a
+  var _sfc_staticRenderFns$9 = [];
+  _sfc_render$9._withStripped = true;
+  var __component__$9 = /* @__PURE__ */ normalizeComponent(
+    _sfc_main$9,
+    _sfc_render$9,
+    _sfc_staticRenderFns$9
   );
-  __component__$a.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/Toolbar.vue";
-  const Toolbar = __component__$a.exports;
-  const _sfc_main$9 = {
+  __component__$9.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/Toolbar.vue";
+  const Toolbar = __component__$9.exports;
+  const _sfc_main$8 = {
     components: {
       EditorContent,
       Toolbar
@@ -18289,7 +18288,7 @@ img.ProseMirror-separator {
       value: String,
       buttons: {
         type: Array,
-        default: () => ["bold", "italic", "strike", "code", "|", "link", "email", "|", "bulletList", "orderedList"]
+        default: () => ["bold", "italic", "strike", "code", "|", "link", "|", "bulletList", "orderedList"]
       }
     },
     data() {
@@ -18309,27 +18308,27 @@ img.ProseMirror-separator {
       });
     }
   };
-  var _sfc_render$9 = function render() {
+  var _sfc_render$8 = function render() {
     var _vm = this, _c = _vm._self._c;
     return _c("k-field", { staticClass: "k-tiptap-field", attrs: { "data-theme": "field", "label": _vm.label } }, [_c("span", { staticClass: "k-input-element" }, [_c("div", { staticClass: "k-input k-textarea-input", attrs: { "data-theme": "field" } }, [_c("div", { staticClass: "k-textarea-input-wrapper" }, [_vm.editor ? _c("toolbar", { attrs: { "editor": _vm.editor, "label": _vm.label, "buttons": _vm.buttons } }) : _vm._e(), _c("editor-content", { attrs: { "editor": _vm.editor }, model: { value: _vm.value, callback: function($$v) {
       _vm.value = $$v;
     }, expression: "value" } })], 1)])])]);
   };
-  var _sfc_staticRenderFns$9 = [];
-  _sfc_render$9._withStripped = true;
-  var __component__$9 = /* @__PURE__ */ normalizeComponent(
-    _sfc_main$9,
-    _sfc_render$9,
-    _sfc_staticRenderFns$9
+  var _sfc_staticRenderFns$8 = [];
+  _sfc_render$8._withStripped = true;
+  var __component__$8 = /* @__PURE__ */ normalizeComponent(
+    _sfc_main$8,
+    _sfc_render$8,
+    _sfc_staticRenderFns$8
   );
-  __component__$9.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/Tiptap.vue";
-  const Tiptap = __component__$9.exports;
+  __component__$8.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/Tiptap.vue";
+  const Tiptap = __component__$8.exports;
   panel.plugin("medienbaecker/tiptap", {
     fields: {
       tiptap: Tiptap
     }
   });
-  const _sfc_main$8 = {
+  const _sfc_main$7 = {
     props: {
       icon: {
         type: String,
@@ -18368,35 +18367,11 @@ img.ProseMirror-separator {
       }
     }
   };
-  var _sfc_render$8 = function render() {
+  var _sfc_render$7 = function render() {
     var _vm = this, _c = _vm._self._c;
     return _c("k-button", { class: ["k-toolbar-button", "k-markdown-button"], attrs: { "icon": _vm.icon, "title": _vm.title, "tabindex": "-1", "current": _vm.isActive }, on: { "mousedown": function($event) {
       $event.preventDefault();
     }, "click": _vm.runCommand } });
-  };
-  var _sfc_staticRenderFns$8 = [];
-  _sfc_render$8._withStripped = true;
-  var __component__$8 = /* @__PURE__ */ normalizeComponent(
-    _sfc_main$8,
-    _sfc_render$8,
-    _sfc_staticRenderFns$8
-  );
-  __component__$8.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/ToolbarButton.vue";
-  const ToolbarButton = __component__$8.exports;
-  const _sfc_main$7 = {
-    components: {
-      ToolbarButton
-    },
-    props: {
-      editor: {
-        type: Object,
-        required: true
-      }
-    }
-  };
-  var _sfc_render$7 = function render() {
-    var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "bold", "title": "Bold", "editor": _vm.editor, "command": "toggleBold", "active-check": "bold" } });
   };
   var _sfc_staticRenderFns$7 = [];
   _sfc_render$7._withStripped = true;
@@ -18405,12 +18380,8 @@ img.ProseMirror-separator {
     _sfc_render$7,
     _sfc_staticRenderFns$7
   );
-  __component__$7.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/BoldButton.vue";
-  const BoldButton = __component__$7.exports;
-  const BoldButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: BoldButton
-  }, Symbol.toStringTag, { value: "Module" }));
+  __component__$7.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/ToolbarButton.vue";
+  const ToolbarButton = __component__$7.exports;
   const _sfc_main$6 = {
     components: {
       ToolbarButton
@@ -18424,7 +18395,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render$6 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "italic", "title": "Italic", "editor": _vm.editor, "command": "toggleItalic", "active-check": "italic" } });
+    return _c("ToolbarButton", { attrs: { "icon": "bold", "title": "Bold", "editor": _vm.editor, "command": "toggleBold", "active-check": "bold" } });
   };
   var _sfc_staticRenderFns$6 = [];
   _sfc_render$6._withStripped = true;
@@ -18433,11 +18404,11 @@ img.ProseMirror-separator {
     _sfc_render$6,
     _sfc_staticRenderFns$6
   );
-  __component__$6.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/ItalicButton.vue";
-  const ItalicButton = __component__$6.exports;
-  const ItalicButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __component__$6.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/BoldButton.vue";
+  const BoldButton = __component__$6.exports;
+  const BoldButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    default: ItalicButton
+    default: BoldButton
   }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main$5 = {
     components: {
@@ -18452,7 +18423,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render$5 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "strikethrough", "title": "Strike-through", "editor": _vm.editor, "command": "toggleStrike", "active-check": "strike" } });
+    return _c("ToolbarButton", { attrs: { "icon": "italic", "title": "Italic", "editor": _vm.editor, "command": "toggleItalic", "active-check": "italic" } });
   };
   var _sfc_staticRenderFns$5 = [];
   _sfc_render$5._withStripped = true;
@@ -18461,11 +18432,11 @@ img.ProseMirror-separator {
     _sfc_render$5,
     _sfc_staticRenderFns$5
   );
-  __component__$5.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/StrikeButton.vue";
-  const StrikeButton = __component__$5.exports;
-  const StrikeButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __component__$5.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/ItalicButton.vue";
+  const ItalicButton = __component__$5.exports;
+  const ItalicButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    default: StrikeButton
+    default: ItalicButton
   }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main$4 = {
     components: {
@@ -18480,7 +18451,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render$4 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "code", "title": "Code", "editor": _vm.editor, "command": "toggleCode", "active-check": "code" } });
+    return _c("ToolbarButton", { attrs: { "icon": "strikethrough", "title": "Strike-through", "editor": _vm.editor, "command": "toggleStrike", "active-check": "strike" } });
   };
   var _sfc_staticRenderFns$4 = [];
   _sfc_render$4._withStripped = true;
@@ -18489,11 +18460,11 @@ img.ProseMirror-separator {
     _sfc_render$4,
     _sfc_staticRenderFns$4
   );
-  __component__$4.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/CodeButton.vue";
-  const CodeButton = __component__$4.exports;
-  const CodeButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __component__$4.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/StrikeButton.vue";
+  const StrikeButton = __component__$4.exports;
+  const StrikeButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    default: CodeButton
+    default: StrikeButton
   }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main$3 = {
     components: {
@@ -18508,7 +18479,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render$3 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "url", "title": "Link", "editor": _vm.editor, "command": "toggleLink", "active-check": "link" } });
+    return _c("ToolbarButton", { attrs: { "icon": "code", "title": "Code", "editor": _vm.editor, "command": "toggleCode", "active-check": "code" } });
   };
   var _sfc_staticRenderFns$3 = [];
   _sfc_render$3._withStripped = true;
@@ -18517,11 +18488,11 @@ img.ProseMirror-separator {
     _sfc_render$3,
     _sfc_staticRenderFns$3
   );
-  __component__$3.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/LinkButton.vue";
-  const LinkButton = __component__$3.exports;
-  const LinkButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __component__$3.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/CodeButton.vue";
+  const CodeButton = __component__$3.exports;
+  const CodeButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    default: LinkButton
+    default: CodeButton
   }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main$2 = {
     components: {
@@ -18536,7 +18507,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render$2 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "bulletList", "title": "Bullet List", "editor": _vm.editor, "command": "toggleBulletList", "active-check": "bulletList" } });
+    return _c("ToolbarButton", { attrs: { "icon": "url", "title": "Link", "editor": _vm.editor, "command": "toggleLink", "active-check": "link" } });
   };
   var _sfc_staticRenderFns$2 = [];
   _sfc_render$2._withStripped = true;
@@ -18545,11 +18516,11 @@ img.ProseMirror-separator {
     _sfc_render$2,
     _sfc_staticRenderFns$2
   );
-  __component__$2.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/BulletListButton.vue";
-  const BulletListButton = __component__$2.exports;
-  const BulletListButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __component__$2.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/LinkButton.vue";
+  const LinkButton = __component__$2.exports;
+  const LinkButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    default: BulletListButton
+    default: LinkButton
   }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main$1 = {
     components: {
@@ -18564,7 +18535,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render$1 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "orderedList", "title": "Ordered List", "editor": _vm.editor, "command": "toggleOrderedList", "active-check": "orderedList" } });
+    return _c("ToolbarButton", { attrs: { "icon": "bulletList", "title": "Bullet List", "editor": _vm.editor, "command": "toggleBulletList", "active-check": "bulletList" } });
   };
   var _sfc_staticRenderFns$1 = [];
   _sfc_render$1._withStripped = true;
@@ -18573,11 +18544,11 @@ img.ProseMirror-separator {
     _sfc_render$1,
     _sfc_staticRenderFns$1
   );
-  __component__$1.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/OrderedListButton.vue";
-  const OrderedListButton = __component__$1.exports;
-  const OrderedListButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __component__$1.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/BulletListButton.vue";
+  const BulletListButton = __component__$1.exports;
+  const BulletListButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    default: OrderedListButton
+    default: BulletListButton
   }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main = {
     components: {
@@ -18592,7 +18563,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "email", "title": "Email", "editor": _vm.editor, "command": "toggleEmail", "active-check": "email" } });
+    return _c("ToolbarButton", { attrs: { "icon": "orderedList", "title": "Ordered List", "editor": _vm.editor, "command": "toggleOrderedList", "active-check": "orderedList" } });
   };
   var _sfc_staticRenderFns = [];
   _sfc_render._withStripped = true;
@@ -18601,10 +18572,10 @@ img.ProseMirror-separator {
     _sfc_render,
     _sfc_staticRenderFns
   );
-  __component__.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/EmailButton.vue";
-  const EmailButton = __component__.exports;
-  const EmailButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __component__.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/buttons/OrderedListButton.vue";
+  const OrderedListButton = __component__.exports;
+  const OrderedListButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    default: EmailButton
+    default: OrderedListButton
   }, Symbol.toStringTag, { value: "Module" }));
 })();
