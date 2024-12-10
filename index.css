@@ -1,36 +1,36 @@
-.k-tiptap-field .ProseMirror {
+
+.k-toolbar {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--toolbar-border);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.k-button {
+  transition-property: color, background;
+&[aria-current] {
+    --button-color-background: var(--toolbar-current);
+}
+}
+
+.ProseMirror {
   padding: .5rem;
   outline: none;
   width: 100%;
   min-height: 4rem;
   line-height: 1.5rem;
 }
-
-.k-tiptap-field .k-toolbar {
-  margin-bottom: 0;
-}
-.k-tiptap-field .k-button {
-  transition-property: color, background;
-}
-.k-tiptap-field .k-button.is-active {
-  background: #ecf1f7;
-  color: #4271ae;
-}
-
-.k-tiptap-field .k-textarea-input-wrapper {
+.k-textarea-input-wrapper {
   width: 100%;
 }
-
-.k-tiptap-field ul {
+ul {
   padding-left: 1.25rem;
 }
-.k-tiptap-field ul li {
+ul li {
   list-style: disc;
 }
-
-.k-tiptap-field ol {
+ol {
   padding-left: 1.25rem;
 }
-.k-tiptap-field ol li {
+ol li {
   list-style: decimal;
 }

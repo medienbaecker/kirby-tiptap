@@ -1,7 +1,7 @@
-import tiptap from "./components/tiptap.vue";
+import Tiptap from "./components/Tiptap.vue"
 
-panel.plugin('medienbaecker/tiptap', {
+panel.plugin("medienbaecker/tiptap", {
   fields: {
-    tiptap
-  }
-});
+    tiptap: Tiptap,
+  },
+})

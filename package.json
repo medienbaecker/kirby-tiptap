@@ -4,10 +4,10 @@
     "build": "kirbyup src/index.js"
   },
   "devDependencies": {
-    "kirbyup": "^0.17.3"
+    "kirbyup": "^3.2.0"
   },
   "dependencies": {
-    "@tiptap/vue-2": "^2.0.0-beta.58",
-    "@tiptap/starter-kit": "^2.0.0-beta.121"
+    "@tiptap/starter-kit": "^2.10.3",
+    "@tiptap/vue-2": "^2.10.3"
   }
 }
