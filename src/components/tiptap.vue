@@ -14,6 +14,7 @@
 <script>
 import { Editor, EditorContent } from '@tiptap/vue-2'
 import StarterKit from '@tiptap/starter-kit'
+import Link from '@tiptap/extension-link'
 import Toolbar from './Toolbar.vue'
 
 export default {
@@ -44,7 +45,12 @@ export default {
         this.$emit("input", editor.getHTML());
       },
       extensions: [
-        StarterKit
+        StarterKit,
+        Link.configure({
+          openOnClick: false,
+          rel: null,
+          target: null,
+        }),
       ],
     });
   },
@@ -79,5 +85,13 @@ ol {
 
 ol li {
   list-style: decimal;
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: underline;
+  text-underline-offset: var(--link-underline-offset);
+  border-radius: var(--rounded-xs);
+  outline-offset: 2px;
 }
 </style>

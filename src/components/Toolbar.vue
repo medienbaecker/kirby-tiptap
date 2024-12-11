@@ -9,13 +9,13 @@
 
 <script>
 const buttonComponents = {
-  bold: () => import('./buttons/BoldButton.vue'),
-  italic: () => import('./buttons/ItalicButton.vue'),
-  strike: () => import('./buttons/StrikeButton.vue'),
-  code: () => import('./buttons/CodeButton.vue'),
-  link: () => import('./buttons/LinkButton.vue'),
-  bulletList: () => import('./buttons/BulletListButton.vue'),
-  orderedList: () => import('./buttons/OrderedListButton.vue')
+  bold: () => import('./toolbarButtons/BoldButton.vue'),
+  italic: () => import('./toolbarButtons/ItalicButton.vue'),
+  strike: () => import('./toolbarButtons/StrikeButton.vue'),
+  code: () => import('./toolbarButtons/CodeButton.vue'),
+  link: () => import('./toolbarButtons/LinkButton.vue'),
+  bulletList: () => import('./toolbarButtons/BulletListButton.vue'),
+  orderedList: () => import('./toolbarButtons/OrderedListButton.vue')
 };
 
 export default {

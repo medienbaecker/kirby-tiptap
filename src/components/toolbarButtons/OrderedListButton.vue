@@ -1,5 +1,6 @@
 <template>
-  <ToolbarButton icon="url" title="Link" :editor="editor" command="toggleLink" active-check="link" />
+  <ToolbarButton icon="list-numbers" title="Ordered List" :editor="editor" command="toggleOrderedList"
+    active-check="orderedList" />
 </template>
 
 <script>

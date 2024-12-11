@@ -1,1 +1,55 @@
-.k-toolbar{margin-bottom:0;border-bottom:1px solid var(--toolbar-border);border-bottom-left-radius:0;border-bottom-right-radius:0}.k-button{transition-property:color,background}.k-button[aria-current]{--button-color-background: var(--toolbar-current)}.ProseMirror{padding:.5rem;outline:none;width:100%;min-height:4rem;line-height:1.5rem}.k-textarea-input-wrapper{width:100%}ul{padding-left:1.25rem}ul li{list-style:disc}ol{padding-left:1.25rem}ol li{list-style:decimal}
+
+.k-toolbar {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--toolbar-border);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.k-button {
+  transition-property: color, background;
+&[aria-current] {
+    --button-color-background: var(--toolbar-current);
+}
+}
+
+.ProseMirror {
+  padding: .5rem;
+  outline: none;
+  width: 100%;
+  min-height: 4rem;
+  line-height: 1.5rem;
+}
+.k-textarea-input-wrapper {
+  width: 100%;
+}
+ul {
+  padding-left: 1.25rem;
+}
+ul li {
+  list-style: disc;
+}
+ol {
+  padding-left: 1.25rem;
+}
+ol li {
+  list-style: decimal;
+}
+a {
+  color: var(--link-color);
+  text-decoration: underline;
+  text-underline-offset: var(--link-underline-offset);
+  border-radius: var(--rounded-xs);
+  outline-offset: 2px;
+}
+
+.k-button-group.k-dialog-buttons {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-3);
+	--button-height: var(--height-lg);
+}
+
+.k-dialog-fields {
+	padding-bottom: 0.5rem;
+	container-type: inline-size;
+}
