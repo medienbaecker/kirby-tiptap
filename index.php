@@ -6,7 +6,19 @@ Kirby::plugin('medienbaecker/tiptap', [
   'fields' => [
     'tiptap' => [
       'props' => [
-        'buttons' => function ($buttons = ['bold', 'italic', 'strike', 'code', '|', 'link', 'email', '|', 'bulletList', 'orderedList']) {
+        'buttons' => function ($buttons = [
+          ['headings' => [1, 2, 3]],
+          '|',
+          'bold',
+          'italic',
+          'strike',
+          'code',
+          '|',
+          'link',
+          '|',
+          'bulletList',
+          'orderedList'
+        ]) {
           return $buttons;
         }
       ]

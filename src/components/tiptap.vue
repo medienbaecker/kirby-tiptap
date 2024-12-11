@@ -28,7 +28,7 @@ export default {
     value: String,
     buttons: {
       type: Array,
-      default: () => ['bold', 'italic', 'strike', 'code', '|', 'link', '|', 'bulletList', 'orderedList']
+      required: true
     }
   },
 
@@ -55,6 +55,11 @@ export default {
     });
   },
 
+  beforeDestroy() {
+    if (this.editor) {
+      this.editor.destroy()
+    }
+  }
 }
 </script>
 
@@ -81,8 +86,44 @@ export default {
   }
 }
 
-.tiptap p {
+.tiptap :where(p, h1, h2, h3, h4, h5, h6) {
   margin-block: calc(var(--text-line-height) * 1em);
+}
+
+.tiptap h1 {
+  font-size: var(--text-h1);
+  font-weight: var(--font-h1);
+  line-height: var(--leading-h1);
+}
+
+.tiptap h2 {
+  font-size: var(--text-h2);
+  font-weight: var(--font-h2);
+  line-height: var(--leading-h2);
+}
+
+.tiptap h3 {
+  font-size: var(--text-h3);
+  font-weight: var(--font-h3);
+  line-height: var(--leading-h3);
+}
+
+.tiptap h4 {
+  font-size: var(--text-h4);
+  font-weight: var(--font-h4);
+  line-height: var(--leading-h4);
+}
+
+.tiptap h5 {
+  font-size: var(--text-h5);
+  font-weight: var(--font-h5);
+  line-height: var(--leading-h5);
+}
+
+.tiptap h6 {
+  font-size: var(--text-h6);
+  font-weight: var(--font-h6);
+  line-height: var(--leading-h6);
 }
 
 .tiptap a {

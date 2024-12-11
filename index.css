@@ -1,1 +1,100 @@
-.k-toolbar{margin-bottom:0;border-bottom:1px solid var(--toolbar-border);border-bottom-left-radius:0;border-bottom-right-radius:0}.k-button{transition-property:color,background}.k-button[aria-current]{--button-color-background: var(--toolbar-current)}.k-tiptap-field .k-textarea-input-wrapper{width:100%}.tiptap{padding:.5rem;outline:none;width:100%;min-height:4rem;line-height:1.5rem}.tiptap>*:first-child{margin-top:0}.tiptap>*:last-child{margin-bottom:0}.tiptap p{margin-top:calc(var(--text-line-height) * 1em);margin-bottom:calc(var(--text-line-height) * 1em)}.tiptap a{color:var(--link-color);text-decoration:underline;text-underline-offset:var(--link-underline-offset);border-radius:var(--rounded-xs);outline-offset:2px}.tiptap :where(ul,ol){padding-left:3ch}.tiptap ul{list-style-type:disc}.tiptap ol{list-style-type:decimal}.tiptap code{padding:var(--spacing-1);font-size:var(--code-inline-font-size);color:var(--code-inline-color-text);background:var(--code-inline-color-back);border-radius:var(--rounded);outline:1px solid var(--code-inline-color-border);outline-offset:-1px}.k-button-group.k-dialog-buttons{display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-3);--button-height: var(--height-lg)}.k-dialog-fields{padding-bottom:.5rem;container-type:inline-size}
+
+.k-toolbar {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--toolbar-border);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.k-heading-buttons {
+  display: inline-flex;
+}
+
+.k-tiptap-field {
+.k-textarea-input-wrapper {
+    width: 100%;
+}
+}
+.tiptap {
+  padding: .5rem;
+  outline: none;
+  width: 100%;
+  min-height: 4rem;
+  line-height: 1.5rem;
+>*:first-child {
+    margin-top: 0;
+}
+>*:last-child {
+    margin-bottom: 0;
+}
+}
+.tiptap :where(p, h1, h2, h3, h4, h5, h6) {
+  margin-top: calc(var(--text-line-height) * 1em);
+  margin-bottom: calc(var(--text-line-height) * 1em);
+}
+.tiptap h1 {
+  font-size: var(--text-h1);
+  font-weight: var(--font-h1);
+  line-height: var(--leading-h1);
+}
+.tiptap h2 {
+  font-size: var(--text-h2);
+  font-weight: var(--font-h2);
+  line-height: var(--leading-h2);
+}
+.tiptap h3 {
+  font-size: var(--text-h3);
+  font-weight: var(--font-h3);
+  line-height: var(--leading-h3);
+}
+.tiptap h4 {
+  font-size: var(--text-h4);
+  font-weight: var(--font-h4);
+  line-height: var(--leading-h4);
+}
+.tiptap h5 {
+  font-size: var(--text-h5);
+  font-weight: var(--font-h5);
+  line-height: var(--leading-h5);
+}
+.tiptap h6 {
+  font-size: var(--text-h6);
+  font-weight: var(--font-h6);
+  line-height: var(--leading-h6);
+}
+.tiptap a {
+  color: var(--link-color);
+  text-decoration: underline;
+  text-underline-offset: var(--link-underline-offset);
+  border-radius: var(--rounded-xs);
+  outline-offset: 2px;
+}
+.tiptap :where(ul, ol) {
+  padding-left: 3ch;
+}
+.tiptap ul {
+  list-style-type: disc;
+}
+.tiptap ol {
+  list-style-type: decimal;
+}
+.tiptap code {
+  padding: var(--spacing-1);
+  font-size: var(--code-inline-font-size);
+  color: var(--code-inline-color-text);
+  background: var(--code-inline-color-back);
+  border-radius: var(--rounded);
+  outline: 1px solid var(--code-inline-color-border);
+  outline-offset: -1px;
+}
+
+.k-button-group.k-dialog-buttons {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-3);
+	--button-height: var(--height-lg);
+}
+
+.k-dialog-fields {
+	padding-bottom: 0.5rem;
+	container-type: inline-size;
+}
