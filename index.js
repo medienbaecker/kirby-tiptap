@@ -10641,7 +10641,7 @@
     document container. If it is `null`, the editor will not be
     added to the document.
     */
-    constructor(place, props2) {
+    constructor(place, props) {
       this._root = null;
       this.focused = false;
       this.trackWrites = null;
@@ -10654,9 +10654,9 @@
       this.pluginViews = [];
       this.requiresGeckoHackNode = false;
       this.dragging = null;
-      this._props = props2;
-      this.state = props2.state;
-      this.directPlugins = props2.plugins || [];
+      this._props = props;
+      this.state = props.state;
+      this.directPlugins = props.plugins || [];
       this.directPlugins.forEach(checkStateComponent);
       this.dispatch = this.dispatch.bind(this);
       this.dom = place && place.mount || document.createElement("div");
@@ -10702,29 +10702,29 @@
     Update the view's props. Will immediately cause an update to
     the DOM.
     */
-    update(props2) {
-      if (props2.handleDOMEvents != this._props.handleDOMEvents)
+    update(props) {
+      if (props.handleDOMEvents != this._props.handleDOMEvents)
         ensureListeners(this);
       let prevProps = this._props;
-      this._props = props2;
-      if (props2.plugins) {
-        props2.plugins.forEach(checkStateComponent);
-        this.directPlugins = props2.plugins;
+      this._props = props;
+      if (props.plugins) {
+        props.plugins.forEach(checkStateComponent);
+        this.directPlugins = props.plugins;
       }
-      this.updateStateInner(props2.state, prevProps);
+      this.updateStateInner(props.state, prevProps);
     }
     /**
     Update the view by updating existing props object with the object
     given as argument. Equivalent to `view.update(Object.assign({},
     view.props, props))`.
     */
-    setProps(props2) {
+    setProps(props) {
       let updated = {};
       for (let name in this._props)
         updated[name] = this._props[name];
       updated.state = this.state;
-      for (let name in props2)
-        updated[name] = props2[name];
+      for (let name in props)
+        updated[name] = props[name];
       this.update(updated);
     }
     /**
@@ -11903,10 +11903,10 @@
     };
   }
   class CommandManager {
-    constructor(props2) {
-      this.editor = props2.editor;
+    constructor(props) {
+      this.editor = props.editor;
       this.rawCommands = this.editor.extensionManager.commands;
-      this.customState = props2.state;
+      this.customState = props.state;
     }
     get hasCustomState() {
       return !!this.customState;
@@ -11918,10 +11918,10 @@
       const { rawCommands, editor, state } = this;
       const { view } = editor;
       const { tr: tr2 } = state;
-      const props2 = this.buildProps(tr2);
+      const props = this.buildProps(tr2);
       return Object.fromEntries(Object.entries(rawCommands).map(([name, command2]) => {
         const method = (...args) => {
-          const callback = command2(...args)(props2);
+          const callback = command2(...args)(props);
           if (!tr2.getMeta("preventDispatch") && !this.hasCustomState) {
             view.dispatch(tr2);
           }
@@ -11951,8 +11951,8 @@
       const chain = {
         ...Object.fromEntries(Object.entries(rawCommands).map(([name, command2]) => {
           const chainedCommand = (...args) => {
-            const props2 = this.buildProps(tr2, shouldDispatch);
-            const callback = command2(...args)(props2);
+            const props = this.buildProps(tr2, shouldDispatch);
+            const callback = command2(...args)(props);
             callbacks.push(callback);
             return chain;
           };
@@ -11966,9 +11966,9 @@
       const { rawCommands, state } = this;
       const dispatch = false;
       const tr2 = startTr || state.tr;
-      const props2 = this.buildProps(tr2, dispatch);
+      const props = this.buildProps(tr2, dispatch);
       const formattedCommands = Object.fromEntries(Object.entries(rawCommands).map(([name, command2]) => {
-        return [name, (...args) => command2(...args)({ ...props2, dispatch: void 0 })];
+        return [name, (...args) => command2(...args)({ ...props, dispatch: void 0 })];
       }));
       return {
         ...formattedCommands,
@@ -11978,7 +11978,7 @@
     buildProps(tr2, shouldDispatch = true) {
       const { rawCommands, editor, state } = this;
       const { view } = editor;
-      const props2 = {
+      const props = {
         tr: tr2,
         editor,
         view,
@@ -11991,11 +11991,11 @@
         can: () => this.createCan(tr2),
         get commands() {
           return Object.fromEntries(Object.entries(rawCommands).map(([name, command2]) => {
-            return [name, (...args) => command2(...args)(props2)];
+            return [name, (...args) => command2(...args)(props)];
           }));
         }
       };
-      return props2;
+      return props;
     }
   }
   class EventEmitter {
@@ -12187,12 +12187,12 @@
   function isFunction(value) {
     return typeof value === "function";
   }
-  function callOrReturn(value, context = void 0, ...props2) {
+  function callOrReturn(value, context = void 0, ...props) {
     if (isFunction(value)) {
       if (context) {
-        return value.bind(context)(...props2);
+        return value.bind(context)(...props);
       }
-      return value(...props2);
+      return value(...props);
     }
     return value;
   }
@@ -12474,8 +12474,8 @@
     });
     return matched;
   }
-  function inputRulesPlugin(props2) {
-    const { editor, rules } = props2;
+  function inputRulesPlugin(props) {
+    const { editor, rules } = props;
     const plugin = new Plugin({
       state: {
         init() {
@@ -12748,8 +12748,8 @@
     (_a = event.clipboardData) === null || _a === void 0 ? void 0 : _a.setData("text/html", text);
     return event;
   };
-  function pasteRulesPlugin(props2) {
-    const { editor, rules } = props2;
+  function pasteRulesPlugin(props) {
+    const { editor, rules } = props;
     let dragSourceElement = null;
     let isPastedFromProseMirror = false;
     let isDroppedFromProseMirror = false;
@@ -13273,8 +13273,8 @@
     });
     return true;
   };
-  const command = (fn) => (props2) => {
-    return fn(props2);
+  const command = (fn) => (props) => {
+    return fn(props);
   };
   const createParagraphNear = () => ({ state, dispatch }) => {
     return createParagraphNear$1(state, dispatch);
@@ -13423,10 +13423,10 @@
     }
     return true;
   };
-  const first = (commands2) => (props2) => {
-    const items = typeof commands2 === "function" ? commands2(props2) : commands2;
+  const first = (commands2) => (props) => {
+    const items = typeof commands2 === "function" ? commands2(props) : commands2;
     for (let i2 = 0; i2 < items.length; i2 += 1) {
-      if (items[i2](props2)) {
+      if (items[i2](props)) {
         return true;
       }
     }
@@ -13505,8 +13505,8 @@
     }
     return true;
   };
-  const forEach = (items, fn) => (props2) => {
-    return items.every((item, index) => fn(item, { ...props2, index }));
+  const forEach = (items, fn) => (props) => {
+    return items.every((item, index) => fn(item, { ...props, index }));
   };
   const insertContent = (value, options) => ({ tr: tr2, commands: commands2 }) => {
     return commands2.insertContentAt({ from: tr2.selection.from, to: tr2.selection.to }, value, options);
@@ -13879,9 +13879,9 @@
     return null;
   }
   function deleteProps(obj, propOrProps) {
-    const props2 = typeof propOrProps === "string" ? [propOrProps] : propOrProps;
+    const props = typeof propOrProps === "string" ? [propOrProps] : propOrProps;
     return Object.keys(obj).reduce((newObj, prop) => {
-      if (!props2.includes(prop)) {
+      if (!props.includes(prop)) {
         newObj[prop] = obj[prop];
       }
       return newObj;
@@ -19153,15 +19153,15 @@ img.ProseMirror-separator {
       };
     }
   };
-  function createTokenClass(type, props2) {
+  function createTokenClass(type, props) {
     class Token extends MultiToken {
       constructor(value, tokens) {
         super(value, tokens);
         this.t = type;
       }
     }
-    for (const p in props2) {
-      Token.prototype[p] = props2[p];
+    for (const p in props) {
+      Token.prototype[p] = props[p];
     }
     Token.t = type;
     return Token;
@@ -19802,7 +19802,7 @@ img.ProseMirror-separator {
     bulletList: () => Promise.resolve().then(() => BulletListButton$1),
     orderedList: () => Promise.resolve().then(() => OrderedListButton$1)
   };
-  const _sfc_main$d = {
+  const _sfc_main$a = {
     components: buttonComponents,
     props: {
       editor: {
@@ -19852,22 +19852,22 @@ img.ProseMirror-separator {
       }
     }
   };
-  var _sfc_render$d = function render() {
+  var _sfc_render$a = function render() {
     var _vm = this, _c = _vm._self._c;
     return _vm.editor ? _c("nav", { staticClass: "k-toolbar" }, [_vm._l(_vm.normalizedButtons, function(button) {
       return [!_vm.isSeperator(button) ? _c(_vm.buttonComponents[_vm.getComponentName(button)], { key: _vm.getKey(button), tag: "component", attrs: { "editor": _vm.editor, "levels": _vm.getLevels(button) } }) : _c("hr")];
     })], 2) : _vm._e();
   };
-  var _sfc_staticRenderFns$d = [];
-  _sfc_render$d._withStripped = true;
-  var __component__$d = /* @__PURE__ */ normalizeComponent(
-    _sfc_main$d,
-    _sfc_render$d,
-    _sfc_staticRenderFns$d
+  var _sfc_staticRenderFns$a = [];
+  _sfc_render$a._withStripped = true;
+  var __component__$a = /* @__PURE__ */ normalizeComponent(
+    _sfc_main$a,
+    _sfc_render$a,
+    _sfc_staticRenderFns$a
   );
-  __component__$d.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/Toolbar.vue";
-  const Toolbar = __component__$d.exports;
-  const _sfc_main$c = {
+  __component__$a.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/Toolbar.vue";
+  const Toolbar = __component__$a.exports;
+  const _sfc_main$9 = {
     components: {
       EditorContent,
       Toolbar
@@ -19895,8 +19895,10 @@ img.ProseMirror-separator {
           StarterKit,
           Link.configure({
             openOnClick: false,
-            rel: null,
-            target: null
+            HTMLAttributes: {
+              rel: null,
+              target: null
+            }
           })
         ]
       });
@@ -19907,27 +19909,27 @@ img.ProseMirror-separator {
       }
     }
   };
-  var _sfc_render$c = function render() {
+  var _sfc_render$9 = function render() {
     var _vm = this, _c = _vm._self._c;
     return _c("k-field", { staticClass: "k-tiptap-field", attrs: { "data-theme": "field", "label": _vm.label } }, [_c("span", { staticClass: "k-input-element" }, [_c("div", { staticClass: "k-input k-textarea-input", attrs: { "data-theme": "field" } }, [_c("div", { staticClass: "k-textarea-input-wrapper" }, [_vm.editor ? _c("toolbar", { attrs: { "editor": _vm.editor, "label": _vm.label, "buttons": _vm.buttons } }) : _vm._e(), _c("editor-content", { attrs: { "editor": _vm.editor }, model: { value: _vm.value, callback: function($$v) {
       _vm.value = $$v;
     }, expression: "value" } })], 1)])])]);
   };
-  var _sfc_staticRenderFns$c = [];
-  _sfc_render$c._withStripped = true;
-  var __component__$c = /* @__PURE__ */ normalizeComponent(
-    _sfc_main$c,
-    _sfc_render$c,
-    _sfc_staticRenderFns$c
+  var _sfc_staticRenderFns$9 = [];
+  _sfc_render$9._withStripped = true;
+  var __component__$9 = /* @__PURE__ */ normalizeComponent(
+    _sfc_main$9,
+    _sfc_render$9,
+    _sfc_staticRenderFns$9
   );
-  __component__$c.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/Tiptap.vue";
-  const Tiptap = __component__$c.exports;
+  __component__$9.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/Tiptap.vue";
+  const Tiptap = __component__$9.exports;
   panel.plugin("medienbaecker/tiptap", {
     fields: {
       tiptap: Tiptap
     }
   });
-  const _sfc_main$b = {
+  const _sfc_main$8 = {
     props: {
       icon: {
         type: String,
@@ -19966,22 +19968,22 @@ img.ProseMirror-separator {
       }
     }
   };
-  var _sfc_render$b = function render() {
+  var _sfc_render$8 = function render() {
     var _vm = this, _c = _vm._self._c;
     return _c("k-button", { class: ["k-toolbar-button", "k-markdown-button"], attrs: { "icon": _vm.icon, "title": _vm.title, "tabindex": "-1", "current": _vm.isActive }, on: { "mousedown": function($event) {
       $event.preventDefault();
     }, "click": _vm.runCommand } });
   };
-  var _sfc_staticRenderFns$b = [];
-  _sfc_render$b._withStripped = true;
-  var __component__$b = /* @__PURE__ */ normalizeComponent(
-    _sfc_main$b,
-    _sfc_render$b,
-    _sfc_staticRenderFns$b
+  var _sfc_staticRenderFns$8 = [];
+  _sfc_render$8._withStripped = true;
+  var __component__$8 = /* @__PURE__ */ normalizeComponent(
+    _sfc_main$8,
+    _sfc_render$8,
+    _sfc_staticRenderFns$8
   );
-  __component__$b.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/ToolbarButton.vue";
-  const ToolbarButton = __component__$b.exports;
-  const _sfc_main$a = {
+  __component__$8.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/ToolbarButton.vue";
+  const ToolbarButton = __component__$8.exports;
+  const _sfc_main$7 = {
     components: {
       ToolbarButton
     },
@@ -20001,95 +20003,11 @@ img.ProseMirror-separator {
       }
     }
   };
-  var _sfc_render$a = function render() {
+  var _sfc_render$7 = function render() {
     var _vm = this, _c = _vm._self._c;
     return _c("div", { staticClass: "k-headings-buttons" }, _vm._l(_vm.levels, function(level) {
       return _c("ToolbarButton", { key: level, attrs: { "icon": `h${level}`, "title": `Heading ${level}`, "editor": _vm.editor, "command": () => _vm.toggleHeading(level), "active-check": () => _vm.editor.isActive("heading", { level }) } });
     }), 1);
-  };
-  var _sfc_staticRenderFns$a = [];
-  _sfc_render$a._withStripped = true;
-  var __component__$a = /* @__PURE__ */ normalizeComponent(
-    _sfc_main$a,
-    _sfc_render$a,
-    _sfc_staticRenderFns$a
-  );
-  __component__$a.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/HeadingsButton.vue";
-  const HeadingsButton = __component__$a.exports;
-  const HeadingsButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: HeadingsButton
-  }, Symbol.toStringTag, { value: "Module" }));
-  const _sfc_main$9 = {
-    components: {
-      ToolbarButton
-    },
-    props: {
-      editor: {
-        type: Object,
-        required: true
-      }
-    }
-  };
-  var _sfc_render$9 = function render() {
-    var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "bold", "title": "Bold", "editor": _vm.editor, "command": "toggleBold", "active-check": "bold" } });
-  };
-  var _sfc_staticRenderFns$9 = [];
-  _sfc_render$9._withStripped = true;
-  var __component__$9 = /* @__PURE__ */ normalizeComponent(
-    _sfc_main$9,
-    _sfc_render$9,
-    _sfc_staticRenderFns$9
-  );
-  __component__$9.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/BoldButton.vue";
-  const BoldButton = __component__$9.exports;
-  const BoldButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: BoldButton
-  }, Symbol.toStringTag, { value: "Module" }));
-  const _sfc_main$8 = {
-    components: {
-      ToolbarButton
-    },
-    props: {
-      editor: {
-        type: Object,
-        required: true
-      }
-    }
-  };
-  var _sfc_render$8 = function render() {
-    var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "italic", "title": "Italic", "editor": _vm.editor, "command": "toggleItalic", "active-check": "italic" } });
-  };
-  var _sfc_staticRenderFns$8 = [];
-  _sfc_render$8._withStripped = true;
-  var __component__$8 = /* @__PURE__ */ normalizeComponent(
-    _sfc_main$8,
-    _sfc_render$8,
-    _sfc_staticRenderFns$8
-  );
-  __component__$8.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/ItalicButton.vue";
-  const ItalicButton = __component__$8.exports;
-  const ItalicButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: ItalicButton
-  }, Symbol.toStringTag, { value: "Module" }));
-  const _sfc_main$7 = {
-    components: {
-      ToolbarButton
-    },
-    props: {
-      editor: {
-        type: Object,
-        required: true
-      }
-    }
-  };
-  var _sfc_render$7 = function render() {
-    var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "strikethrough", "title": "Strike-through", "editor": _vm.editor, "command": "toggleStrike", "active-check": "strike" } });
   };
   var _sfc_staticRenderFns$7 = [];
   _sfc_render$7._withStripped = true;
@@ -20098,11 +20016,11 @@ img.ProseMirror-separator {
     _sfc_render$7,
     _sfc_staticRenderFns$7
   );
-  __component__$7.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/StrikeButton.vue";
-  const StrikeButton = __component__$7.exports;
-  const StrikeButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __component__$7.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/HeadingsButton.vue";
+  const HeadingsButton = __component__$7.exports;
+  const HeadingsButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    default: StrikeButton
+    default: HeadingsButton
   }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main$6 = {
     components: {
@@ -20117,7 +20035,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render$6 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "code", "title": "Code", "editor": _vm.editor, "command": "toggleCode", "active-check": "code" } });
+    return _c("ToolbarButton", { attrs: { "icon": "bold", "title": "Bold", "editor": _vm.editor, "command": "toggleBold", "active-check": "bold" } });
   };
   var _sfc_staticRenderFns$6 = [];
   _sfc_render$6._withStripped = true;
@@ -20126,107 +20044,26 @@ img.ProseMirror-separator {
     _sfc_render$6,
     _sfc_staticRenderFns$6
   );
-  __component__$6.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/CodeButton.vue";
-  const CodeButton = __component__$6.exports;
-  const CodeButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __component__$6.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/BoldButton.vue";
+  const BoldButton = __component__$6.exports;
+  const BoldButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    default: CodeButton
+    default: BoldButton
   }, Symbol.toStringTag, { value: "Module" }));
-  function isObject(input) {
-    return typeof input === "object" && (input == null ? void 0 : input.constructor) === Object;
-  }
-  const props$1 = {
-    props: {
-      /**
-       * Options for the cancel button
-       */
-      cancelButton: {
-        default: true,
-        type: [Boolean, String, Object]
-      },
-      /**
-       * Whether to disable the submit button
-       * @deprecated 4.0.0 use the `submit-button` prop instead
-       */
-      disabled: {
-        default: false,
-        type: Boolean
-      },
-      /**
-       * The icon type for the submit button
-       * @deprecated 4.0.0 use the `submit-button` prop instead
-       */
-      icon: {
-        default: "check",
-        type: String
-      },
-      /**
-       * Options for the submit button
-       */
-      submitButton: {
-        type: [Boolean, String, Object],
-        default: true
-      },
-      /**
-       * The theme of the submit button
-       * @values "positive", "negative"
-       * @deprecated 4.0.0 use the `submit-button` prop instead
-       */
-      theme: {
-        default: "positive",
-        type: String
-      }
-    }
-  };
   const _sfc_main$5 = {
-    mixins: [props$1],
-    emits: ["cancel"],
-    computed: {
-      cancel() {
-        return this.button(this.cancelButton, {
-          click: () => this.$emit("cancel"),
-          class: "k-dialog-button-cancel",
-          icon: "cancel",
-          text: this.$t("cancel"),
-          variant: "filled"
-        });
-      },
-      submit() {
-        return this.button(this.submitButton, {
-          class: "k-dialog-button-submit",
-          disabled: this.disabled || this.$panel.dialog.isLoading,
-          icon: this.icon,
-          text: this.$t("confirm"),
-          theme: this.theme,
-          type: "submit",
-          variant: "filled"
-        });
-      }
+    components: {
+      ToolbarButton
     },
-    methods: {
-      button(button, defaults2) {
-        if (typeof button === "string") {
-          return {
-            ...defaults2,
-            text: button
-          };
-        }
-        if (button === false) {
-          return false;
-        }
-        if (isObject(button) === false) {
-          return defaults2;
-        }
-        return {
-          ...defaults2,
-          ...button
-        };
+    props: {
+      editor: {
+        type: Object,
+        required: true
       }
     }
   };
   var _sfc_render$5 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("k-button-group", { staticClass: "k-dialog-buttons" }, [_vm.cancel ? _c("k-button", _vm._b({}, "k-button", _vm.cancel, false)) : _vm._e(), _vm.submit ? _c("k-button", _vm._b({ attrs: { "icon": _vm.$panel.dialog.isLoading ? "loader" : _vm.submit.icon } }, "k-button", _vm.submit, false)) : _vm._e()], 1);
+    return _c("ToolbarButton", { attrs: { "icon": "italic", "title": "Italic", "editor": _vm.editor, "command": "toggleItalic", "active-check": "italic" } });
   };
   var _sfc_staticRenderFns$5 = [];
   _sfc_render$5._withStripped = true;
@@ -20235,125 +20072,26 @@ img.ProseMirror-separator {
     _sfc_render$5,
     _sfc_staticRenderFns$5
   );
-  __component__$5.options.__file = "/Users/thguenther/Work/Repositories/kirby/panel/src/components/Dialogs/Elements/Buttons.vue";
-  const Dialog = {
-    mixins: [props$1],
-    props: {
-      /**
-       * Width of the dialog
-       * @values "small", "default", "medium", "large", "huge"
-       */
-      size: {
-        default: "default",
-        type: String
-      },
-      visible: {
-        default: false,
-        type: Boolean
-      }
-    },
-    emits: ["cancel", "close", "input", "submit", "success"],
-    methods: {
-      /**
-       * Triggers the `@cancel` event and closes the dialog.
-       * @public
-       */
-      cancel() {
-        this.$emit("cancel");
-      },
-      /**
-       * Triggers the `@close` event and closes the dialog.
-       * @public
-       */
-      close() {
-        this.$emit("close");
-      },
-      /**
-       * Shows the error notification bar in the dialog with the given message
-       * @param {String} error
-       */
-      error(error) {
-        this.$panel.notification.error(error);
-      },
-      /**
-       * Sets the focus on the first usable input
-       * or a given input by name
-       * @public
-       * @param {String} input
-       */
-      focus(input) {
-        this.$panel.dialog.focus(input);
-      },
-      /**
-       * Updates the dialog values
-       * @public
-       * @param {Object} value new values
-       */
-      input(value) {
-        this.$emit("input", value);
-      },
-      /**
-       * Opens the dialog and triggers the `@open` event.
-       * Use ready to fire events that should be run as
-       * soon as the dialog is open
-       * @public
-       */
-      open() {
-        this.$panel.dialog.open(this);
-      },
-      submit() {
-        this.$emit("submit", this.value);
-      },
-      /**
-       * Shows the success notification bar in the dialog with the given message
-       * @param {String|Object} message
-       */
-      success(success) {
-        this.$emit("success", success);
-      }
-    }
-  };
-  const props = {
-    props: {
-      /**
-       * Empty state message if no fields are defined
-       */
-      empty: {
-        default: () => window.panel.$t("dialog.fields.empty"),
-        type: String
-      },
-      /**
-       * An array or object with all available fields
-       */
-      fields: {
-        default: () => [],
-        type: [Array, Object]
-      },
-      /**
-       * An object with all values for the fields
-       */
-      value: {
-        default: () => ({}),
-        type: Object
-      }
-    }
-  };
+  __component__$5.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/ItalicButton.vue";
+  const ItalicButton = __component__$5.exports;
+  const ItalicButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    default: ItalicButton
+  }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main$4 = {
-    mixins: [props],
-    emits: ["input", "submit"],
-    computed: {
-      hasFields() {
-        return this.$helper.object.length(this.fields) > 0;
+    components: {
+      ToolbarButton
+    },
+    props: {
+      editor: {
+        type: Object,
+        required: true
       }
     }
   };
   var _sfc_render$4 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _vm.hasFields ? _c("k-fieldset", { staticClass: "k-dialog-fields", attrs: { "fields": _vm.fields, "value": _vm.value }, on: { "input": function($event) {
-      return _vm.$emit("input", $event);
-    }, "submit": function($event) {
-      return _vm.$emit("submit", $event);
-    } } }) : _c("k-box", { attrs: { "theme": "info" } }, [_vm._v(_vm._s(_vm.empty))]);
+    return _c("ToolbarButton", { attrs: { "icon": "strikethrough", "title": "Strike-through", "editor": _vm.editor, "command": "toggleStrike", "active-check": "strike" } });
   };
   var _sfc_staticRenderFns$4 = [];
   _sfc_render$4._withStripped = true;
@@ -20362,68 +20100,26 @@ img.ProseMirror-separator {
     _sfc_render$4,
     _sfc_staticRenderFns$4
   );
-  __component__$4.options.__file = "/Users/thguenther/Work/Repositories/kirby/panel/src/components/Dialogs/Elements/Fields.vue";
+  __component__$4.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/StrikeButton.vue";
+  const StrikeButton = __component__$4.exports;
+  const StrikeButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    default: StrikeButton
+  }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main$3 = {
-    mixins: [Dialog, props],
+    components: {
+      ToolbarButton
+    },
     props: {
-      // eslint-disable-next-line vue/require-prop-types
-      fields: {
-        default: () => ({
-          href: {
-            label: window.panel.$t("link"),
-            type: "link",
-            placeholder: window.panel.$t("url.placeholder"),
-            icon: "url"
-          },
-          title: {
-            label: window.panel.$t("title"),
-            type: "text",
-            icon: "title"
-          },
-          target: {
-            label: window.panel.$t("open.newWindow"),
-            type: "toggle",
-            text: [window.panel.$t("no"), window.panel.$t("yes")]
-          }
-        })
-      },
-      // eslint-disable-next-line vue/require-prop-types
-      size: {
-        default: "medium"
-      },
-      // eslint-disable-next-line vue/require-prop-types
-      submitButton: {
-        default: () => window.panel.$t("insert")
-      }
-    },
-    data() {
-      return {
-        values: {
-          href: "",
-          title: null,
-          ...this.value,
-          target: Boolean(this.value.target ?? false)
-        }
-      };
-    },
-    methods: {
-      submit() {
-        const href = this.values.href.replace("file://", "/@/file/").replace("page://", "/@/page/");
-        this.$emit("submit", {
-          ...this.values,
-          href,
-          target: this.values.target ? "_blank" : null
-        });
+      editor: {
+        type: Object,
+        required: true
       }
     }
   };
   var _sfc_render$3 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("k-form-dialog", _vm._b({ attrs: { "value": _vm.values }, on: { "cancel": function($event) {
-      return _vm.$emit("cancel");
-    }, "input": function($event) {
-      _vm.values = $event;
-    }, "submit": _vm.submit } }, "k-form-dialog", _vm.$props, false));
+    return _c("ToolbarButton", { attrs: { "icon": "code", "title": "Code", "editor": _vm.editor, "command": "toggleCode", "active-check": "code" } });
   };
   var _sfc_staticRenderFns$3 = [];
   _sfc_render$3._withStripped = true;
@@ -20432,9 +20128,14 @@ img.ProseMirror-separator {
     _sfc_render$3,
     _sfc_staticRenderFns$3
   );
-  __component__$3.options.__file = "/Users/thguenther/Work/Repositories/kirby/panel/src/components/Dialogs/LinkDialog.vue";
-  const LinkDialog = __component__$3.exports;
+  __component__$3.options.__file = "/Users/thguenther/Work/Repositories/kirby-tiptap/src/components/toolbarButtons/CodeButton.vue";
+  const CodeButton = __component__$3.exports;
+  const CodeButton$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    default: CodeButton
+  }, Symbol.toStringTag, { value: "Module" }));
   const _sfc_main$2 = {
+    name: "LinkButton",
     components: {
       ToolbarButton
     },
@@ -20445,15 +20146,52 @@ img.ProseMirror-separator {
       }
     },
     methods: {
-      openLinkDialog(editor) {
+      handleLink(editor) {
+        const attrs = editor.getAttributes("link");
+        const isEditing = Boolean(attrs.href);
         this.$panel.dialog.open({
-          component: LinkDialog,
+          component: "k-link-dialog",
+          props: {
+            fields: {
+              href: {
+                label: window.panel.$t("link"),
+                type: "link",
+                placeholder: window.panel.$t("url.placeholder"),
+                icon: "url"
+              },
+              target: {
+                label: window.panel.$t("open.newWindow"),
+                type: "toggle",
+                text: [window.panel.$t("no"), window.panel.$t("yes")]
+              }
+            },
+            value: attrs,
+            submitButton: isEditing ? window.panel.$t("update") : window.panel.$t("insert")
+          },
           on: {
-            cancel: () => editor.focus(),
-            submit: (values) => {
-              console.log("submit");
+            cancel: () => {
               this.$panel.dialog.close();
-              editor.chain().focus().extendMarkRange("link").setLink(values).run();
+              editor.chain().focus().run();
+            },
+            submit: (values) => {
+              var _a;
+              this.$panel.dialog.close();
+              if (!((_a = values.href) == null ? void 0 : _a.length)) {
+                editor.chain().focus().unsetLink().run();
+                return;
+              }
+              if (editor.state.selection.empty) {
+                editor.commands.insertContent({
+                  type: "text",
+                  text: values.text || values.href,
+                  marks: [{
+                    type: "link",
+                    attrs: values
+                  }]
+                });
+              } else {
+                editor.chain().focus().setLink(values).run();
+              }
             }
           }
         });
@@ -20462,7 +20200,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render$2 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("ToolbarButton", { attrs: { "icon": "url", "title": "Link", "editor": _vm.editor, "command": _vm.openLinkDialog, "active-check": "link" } });
+    return _c("ToolbarButton", { attrs: { "icon": "url", "title": "Link", "editor": _vm.editor, "command": _vm.handleLink, "active-check": "link" } });
   };
   var _sfc_staticRenderFns$2 = [];
   _sfc_render$2._withStripped = true;

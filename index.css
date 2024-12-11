@@ -20,16 +20,14 @@
   width: 100%;
   min-height: 4rem;
   line-height: 1.5rem;
->*:first-child {
-    margin-top: 0;
-}
->*:last-child {
-    margin-bottom: 0;
-}
 }
 .tiptap :where(p, h1, h2, h3, h4, h5, h6) {
-  margin-top: calc(var(--text-line-height) * 1em);
-  margin-bottom: calc(var(--text-line-height) * 1em);
+&:not(:first-child) {
+    margin-top: 1em;
+}
+&:not(:last-child) {
+    margin-bottom: 1em;
+}
 }
 .tiptap h1 {
   font-size: var(--text-h1);
@@ -85,16 +83,4 @@
   border-radius: var(--rounded);
   outline: 1px solid var(--code-inline-color-border);
   outline-offset: -1px;
-}
-
-.k-button-group.k-dialog-buttons {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: var(--spacing-3);
-	--button-height: var(--height-lg);
-}
-
-.k-dialog-fields {
-	padding-bottom: 0.5rem;
-	container-type: inline-size;
 }

@@ -48,8 +48,10 @@ export default {
         StarterKit,
         Link.configure({
           openOnClick: false,
-          rel: null,
-          target: null,
+          HTMLAttributes: {
+            rel: null,
+            target: null,
+          },
         }),
       ],
     });
@@ -76,18 +78,16 @@ export default {
   width: 100%;
   min-height: 4rem;
   line-height: 1.5rem;
-
-  >*:first-child {
-    margin-block-start: 0;
-  }
-
-  >*:last-child {
-    margin-block-end: 0;
-  }
 }
 
 .tiptap :where(p, h1, h2, h3, h4, h5, h6) {
-  margin-block: calc(var(--text-line-height) * 1em);
+  &:not(:first-child) {
+    margin-block-start: 1em;
+  }
+
+  &:not(:last-child) {
+    margin-block-end: 1em;
+  }
 }
 
 .tiptap h1 {
