@@ -59,39 +59,59 @@ export default {
 </script>
 
 <style>
-.ProseMirror {
+.k-tiptap-field {
+  .k-textarea-input-wrapper {
+    width: 100%;
+  }
+}
+
+.tiptap {
   padding: .5rem;
   outline: none;
   width: 100%;
   min-height: 4rem;
   line-height: 1.5rem;
+
+  >*:first-child {
+    margin-block-start: 0;
+  }
+
+  >*:last-child {
+    margin-block-end: 0;
+  }
 }
 
-.k-textarea-input-wrapper {
-  width: 100%;
+.tiptap p {
+  margin-block: calc(var(--text-line-height) * 1em);
 }
 
-ul {
-  padding-left: 1.25rem;
-}
-
-ul li {
-  list-style: disc;
-}
-
-ol {
-  padding-left: 1.25rem;
-}
-
-ol li {
-  list-style: decimal;
-}
-
-a {
+.tiptap a {
   color: var(--link-color);
   text-decoration: underline;
   text-underline-offset: var(--link-underline-offset);
   border-radius: var(--rounded-xs);
   outline-offset: 2px;
+}
+
+.tiptap :where(ul, ol) {
+  padding-inline-start: 3ch;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+}
+
+.tiptap code {
+  padding: var(--spacing-1);
+  font-size: var(--code-inline-font-size);
+  color: var(--code-inline-color-text);
+  background: var(--code-inline-color-back);
+  border-radius: var(--rounded);
+  outline: 1px solid var(--code-inline-color-border);
+  outline-offset: -1px;
 }
 </style>
