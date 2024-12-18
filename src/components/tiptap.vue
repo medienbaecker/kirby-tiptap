@@ -15,6 +15,7 @@
 import { Editor, EditorContent } from '@tiptap/vue-2'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
+import { Kirbytag } from './kirbytag'
 import Toolbar from './Toolbar.vue'
 
 export default {
@@ -53,6 +54,7 @@ export default {
             target: null,
           },
         }),
+        Kirbytag,
       ],
     });
   },
@@ -154,5 +156,12 @@ export default {
   border-radius: var(--rounded);
   outline: 1px solid var(--code-inline-color-border);
   outline-offset: -1px;
+}
+
+.tiptap .kirbytag {
+  background-color: hsl(var(--color-green-h), var(--color-green-s), 90%);
+  color: hsl(var(--color-green-h), var(--color-green-s), 10%);
+  border-radius: var(--rounded);
+  padding: 2px 4px;
 }
 </style>

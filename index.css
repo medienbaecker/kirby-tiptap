@@ -84,3 +84,9 @@
   outline: 1px solid var(--code-inline-color-border);
   outline-offset: -1px;
 }
+.tiptap .kirbytag {
+  background-color: hsl(var(--color-green-h), var(--color-green-s), 90%);
+  color: hsl(var(--color-green-h), var(--color-green-s), 10%);
+  border-radius: var(--rounded);
+  padding: 2px 4px;
+}

@@ -19780,6 +19780,39 @@ img.ProseMirror-separator {
       return plugins;
     }
   });
+  const Kirbytag = Extension.create({
+    name: "kirbytag",
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          key: new PluginKey("kirbytag"),
+          props: {
+            decorations: (state) => {
+              const { doc: doc2 } = state;
+              const decorations = [];
+              doc2.descendants((node, pos) => {
+                if (node.isText) {
+                  const text = node.text;
+                  const regex = /\([a-z]+:\s*[^\)]+\)/g;
+                  let match;
+                  while ((match = regex.exec(text)) !== null) {
+                    const from = pos + match.index;
+                    const to = from + match[0].length;
+                    decorations.push(
+                      Decoration.inline(from, to, {
+                        class: "kirbytag"
+                      })
+                    );
+                  }
+                }
+              });
+              return DecorationSet.create(doc2, decorations);
+            }
+          }
+        })
+      ];
+    }
+  });
   function normalizeComponent(scriptExports, render, staticRenderFns, functionalTemplate, injectStyles, scopeId, moduleIdentifier, shadowMode) {
     var options = typeof scriptExports === "function" ? scriptExports.options : scriptExports;
     if (render) {
@@ -19899,7 +19932,8 @@ img.ProseMirror-separator {
               rel: null,
               target: null
             }
-          })
+          }),
+          Kirbytag
         ]
       });
     },
