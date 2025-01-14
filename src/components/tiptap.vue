@@ -15,8 +15,10 @@
 import { Editor, EditorContent } from '@tiptap/vue-2'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
+import { InvisibleCharacters } from '@tiptap-pro/extension-invisible-characters'
 import { Highlights } from './highlights'
 import Toolbar from './Toolbar.vue'
+import { SoftHyphenCharacter, NonBreakingSpaceCharacter } from './invisibles'
 
 export default {
   components: { EditorContent, Toolbar },
@@ -39,7 +41,13 @@ export default {
           openOnClick: false,
           HTMLAttributes: { rel: null, target: null }
         }),
-        Highlights.configure({ highlights: this.highlights })
+        Highlights.configure({ highlights: this.highlights }),
+        InvisibleCharacters.configure({
+          builders: [
+            new SoftHyphenCharacter(),
+            new NonBreakingSpaceCharacter()
+          ],
+        }),
       ]
     })
   },
@@ -138,6 +146,18 @@ export default {
   border-radius: var(--rounded);
   outline: 1px solid var(--code-inline-color-border);
   outline-offset: -1px;
+}
+
+.Tiptap-invisible-character--soft-hyphen::before {
+  content: '';
+  height: 1.25lh;
+  vertical-align: text-top;
+  border-inline-end: 1px solid currentColor;
+  margin-inline: .5px;
+}
+
+.Tiptap-invisible-character--non-breaking-space::before {
+  content: 'ˍ';
 }
 
 .tiptap .kirbytag {

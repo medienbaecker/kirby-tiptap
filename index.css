@@ -84,6 +84,17 @@
   outline: 1px solid var(--code-inline-color-border);
   outline-offset: -1px;
 }
+.Tiptap-invisible-character--soft-hyphen::before {
+  content: '';
+  height: 1.25lh;
+  vertical-align: text-top;
+  border-right: 1px solid currentColor;
+  margin-left: .5px;
+  margin-right: .5px;
+}
+.Tiptap-invisible-character--non-breaking-space::before {
+  content: 'ˍ';
+}
 .tiptap .kirbytag {
   background-color: var(--color-green-100);
   color: var(--color-green-900);
