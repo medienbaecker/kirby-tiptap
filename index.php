@@ -3,6 +3,14 @@
 use Kirby\Cms\App as Kirby;
 
 Kirby::plugin('medienbaecker/tiptap', [
+  'options' => [
+    'highlights' => [
+      [
+        'pattern' => '\([a-z]+:\s*[^\)]+\)',
+        'class' => 'kirbytag'
+      ]
+    ]
+  ],
   'fields' => [
     'tiptap' => [
       'props' => [
@@ -20,6 +28,9 @@ Kirby::plugin('medienbaecker/tiptap', [
           'orderedList'
         ]) {
           return $buttons;
+        },
+        'highlights' => function () {
+          return option('medienbaecker.tiptap.highlights');
         }
       ]
     ]

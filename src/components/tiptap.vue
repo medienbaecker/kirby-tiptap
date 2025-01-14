@@ -15,54 +15,36 @@
 import { Editor, EditorContent } from '@tiptap/vue-2'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
-import { Kirbytag } from './kirbytag'
+import { Highlights } from './highlights'
 import Toolbar from './Toolbar.vue'
 
 export default {
-  components: {
-    EditorContent,
-    Toolbar,
-  },
-
+  components: { EditorContent, Toolbar },
   props: {
     label: String,
     value: String,
-    buttons: {
-      type: Array,
-      required: true
-    }
+    buttons: { type: Array, required: true },
+    highlights: Array
   },
-
-  data() {
-    return {
-      editor: null,
-    }
-  },
-
+  data: () => ({
+    editor: null
+  }),
   mounted() {
     this.editor = new Editor({
       content: this.value,
-      onUpdate: ({ editor }) => {
-        this.$emit("input", editor.getHTML());
-      },
+      onUpdate: ({ editor }) => this.$emit("input", editor.getHTML()),
       extensions: [
         StarterKit,
         Link.configure({
           openOnClick: false,
-          HTMLAttributes: {
-            rel: null,
-            target: null,
-          },
+          HTMLAttributes: { rel: null, target: null }
         }),
-        Kirbytag,
-      ],
-    });
+        Highlights.configure({ highlights: this.highlights })
+      ]
+    })
   },
-
   beforeDestroy() {
-    if (this.editor) {
-      this.editor.destroy()
-    }
+    this.editor?.destroy()
   }
 }
 </script>
@@ -159,9 +141,9 @@ export default {
 }
 
 .tiptap .kirbytag {
-  background-color: hsl(var(--color-green-h), var(--color-green-s), 90%);
-  color: hsl(var(--color-green-h), var(--color-green-s), 10%);
+  background-color: var(--color-green-100);
+  color: var(--color-green-900);
   border-radius: var(--rounded);
-  padding: 2px 4px;
+  padding: 2px 3px;
 }
 </style>
