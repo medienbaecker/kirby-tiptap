@@ -138,9 +138,11 @@ export default {
   list-style-type: decimal;
 }
 
-.tiptap code {
+.tiptap code,
+.tiptap .kirbytag {
   padding: var(--spacing-1);
   font-size: var(--code-inline-font-size);
+  font-family: var(--code-font-family);
   color: var(--code-inline-color-text);
   background: var(--code-inline-color-back);
   border-radius: var(--rounded);
@@ -158,12 +160,5 @@ export default {
 
 .Tiptap-invisible-character--non-breaking-space::before {
   content: 'ˍ';
-}
-
-.tiptap .kirbytag {
-  background-color: var(--color-green-100);
-  color: var(--color-green-900);
-  border-radius: var(--rounded);
-  padding: 2px 3px;
 }
 </style>

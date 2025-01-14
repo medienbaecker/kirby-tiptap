@@ -20112,7 +20112,7 @@ img.ProseMirror-separator {
   };
   var _sfc_render$8 = function render() {
     var _vm = this, _c = _vm._self._c;
-    return _c("k-button", { class: ["k-toolbar-button", "k-markdown-button"], attrs: { "icon": _vm.icon, "title": _vm.title, "tabindex": "-1", "current": _vm.isActive }, on: { "mousedown": function($event) {
+    return _c("k-button", { class: ["k-toolbar-button", "k-markdown-button"], attrs: { "icon": _vm.icon, "title": _vm.title, "ariaLabel": _vm.title, "current": _vm.isActive }, on: { "mousedown": function($event) {
       $event.preventDefault();
     }, "click": _vm.runCommand } });
   };

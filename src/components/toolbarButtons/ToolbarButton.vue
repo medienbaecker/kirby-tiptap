@@ -1,5 +1,5 @@
 <template>
-  <k-button :icon="icon" :title="title" tabindex="-1" :class="['k-toolbar-button', 'k-markdown-button']"
+  <k-button :icon="icon" :title="title" :ariaLabel="title" :class="['k-toolbar-button', 'k-markdown-button']"
     :current="isActive" @mousedown.prevent @click="runCommand" />
 </template>
 
