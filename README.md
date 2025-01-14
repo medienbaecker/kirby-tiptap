@@ -2,4 +2,4 @@
 
 [Kirby](https://getkirby.com/) + [tiptap](https://tiptap.dev/) = ❤️
 
-![Preview](https://github.com/user-attachments/assets/9d304038-8c54-4922-bd6f-1dd2c10d7bf9)
+![Preview](https://github.com/user-attachments/assets/e06f0204-94ff-4d6f-9b0d-575230d3bc74)
