@@ -150,6 +150,12 @@ export default {
   outline-offset: -1px;
 }
 
+.tiptap .kirbytag {
+  color: var(--color-green-900);
+  background: var(--color-green-100);
+  outline: 1px solid var(--color-green-400);
+}
+
 .Tiptap-invisible-character--soft-hyphen::before {
   content: '';
   height: 1.25lh;
