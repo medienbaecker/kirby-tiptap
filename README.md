@@ -2,7 +2,7 @@
 
 [Kirby](https://getkirby.com/) + [tiptap](https://tiptap.dev/) = ❤️
 
-![Preview](https://github.com/user-attachments/assets/e06f0204-94ff-4d6f-9b0d-575230d3bc74)
+![Preview](https://github.com/user-attachments/assets/bc67ae1f-3705-49be-8425-f0c74393c160)
 
 ## Features
 
@@ -24,21 +24,19 @@
 
 ## Necessary for 1.0
 
-- [ ] Regular field features
-  - [ ] Placeholder
-  - [ ] Counter
-  - [ ] Disabled
-  - [ ] Font (?)
-  - [ ] Help
-  - [ ] Icon
+- [x] Regular field features
+  - [x] Placeholder
+  - [x] Counter
+  - [x] Disabled
+  - [x] Help
+  - [x] size (?)
+  - [x] spellcheck
+  - [ ] Icon (?)
   - [ ] maxlength/minlength
-  - [ ] size (?)
-  - [ ] spellcheck
 - [ ] Replacement for writer blocks (?)
 
 ## Blockers
 
-- [ ] Is it a good idea to use classes like `.k-input-element`, `.k-textarea-input-wrapper`?
 - [ ] Automatic conversion of permalinks ([First try](https://forum.getkirby.com/t/overwrite-tostring-method-for-custom-field/33053))
 - [ ] Custom field method? Or extending `kirbytags`/`permalinksToUrls`?
 - [ ] Different Link Dialogs in Textarea/Writer. See https://github.com/fabianmichael/kirby-markdown-field/issues/189#issuecomment-2072033717
