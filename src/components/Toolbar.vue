@@ -41,20 +41,10 @@ export default {
       return buttonComponents;
     },
     normalizedButtons() {
-      return this.buttons.map(button => {
-        // Handle nested headings config
-        if (typeof button === 'object' && button.headings) {
-          return {
-            type: 'headings',
-            levels: button.headings
-          };
-        }
-        // Handle regular buttons
-        return {
-          type: button,
-          levels: null
-        };
-      });
+      return this.buttons.map(button => ({
+        type: typeof button === 'object' && button.headings ? 'headings' : button,
+        levels: (typeof button === 'object' && button.headings) ? button.headings : null
+      }));
     }
   },
   methods: {
@@ -75,6 +65,7 @@ export default {
 </script>
 
 <style>
+/* Base styles for the toolbar */
 .k-toolbar {
   margin-bottom: 0;
   border-bottom: 1px solid var(--toolbar-border);
@@ -82,7 +73,17 @@ export default {
   border-end-end-radius: 0;
 }
 
-.k-heading-buttons {
-  display: inline-flex;
+/* Turning buttons grey when not focused */
+:where(.k-tiptap-input):not(:focus-within) {
+  --toolbar-text: light-dark(var(--color-gray-300), var(--color-gray-700));
+}
+
+/* Turning toolbar sticky when focused */
+:where(.k-tiptap-input):focus-within .k-toolbar {
+  position: sticky;
+  top: var(--header-sticky-offset);
+  inset-inline: 0;
+  z-index: 1;
+  box-shadow: rgba(0, 0, 0, 0.05) 0 2px 5px;
 }
 </style>
