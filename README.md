@@ -4,6 +4,27 @@
 
 ![Preview](https://github.com/user-attachments/assets/bc67ae1f-3705-49be-8425-f0c74393c160)
 
+## Example blueprint
+
+```yml
+tiptap:
+  buttons:
+    - headings:
+        - 1
+        - 2
+        - 3
+    - "|"
+    - bold
+    - italic
+    - code
+    - strike
+    - "|"
+    - "link"
+    - "|"
+    - "bulletList"
+    - "orderedList"
+```
+
 ## Features
 
 - [x] Simplified node/marks distinction
@@ -31,22 +52,25 @@
   - [x] Help
   - [x] size (?)
   - [x] spellcheck
-  - [ ] Icon (?)
   - [ ] maxlength/minlength
+    - [x] Counter
+    - [ ] Validation
+  - [ ] Icon (?)
+- [ ] File/image button
 - [ ] Replacement for writer blocks (?)
 
 ## Blockers
 
-- [ ] Automatic conversion of permalinks ([First try](https://forum.getkirby.com/t/overwrite-tostring-method-for-custom-field/33053))
-- [ ] Custom field method? Or extending `kirbytags`/`permalinksToUrls`?
+- [ ] Converting permalinks ([First try](https://forum.getkirby.com/t/overwrite-tostring-method-for-custom-field/33053))
+  - [ ] Custom field method? Or extending `kirbytags`/`permalinksToUrls`?
 - [ ] Different Link Dialogs in Textarea/Writer. See https://github.com/fabianmichael/kirby-markdown-field/issues/189#issuecomment-2072033717
 - [ ] Textarea uses `headlines`, Writer uses `headings` button
 
 ## Future
 
+- [ ] Kirbytag Button (fetch all Kirbytags)
 - [ ] Settings for links
   - [ ] Uploads
   - [ ] Available link types
-- [ ] "Remove formatting" button
-- [ ] Kirbytag Button (fetch all Kirbytags)
+- [ ] "Remove formatting" button (necessary?)
 - [ ] https://tiptap.dev/docs/examples/advanced/forced-content-structure
