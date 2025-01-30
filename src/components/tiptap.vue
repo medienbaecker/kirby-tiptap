@@ -1,9 +1,9 @@
 <template>
-  <k-field class="k-tiptap-field" data-theme="field" :label="label">
+  <k-field class="k-tiptap-field" data-theme="field" v-bind="$props" :counter="counterOptions">
     <span class="k-input-element">
-      <div data-theme="field" class="k-input k-textarea-input">
-        <div class="k-textarea-input-wrapper">
-          <toolbar v-if="editor" :editor="editor" :label="label" :buttons="buttons" />
+      <div :data-disabled="disabled" :data-size="size" class="k-input k-tiptap-input">
+        <div class="k-tiptap-input-wrapper">
+          <toolbar v-if="editor && this.disabled === false" :editor="editor" :label="label" :buttons="buttons" />
           <editor-content :editor="editor" v-model="value" />
         </div>
       </div>
@@ -14,17 +14,33 @@
 <script>
 import { Editor, EditorContent } from '@tiptap/vue-2'
 import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import { InvisibleCharacters } from '@tiptap-pro/extension-invisible-characters'
 import { Highlights } from './highlights'
 import Toolbar from './Toolbar.vue'
 import { SoftHyphenCharacter, NonBreakingSpaceCharacter } from './invisibles'
+import counter from "@/mixins/forms/counter.js";
 
 export default {
+  mixins: [counter],
+  computed: {
+    counterValue() {
+      const plain = this.$helper.string.stripHTML(this.value ?? "");
+      return this.$helper.string.unescapeHTML(plain);
+    }
+  },
   components: { EditorContent, Toolbar },
   props: {
     label: String,
     value: String,
+    placeholder: String,
+    disabled: Boolean,
+    spellcheck: Boolean,
+    help: String,
+    minlength: Number,
+    maxlength: Number,
+    size: String,
     buttons: { type: Array, required: true },
     highlights: Array
   },
@@ -34,9 +50,15 @@ export default {
   mounted() {
     this.editor = new Editor({
       content: this.value,
+      onCreate: ({ editor }) => {
+        editor.view.dom.setAttribute("spellcheck", this.spellcheck);
+      },
       onUpdate: ({ editor }) => this.$emit("input", editor.getHTML()),
       extensions: [
         StarterKit,
+        Placeholder.configure({
+          placeholder: this.placeholder,
+        }),
         Link.configure({
           openOnClick: false,
           HTMLAttributes: { rel: null, target: null }
@@ -55,13 +77,12 @@ export default {
     this.editor?.destroy()
   }
 }
+
 </script>
 
 <style>
-.k-tiptap-field {
-  .k-textarea-input-wrapper {
-    width: 100%;
-  }
+.k-tiptap-input-wrapper {
+  width: 100%;
 }
 
 .tiptap {
@@ -70,6 +91,46 @@ export default {
   width: 100%;
   min-height: 4rem;
   line-height: 1.5rem;
+}
+
+:where(.k-tiptap-input):not(:focus-within) {
+  --toolbar-text: light-dark(var(--color-gray-300), var(--color-gray-700));
+}
+
+:where(.k-tiptap-input):focus-within .k-toolbar {
+  position: sticky;
+  top: var(--header-sticky-offset);
+  inset-inline: 0;
+  z-index: 1;
+  box-shadow: rgba(0, 0, 0, 0.05) 0 2px 5px;
+}
+
+.tiptap {
+  min-height: var(--tiptap-size);
+}
+
+.k-tiptap-input[data-size="small"] {
+  --tiptap-size: 7.5rem;
+}
+
+.k-tiptap-input[data-size="medium"] {
+  --tiptap-size: 15rem;
+}
+
+.k-tiptap-input[data-size="large"] {
+  --tiptap-size: 30rem;
+}
+
+.k-tiptap-input[data-size="huge"] {
+  --tiptap-size: 45rem;
+}
+
+p.is-editor-empty:first-child::before {
+  color: var(--input-color-placeholder);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
 }
 
 .tiptap :where(p, h1, h2, h3, h4, h5, h6) {

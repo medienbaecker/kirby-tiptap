@@ -14,6 +14,12 @@ Kirby::plugin('medienbaecker/tiptap', [
   'fields' => [
     'tiptap' => [
       'props' => [
+        'size' => function ($size = 'auto') {
+          return $size;
+        },
+        'spellcheck' => function ($spellcheck = true) {
+          return $spellcheck;
+        },
         'buttons' => function ($buttons = [
           ['headings' => [1, 2, 3]],
           '|',
