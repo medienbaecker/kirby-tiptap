@@ -2,7 +2,7 @@
   <k-field class="k-tiptap-field" data-theme="field" v-bind="$props" :counter="counterOptions">
     <k-input-element>
       <div :data-disabled="disabled" :data-size="size" class="k-input k-tiptap-input">
-        <TiptapInput v-bind="$props" @input="handleInput" />
+        <TiptapInput v-bind="$props" @input="handleInput" @editor="editor = $event" />
       </div>
     </k-input-element>
   </k-field>
@@ -18,18 +18,18 @@ export default {
   components: { TiptapInput },
   data() {
     return {
-      plainText: ''
-    }
-  },
-  methods: {
-    handleInput(value) {
-      this.plainText = value.text;
-      this.$emit('input', value.json);
+      editor: null
     }
   },
   computed: {
     counterValue() {
-      return this.plainText;
+      return this.editor?.getText() || '';
+    }
+  },
+
+  methods: {
+    handleInput(value) {
+      this.$emit('input', value.json);
     }
   },
   props,

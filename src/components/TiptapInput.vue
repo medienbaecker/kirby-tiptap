@@ -18,30 +18,87 @@ import { props } from './props.js'
 export default {
   components: { EditorContent, Toolbar },
   props,
+
   data: () => ({
     editor: null
   }),
+
+  watch: {
+    value: {
+      /**
+       * We have to watch for external value changes because the user can "Revert" changes
+       * Note: couldn't this be handled more elegantly?
+       */
+      handler(newValue, oldValue) {
+        if (this.editor && newValue !== oldValue) {
+          const newContent = this.parseContent(newValue);
+          const currentContent = this.editor.getJSON();
+
+          // Only update if content actually differs
+          if (JSON.stringify(newContent) !== JSON.stringify(currentContent)) {
+            this.editor.commands.setContent(newContent, false);
+          }
+        }
+      },
+      deep: true
+    }
+  },
+
   mounted() {
     this.createEditor()
   },
+
   beforeDestroy() {
     this.editor?.destroy()
   },
+
   methods: {
-    createEditor() {
-      let content;
+    /**
+     * Parses a JSON string into an object or returns the original value if parsing fails
+     */
+    parseContent(value) {
       try {
-        content = JSON.parse(this.value);
+        return JSON.parse(value);
       } catch {
-        content = this.value;
+        return value;
       }
+    },
+
+    /**
+     * Emits the current editor content state
+     * @param {Editor} editor - The Tiptap editor instance
+     */
+    emitContent(editor) {
+      const content = editor.getJSON();
+
+      const json = editor.isEmpty
+        ? ''
+        : JSON.stringify({
+          type: 'doc',
+          content: content.content
+        });
+
+      this.$emit("input", {
+        json
+      });
+    },
+
+    /**
+     * Creates and configures a new Tiptap editor instance
+     */
+    createEditor() {
+      const content = this.parseContent(this.value);
 
       this.editor = new Editor({
         content,
         extensions: [
           StarterKit,
-          Placeholder.configure({ placeholder: this.placeholder }),
-          Highlights.configure({ highlights: this.highlights }),
+          Placeholder.configure({
+            placeholder: this.placeholder
+          }),
+          Highlights.configure({
+            highlights: this.highlights
+          }),
           InvisibleCharacters.configure({
             builders: [
               new SoftHyphenCharacter(),
@@ -51,22 +108,15 @@ export default {
         ],
         onCreate: ({ editor }) => {
           editor.view.dom.setAttribute("spellcheck", this.spellcheck);
+          this.$emit('editor', editor); // Emit editor instance to parent
         },
         onUpdate: ({ editor }) => {
-          const content = {
-            type: 'doc',
-            content: editor.getJSON().content
-          };
-
-          this.$emit("input", {
-            json: JSON.stringify(content),
-            text: editor.getText()
-          });
+          this.emitContent(editor);
         }
-      })
+      });
     }
   }
-}
+};
 </script>
 
 <style>
