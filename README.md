@@ -91,6 +91,7 @@ tiptap:
   - [ ] Icon (?)
 - [ ] File/image button
 - [ ] Handle dropping files
+- [ ] Handle permalinks/UUIDs
 - [ ] Replacement for writer blocks (?)
 
 ## Blockers
