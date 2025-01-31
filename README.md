@@ -94,6 +94,7 @@ tiptap:
 - [ ] File/image button
 - [ ] Handle dropping files
 - [ ] Handle permalinks/UUIDs
+- [ ] Fix reverting changes
 - [ ] Replacement for writer blocks (?)
 
 ## Blockers
