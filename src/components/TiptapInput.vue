@@ -114,14 +114,25 @@ export default {
         editorProps: {
           handleDrop: (view, event, slice, moved) => {
             if (!moved && this.$panel.drag.data) {
-              const dragData = this.$panel.drag.data;
+
               const coordinates = view.posAtCoords({
                 left: event.clientX,
                 top: event.clientY
               });
-              const transaction = view.state.tr.insertText(dragData, coordinates.pos);
 
-              view.dispatch(transaction);
+              const dragData = this.$panel.drag.data;
+
+              // Dropping text (like Kirbytags)
+              if (dragData.type === "text") {
+                const transaction = view.state.tr.insertText(dragData, coordinates.pos);
+                view.dispatch(transaction);
+              }
+
+              // Dropping files
+              if (this.$helper.isUploadEvent(event)) {
+                alert('WIP')
+              }
+
               return true;
             }
             return false;
