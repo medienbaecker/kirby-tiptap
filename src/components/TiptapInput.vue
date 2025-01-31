@@ -29,8 +29,16 @@ export default {
   },
   methods: {
     createEditor() {
+
+      let content;
+      try {
+        content = JSON.parse(this.value);
+      } catch {
+        content = this.value; // Fallback to treating it as plain text
+      }
+
       this.editor = new Editor({
-        content: this.value,
+        content,
         extensions: [
           StarterKit, /* Provides basic editor functionality (bold, italic, etc.) */
           Placeholder.configure({ placeholder: this.placeholder }), /* Adds placeholder text from blueprint */
@@ -46,7 +54,14 @@ export default {
           /* Set spellcheck attribute after editor creation */
           editor.view.dom.setAttribute("spellcheck", this.spellcheck);
         },
-        onUpdate: ({ editor }) => this.$emit("input", editor.getHTML()), /* Emit changes to parent */
+        onUpdate: ({ editor }) => {
+          // Create proper JSON structure
+          const content = {
+            type: 'doc',
+            content: editor.getJSON().content
+          };
+          this.$emit("input", JSON.stringify(content));
+        }
       })
     }
   }

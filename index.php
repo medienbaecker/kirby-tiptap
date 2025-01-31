@@ -1,5 +1,9 @@
 <?php
 
+@require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/lib/helpers.php';
+require_once __DIR__ . '/lib/KirbyTagNode.php';
+
 use Kirby\Cms\App as Kirby;
 
 Kirby::plugin('medienbaecker/tiptap', [
@@ -40,5 +44,13 @@ Kirby::plugin('medienbaecker/tiptap', [
         }
       ]
     ]
+  ],
+  'fieldMethods' => [
+    'toHtml' => function ($field) {
+      return convertTiptapToHtml(
+        json_decode($field->value, true),
+        $field->parent()
+      );
+    }
   ]
 ]);
