@@ -93,8 +93,10 @@ tiptap:
   - [ ] Icon (?)
 - [x] Fix reverting changes
 - [x] Handle permalinks/UUIDs
+- [ ] Handle dropping files/pages
+  - [x] From files/pages sections
+  - [ ] From local machine (upload)
 - [ ] File/image button
-- [ ] Handle dropping files
 
 ## Blockers
 
