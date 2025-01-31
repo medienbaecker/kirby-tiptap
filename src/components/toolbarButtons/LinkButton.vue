@@ -24,7 +24,6 @@ export default {
       const attrs = editor.getAttributes('link');
       const isEditing = Boolean(attrs.href);
 
-      // Get selected text if any
       const selectedText = !editor.state.selection.empty
         ? editor.state.doc.textBetween(
           editor.state.selection.from,
@@ -67,16 +66,32 @@ export default {
               return;
             }
 
-            let kirbyTag = `(link: ${values.href}`;
-            if (values.text) {
-              kirbyTag += ` text: ${values.text}`;
-            }
-            kirbyTag += ')';
-
+            let kirbyTag = this.getKirbyTag(values.href, values.text);
             editor.commands.insertContent(kirbyTag);
           }
         }
       });
+    },
+
+    getKirbyTag(href, text) {
+      if (href.startsWith('mailto:')) {
+        const email = href.replace('mailto:', '');
+        return text
+          ? `(email: ${email} text: ${text})`
+          : `(email: ${email})`;
+      }
+
+      if (href.startsWith('tel:')) {
+        const phone = href.replace('tel:', '');
+        return text
+          ? `(tel: ${phone} text: ${text})`
+          : `(tel: ${phone})`;
+      }
+
+      // Default link handling
+      return text
+        ? `(link: ${href} text: ${text})`
+        : `(link: ${href})`;
     }
   }
 }
