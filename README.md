@@ -91,11 +91,10 @@ tiptap:
     - [x] Counter
     - [ ] Validation
   - [ ] Icon (?)
+- [x] Fix reverting changes
+- [x] Handle permalinks/UUIDs
 - [ ] File/image button
 - [ ] Handle dropping files
-- [ ] Handle permalinks/UUIDs
-- [ ] Fix reverting changes
-- [ ] Replacement for writer blocks (?)
 
 ## Blockers
 
@@ -105,6 +104,7 @@ tiptap:
 ## Future
 
 - [ ] Kirbytag Button (fetch all Kirbytags)
+- [ ] Replacement for writer blocks
 - [ ] Settings for links
   - [ ] Uploads
   - [ ] Available link types

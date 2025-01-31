@@ -66,7 +66,12 @@ export default {
               return;
             }
 
-            let kirbyTag = this.getKirbyTag(values.href, values.text);
+            // Turn permalinks into UUIDs
+            const href = values.href
+              .replace("/@/file/", "file://")
+              .replace("/@/page/", "page://")
+
+            let kirbyTag = this.getKirbyTag(href, values.text);
             editor.commands.insertContent(kirbyTag);
           }
         }
