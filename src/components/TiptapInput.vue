@@ -1,7 +1,7 @@
 <template>
   <div class="k-tiptap-input-wrapper">
     <toolbar v-if="editor && !disabled" :editor="editor" :label="label" :buttons="buttons" />
-    <editor-content :editor="editor" v-model="value" />
+    <editor-content :editor="editor" />
   </div>
 </template>
 
@@ -53,13 +53,11 @@ export default {
           editor.view.dom.setAttribute("spellcheck", this.spellcheck);
         },
         onUpdate: ({ editor }) => {
-          // Create proper JSON structure
           const content = {
             type: 'doc',
             content: editor.getJSON().content
           };
 
-          // Emit both the JSON content and the plain text
           this.$emit("input", {
             json: JSON.stringify(content),
             text: editor.getText()
