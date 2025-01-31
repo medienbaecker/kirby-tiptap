@@ -29,20 +29,19 @@ export default {
   },
   methods: {
     createEditor() {
-
       let content;
       try {
         content = JSON.parse(this.value);
       } catch {
-        content = this.value; // Fallback to treating it as plain text
+        content = this.value;
       }
 
       this.editor = new Editor({
         content,
         extensions: [
-          StarterKit, /* Provides basic editor functionality (bold, italic, etc.) */
-          Placeholder.configure({ placeholder: this.placeholder }), /* Adds placeholder text from blueprint */
-          Highlights.configure({ highlights: this.highlights }), /* Custom highlight functionality */
+          StarterKit,
+          Placeholder.configure({ placeholder: this.placeholder }),
+          Highlights.configure({ highlights: this.highlights }),
           InvisibleCharacters.configure({
             builders: [
               new SoftHyphenCharacter(),
@@ -51,7 +50,6 @@ export default {
           }),
         ],
         onCreate: ({ editor }) => {
-          /* Set spellcheck attribute after editor creation */
           editor.view.dom.setAttribute("spellcheck", this.spellcheck);
         },
         onUpdate: ({ editor }) => {
@@ -60,7 +58,12 @@ export default {
             type: 'doc',
             content: editor.getJSON().content
           };
-          this.$emit("input", JSON.stringify(content));
+
+          // Emit both the JSON content and the plain text
+          this.$emit("input", {
+            json: JSON.stringify(content),
+            text: editor.getText()
+          });
         }
       })
     }

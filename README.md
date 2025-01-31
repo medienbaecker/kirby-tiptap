@@ -29,7 +29,9 @@ The Writer field is what Kirby uses for the default [text blocks](https://getkir
 3. No HTML allowed
 4. No highlighting for KirbyTags
 5. Not possible to add images/videos/…
-6. Massive issues with copying text containing [gender stars](https://en.wikipedia.org/wiki/Gender_star) (https://github.com/getkirby/kirby/issues/3138)
+6. Complex nodes/marks differentiation, UX for lists
+7. Redundant email button
+8. Massive issues with copying text containing [gender stars](https://en.wikipedia.org/wiki/Gender_star) (https://github.com/getkirby/kirby/issues/3138)
 
 ### [Markdown field plugin](https://github.com/fabianmichael/kirby-markdown-field/)
 
