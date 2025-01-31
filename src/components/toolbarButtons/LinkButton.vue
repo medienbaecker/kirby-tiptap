@@ -21,9 +21,16 @@ export default {
 
   methods: {
     handleLink(editor) {
-      // Get current link attributes
       const attrs = editor.getAttributes('link');
       const isEditing = Boolean(attrs.href);
+
+      // Get selected text if any
+      const selectedText = !editor.state.selection.empty
+        ? editor.state.doc.textBetween(
+          editor.state.selection.from,
+          editor.state.selection.to
+        )
+        : '';
 
       this.$panel.dialog.open({
         component: 'k-link-dialog',
@@ -35,13 +42,16 @@ export default {
               placeholder: window.panel.$t("url.placeholder"),
               icon: "url"
             },
-            target: {
-              label: window.panel.$t("open.newWindow"),
-              type: "toggle",
-              text: [window.panel.$t("no"), window.panel.$t("yes")]
+            text: {
+              label: window.panel.$t("link.text"),
+              type: "text",
+              value: selectedText
             }
           },
-          value: attrs,
+          value: {
+            ...attrs,
+            text: selectedText
+          },
           submitButton: isEditing ? window.panel.$t("update") : window.panel.$t("insert")
         },
         on: {
@@ -57,19 +67,13 @@ export default {
               return;
             }
 
-            if (editor.state.selection.empty) {
-              // Insert both content and mark in one command
-              editor.commands.insertContent({
-                type: 'text',
-                text: values.text || values.href,
-                marks: [{
-                  type: 'link',
-                  attrs: values
-                }]
-              });
-            } else {
-              editor.chain().focus().setLink(values).run();
+            let kirbyTag = `(link: ${values.href}`;
+            if (values.text) {
+              kirbyTag += ` text: ${values.text}`;
             }
+            kirbyTag += ')';
+
+            editor.commands.insertContent(kirbyTag);
           }
         }
       });

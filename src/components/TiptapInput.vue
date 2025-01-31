@@ -9,7 +9,6 @@
 import { Editor, EditorContent } from '@tiptap/vue-2'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
-import Link from '@tiptap/extension-link'
 import { InvisibleCharacters } from '@tiptap-pro/extension-invisible-characters'
 import { Highlights } from './highlights'
 import Toolbar from './Toolbar.vue'
@@ -35,10 +34,6 @@ export default {
         extensions: [
           StarterKit, /* Provides basic editor functionality (bold, italic, etc.) */
           Placeholder.configure({ placeholder: this.placeholder }), /* Adds placeholder text from blueprint */
-          Link.configure({
-            openOnClick: false, /* Prevents link opening on click (we want to edit stuff) */
-            HTMLAttributes: { rel: null, target: null } /* Removes default link attributes */
-          }),
           Highlights.configure({ highlights: this.highlights }), /* Custom highlight functionality */
           InvisibleCharacters.configure({
             builders: [

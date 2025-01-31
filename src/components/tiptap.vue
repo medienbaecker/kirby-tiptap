@@ -2,7 +2,7 @@
   <k-field class="k-tiptap-field" data-theme="field" v-bind="$props">
     <k-input-element>
       <div :data-disabled="disabled" :data-size="size" class="k-input k-tiptap-input">
-        <TiptapInput v-bind="$props" />
+        <TiptapInput v-bind="$props" @input="$emit('input', $event)" />
       </div>
     </k-input-element>
   </k-field>
@@ -14,8 +14,7 @@ import { props } from './props.js'
 
 export default {
   components: { TiptapInput },
-  props
+  props,
+  emits: ['input']
 }
 </script>
-
-<style></style>
