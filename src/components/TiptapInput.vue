@@ -92,7 +92,12 @@ export default {
       this.editor = new Editor({
         content,
         extensions: [
-          StarterKit,
+          StarterKit.configure({
+            dropcursor: {
+              width: 2,
+              color: 'var(--color-blue-600)'
+            }
+          }),
           Placeholder.configure({
             placeholder: this.placeholder
           }),
@@ -106,6 +111,22 @@ export default {
             ],
           }),
         ],
+        editorProps: {
+          handleDrop: (view, event, slice, moved) => {
+            if (!moved && this.$panel.drag.data) {
+              const dragData = this.$panel.drag.data;
+              const coordinates = view.posAtCoords({
+                left: event.clientX,
+                top: event.clientY
+              });
+              const transaction = view.state.tr.insertText(dragData, coordinates.pos);
+
+              view.dispatch(transaction);
+              return true;
+            }
+            return false;
+          }
+        },
         onCreate: ({ editor }) => {
           editor.view.dom.setAttribute("spellcheck", this.spellcheck);
           this.$emit('editor', editor); // Emit editor instance to parent
