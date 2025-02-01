@@ -72,6 +72,7 @@ tiptap:
 - [x] Some improvements over Writer just because of tiptap's amazing groundwork
   - [x] Click outside reliably removes focus
   - [x] Arrow keys behavior (code block stops cursor movement in Writer, …)
+- [x] Drag files/pages with nice [dropcursor](https://tiptap.dev/docs/editor/extensions/functionality/dropcursor) UI
 - [x] Allows HTML like the textarea
 - [x] Better Link Dialog UX
   - [x] Merged email button with link (why have separate fields?)
