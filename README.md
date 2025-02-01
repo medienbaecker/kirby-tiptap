@@ -68,15 +68,15 @@ tiptap:
   - [x] Soft hyphen
   - [x] Non-breaking space
   - [x] Always (barely) visible instead of button
+- [x] Text replacement for `(-)` with soft hyphen
 - [x] Some improvements over Writer just because of tiptap's amazing groundwork
   - [x] Click outside reliably removes focus
   - [x] Arrow keys behavior (code block stops cursor movement in Writer, …)
 - [x] Allows HTML like the textarea
-- [ ] Better Link Dialog UX
+- [x] Better Link Dialog UX
   - [x] Merged email button with link (why have separate fields?)
   - [x] Contextual link dialog submit button label (insert/update)
   - [x] Automatic KirbyTag handling (`link`, `email`, `tel`)
-  - [ ] "Title" and "Text" Fields?
 
 ## Necessary for 1.0
 
@@ -105,11 +105,11 @@ tiptap:
 
 ## Future
 
-- [ ] Kirbytag Button (fetch all Kirbytags)
-- [ ] Replacement for writer blocks
+- [ ] Kirbytag Button (fetch all Kirbytags except `link`, `image` and `file`?)
+- [ ] Replacement for Writer blocks (?)
 - [ ] Settings for links
   - [ ] Uploads
-  - [ ] Available link types
+  - [ ] Link types
   - [ ] Fields in dialog
-- [ ] "Remove formatting" button (necessary?)
-- [ ] https://tiptap.dev/docs/examples/advanced/forced-content-structure
+- [ ] "Remove formatting" button (?)
+- [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)
