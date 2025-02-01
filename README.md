@@ -92,13 +92,15 @@ tiptap:
   - [ ] maxlength/minlength
     - [x] Counter
     - [ ] Validation (help)
-  - [ ] Only allow formatting for visible buttons
+  - [x] Allow only visible buttons' formatting
+    - [ ] Handle content that contains forbidden marks
 - [x] Fix reverting changes
 - [x] Handle permalinks/UUIDs
 
 ## Planned
 
 - [ ] File/image button
+- [ ] [Codeblocks](https://tiptap.dev/docs/editor/extensions/nodes/code-block)
 - [ ] Handle dropping files/pages
   - [x] From files/pages sections
   - [ ] Upload files
@@ -111,7 +113,9 @@ tiptap:
 
 ## Future
 
-- [ ] Kirbytag Button (fetch all Kirbytags except `link`, `image` and `file`?)
+- [ ] Kirbytag button (fetch all Kirbytags except `link`, `image` and `file`?)
+- [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
+- [ ]
 - [ ] Replacement for Writer blocks (?)
 - [ ] Settings for links
   - [ ] Uploads

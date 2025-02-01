@@ -97,7 +97,14 @@ export default {
             dropcursor: {
               width: 2,
               color: 'var(--color-blue-600)'
-            }
+            },
+            heading: this.buttons.includes('headings'),
+            bold: this.buttons.includes('bold'),
+            italic: this.buttons.includes('italic'),
+            code: this.buttons.includes('code'),
+            strike: this.buttons.includes('strike'),
+            bulletList: this.buttons.includes('bulletList'),
+            orderedList: this.buttons.includes('orderedList'),
           }),
           Placeholder.configure({
             placeholder: this.placeholder
