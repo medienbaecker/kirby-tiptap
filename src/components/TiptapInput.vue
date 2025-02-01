@@ -1,6 +1,6 @@
 <template>
   <div class="k-tiptap-input-wrapper">
-    <toolbar v-if="editor && !disabled" :editor="editor" :label="label" :buttons="buttons" />
+    <toolbar v-if="editor && !disabled" :editor="editor" :buttons="buttons" />
     <editor-content :editor="editor" />
   </div>
 </template>

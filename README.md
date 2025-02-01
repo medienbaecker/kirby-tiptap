@@ -82,22 +82,26 @@ tiptap:
 ## Necessary for 1.0
 
 - [x] Regular field features
+  - [x] Required
   - [x] Placeholder
   - [x] Counter
   - [x] Disabled
   - [x] Help
-  - [x] size (?)
+  - [x] size
   - [x] spellcheck
   - [ ] maxlength/minlength
     - [x] Counter
-    - [ ] Validation
-  - [ ] Icon (?)
+    - [ ] Validation (help)
 - [x] Fix reverting changes
 - [x] Handle permalinks/UUIDs
+
+## Planned
+
+- [ ] File/image button
 - [ ] Handle dropping files/pages
   - [x] From files/pages sections
-  - [ ] From local machine (upload)
-- [ ] File/image button
+  - [ ] Upload files
+- [ ] Custom buttons
 
 ## Blockers
 
@@ -113,6 +117,7 @@ tiptap:
   - [ ] Link types
   - [ ] Fields in dialog
 - [ ] "Remove formatting" button (?)
+- [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)
 - [ ] [Blocks replacement](https://templates.tiptap.dev/)
 - [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)
 - [ ] [Real-time collaboration](https://tiptap.dev/product/collaboration)
