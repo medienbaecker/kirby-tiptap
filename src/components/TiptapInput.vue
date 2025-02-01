@@ -13,6 +13,7 @@ import { InvisibleCharacters } from '@tiptap-pro/extension-invisible-characters'
 import { Highlights } from './highlights'
 import Toolbar from './Toolbar.vue'
 import { SoftHyphenCharacter, NonBreakingSpaceCharacter } from './invisibles'
+import { Replacements } from './replacements'
 import { props } from './props.js'
 
 export default {
@@ -102,6 +103,7 @@ export default {
             placeholder: this.placeholder
           }),
           Highlights.configure({
+            kirbytags: this.kirbytags,
             highlights: this.highlights
           }),
           InvisibleCharacters.configure({
@@ -110,6 +112,7 @@ export default {
               new NonBreakingSpaceCharacter()
             ],
           }),
+          Replacements
         ],
         editorProps: {
           handleDrop: (view, event, slice, moved) => {

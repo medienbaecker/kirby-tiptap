@@ -2,21 +2,17 @@ import { Extension } from "@tiptap/core"
 import { Plugin, PluginKey } from "@tiptap/pm/state"
 import { Decoration, DecorationSet } from "@tiptap/pm/view"
 
-/**
- * Custom Tiptap extension that adds text highlighting functionality
- */
 export const Highlights = Extension.create({
   name: "highlights",
 
-  addOptions: () => ({
-    highlights: [] /* Array of {pattern, class} objects */,
-  }),
+  addOptions() {
+    return {
+      highlights: [],
+      kirbytags: [],
+    }
+  },
 
   addProseMirrorPlugins() {
-    /* Helper to create RegExp from string or use existing RegExp */
-    const createRegex = (pattern) =>
-      typeof pattern === "string" ? new RegExp(pattern, "g") : pattern
-
     return [
       new Plugin({
         key: new PluginKey("highlights"),
@@ -24,24 +20,46 @@ export const Highlights = Extension.create({
           decorations: (state) => {
             const decorations = []
 
-            /* Traverse document to find text matches */
             state.doc.descendants((node, pos) => {
               if (!node.isText) return
 
-              /* Apply each highlight pattern */
+              // Highlight Kirbytags
+              if (this.options.kirbytags.length) {
+                const kirbytagRegex = new RegExp(
+                  `\\((?:${this.options.kirbytags.join(
+                    "|"
+                  )}):[^()]*(?:\\([^()]*\\)[^()]*)*\\)`,
+                  "g"
+                )
+
+                let match
+                while ((match = kirbytagRegex.exec(node.text))) {
+                  decorations.push(
+                    Decoration.inline(
+                      pos + match.index,
+                      pos + match.index + match[0].length,
+                      { class: "kirbytag" }
+                    )
+                  )
+                }
+              }
+
+              // Apply custom highlights
               this.options.highlights.forEach(
                 ({ pattern, class: className }) => {
-                  const regex = createRegex(pattern)
+                  const regex =
+                    typeof pattern === "string"
+                      ? new RegExp(pattern, "g")
+                      : pattern
+
                   let match
-
-                  /* Find all matches in current text node */
                   while ((match = regex.exec(node.text))) {
-                    const from = pos + match.index
-                    const to = from + match[0].length
-
-                    /* Create inline decoration for the match */
                     decorations.push(
-                      Decoration.inline(from, to, { class: className })
+                      Decoration.inline(
+                        pos + match.index,
+                        pos + match.index + match[0].length,
+                        { class: className }
+                      )
                     )
                   }
                 }

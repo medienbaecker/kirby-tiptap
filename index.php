@@ -8,12 +8,7 @@ use Kirby\Cms\App as Kirby;
 
 Kirby::plugin('medienbaecker/tiptap', [
   'options' => [
-    'highlights' => [
-      [
-        'pattern' => '\([a-z]+:\s*[^\)]+\)',
-        'class' => 'kirbytag'
-      ]
-    ]
+    'highlights' => []
   ],
   'fields' => [
     'tiptap' => [
@@ -41,7 +36,10 @@ Kirby::plugin('medienbaecker/tiptap', [
         },
         'highlights' => function () {
           return option('medienbaecker.tiptap.highlights');
-        }
+        },
+        'kirbytags' => function () {
+          return array_keys($this->kirby()->extensions('tags'));
+        },
       ]
     ]
   ],

@@ -10,4 +10,5 @@ export const props = {
   size: String,
   buttons: Array,
   highlights: Array,
+  kirbytags: Array,
 }
