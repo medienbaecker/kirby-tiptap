@@ -92,6 +92,7 @@ tiptap:
   - [ ] maxlength/minlength
     - [x] Counter
     - [ ] Validation (help)
+  - [ ] Only allow formatting for visible buttons
 - [x] Fix reverting changes
 - [x] Handle permalinks/UUIDs
 
