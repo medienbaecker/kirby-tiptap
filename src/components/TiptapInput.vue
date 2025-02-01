@@ -126,14 +126,14 @@ export default {
               const dragData = this.$panel.drag.data;
 
               // Dropping text (like Kirbytags)
-              if (dragData.type === "text") {
+              if (typeof dragData === "string") {
                 const transaction = view.state.tr.insertText(dragData, coordinates.pos);
                 view.dispatch(transaction);
               }
 
               // Dropping files
               if (this.$helper.isUploadEvent(event)) {
-                alert('WIP')
+                alert('File uploads are not possible yet')
               }
 
               return true;
