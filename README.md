@@ -71,7 +71,7 @@ tiptap:
 - [x] Text replacement for `(-)` with soft hyphen
 - [x] Some improvements over Writer just because of tiptap's amazing groundwork
   - [x] Click outside reliably removes focus
-  - [x] Arrow keys behavior (code block stops cursor movement in Writer, …)
+  - [x] More reliable arrow keys behavior
 - [x] Drag files/pages with nice [dropcursor](https://tiptap.dev/docs/editor/extensions/functionality/dropcursor) UI
 - [x] Allows HTML like the textarea
 - [x] Better Link Dialog UX
@@ -113,4 +113,6 @@ tiptap:
   - [ ] Link types
   - [ ] Fields in dialog
 - [ ] "Remove formatting" button (?)
+- [ ] [Blocks replacement](https://templates.tiptap.dev/)
 - [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)
+- [ ] [Real-time collaboration](https://tiptap.dev/product/collaboration)
