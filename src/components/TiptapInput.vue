@@ -14,6 +14,7 @@ import { Highlights } from './highlights'
 import Toolbar from './Toolbar.vue'
 import { SoftHyphenCharacter, NonBreakingSpaceCharacter } from './invisibles'
 import { Replacements } from './replacements'
+import { ContentSanitizer } from './sanitizer'
 import { props } from './props.js'
 
 export default {
@@ -21,8 +22,13 @@ export default {
   props,
 
   data: () => ({
-    editor: null
+    editor: null,
+    sanitizer: null
   }),
+
+  created() {
+    this.sanitizer = new ContentSanitizer(this.buttons);
+  },
 
   watch: {
     value: {
@@ -54,12 +60,10 @@ export default {
   },
 
   methods: {
-    /**
-     * Parses a JSON string into an object or returns the original value if parsing fails
-     */
     parseContent(value) {
       try {
-        return JSON.parse(value);
+        const content = typeof value === 'string' ? JSON.parse(value) : value;
+        return this.sanitizer.sanitizeContent(content);
       } catch {
         return value;
       }
@@ -71,12 +75,13 @@ export default {
      */
     emitContent(editor) {
       const content = editor.getJSON();
+      const sanitizedContent = this.sanitizer.sanitizeContent(content);
 
       const json = editor.isEmpty
         ? ''
         : JSON.stringify({
           type: 'doc',
-          content: content.content
+          content: sanitizedContent.content
         });
 
       this.$emit("input", {
@@ -98,7 +103,9 @@ export default {
               width: 2,
               color: 'var(--color-blue-600)'
             },
-            heading: this.buttons.some(btn => typeof btn === 'object' ? 'headings' in btn : btn === 'headings'),
+            heading: this.buttons.some(btn =>
+              typeof btn === 'object' ? 'headings' in btn : btn === 'headings'
+            ),
             bold: this.buttons.includes('bold'),
             italic: this.buttons.includes('italic'),
             code: this.buttons.includes('code'),
@@ -122,6 +129,9 @@ export default {
           Replacements
         ],
         editorProps: {
+          transformPasted: (content) => {
+            return this.sanitizer.sanitizeContent(content);
+          },
           handleDrop: (view, event, slice, moved) => {
             if (!moved && this.$panel.drag.data) {
               const coordinates = view.posAtCoords({
