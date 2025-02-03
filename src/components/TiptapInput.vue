@@ -133,6 +133,37 @@ export default {
           transformPasted: (content) => {
             return this.sanitizer.sanitizeContent(content);
           },
+
+          handlePaste: (view, event, slice) => {
+            // Check if there's text selected and if the pasted content is a URL
+            const selection = view.state.selection;
+            const selectedText = !selection.empty
+              ? view.state.doc.textBetween(selection.from, selection.to)
+              : '';
+
+            if (selectedText) {
+              const pastedText = event.clipboardData.getData('text/plain').trim();
+
+              const urlPattern = /^(https?:\/\/|mailto:|tel:)/i;
+              if (urlPattern.test(pastedText)) {
+                // Insert Kirby tag
+                const kirbyTag = `(link: ${pastedText} text: ${selectedText})`;
+
+                this.editor
+                  .chain()
+                  .focus()
+                  .insertContentAt(selection, kirbyTag)
+                  .run();
+
+                event.preventDefault();
+                return true;
+              }
+            }
+
+            // Fall back to default paste handling
+            return false;
+          },
+
           handleDrop: (view, event, slice, moved) => {
             if (!moved && this.$panel.drag.data) {
               const coordinates = view.posAtCoords({

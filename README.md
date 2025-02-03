@@ -11,7 +11,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - **Smart text handling** with intuitive soft hyphen `(-)` and non-breaking space `(_)` replacements, and visible special characters
 - **Configurable buttons** with individual heading levels and a content sanitizer that automatically removes formatting you don't want
 - **Intuitive drag & drop support** for pages and files with intelligent spacing
-- **Improved link dialog** with automatic KirbyTag (`(link: )`, `(email: )`, `(file: )`or `(tel: )`)
+- **Improved link handling** with a dialog that automatically picks the right KirbyTag (`(link: )`, `(email: )`, `(file: )`or `(tel: )`) and a paste handler that adds link tags to the selected text
 - **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
 - **Abstracted JSON content** that can be easily manipulated
 
