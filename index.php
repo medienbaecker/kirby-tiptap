@@ -2,7 +2,6 @@
 
 @require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/lib/helpers.php';
-require_once __DIR__ . '/lib/KirbyTagNode.php';
 
 use Kirby\Cms\App as Kirby;
 
@@ -12,6 +11,9 @@ Kirby::plugin('medienbaecker/tiptap', [
   ],
   'fields' => [
     'tiptap' => [
+      'mixins' => [
+        'filepicker', /* Needed for the API endpoint */
+      ],
       'props' => [
         'size' => function ($size = 'auto') {
           return $size;
@@ -28,6 +30,7 @@ Kirby::plugin('medienbaecker/tiptap', [
           'code',
           '|',
           'link',
+          'image',
           '|',
           'bulletList',
           'orderedList'
@@ -39,8 +42,22 @@ Kirby::plugin('medienbaecker/tiptap', [
         },
         'kirbytags' => function () {
           return array_keys($this->kirby()->extensions('tags'));
-        },
-      ]
+        }
+      ],
+      'api' => function () {
+        return [
+          [
+            'pattern' => 'files',
+            'action' => function () {
+              return $this->field()->filepicker([
+                'query' => 'page.images',
+                'page'   => $this->requestQuery('page'),
+                'search' => $this->requestQuery('search')
+              ]);
+            }
+          ]
+        ];
+      }
     ]
   ],
   'fieldMethods' => [

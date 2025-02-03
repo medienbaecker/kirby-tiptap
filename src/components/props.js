@@ -12,4 +12,5 @@ export const props = {
   buttons: Array,
   highlights: Array,
   kirbytags: Array,
+  endpoints: Object,
 }

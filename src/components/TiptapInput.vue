@@ -1,6 +1,6 @@
 <template>
   <div class="k-tiptap-input-wrapper">
-    <toolbar v-if="editor && !disabled" :editor="editor" :buttons="buttons" />
+    <toolbar v-if="editor && !disabled" v-bind="$props" :editor="editor" />
     <editor-content :editor="editor" />
   </div>
 </template>
@@ -98,7 +98,7 @@ export default {
               width: 2,
               color: 'var(--color-blue-600)'
             },
-            heading: this.buttons.includes('headings'),
+            heading: this.buttons.some(btn => typeof btn === 'object' ? 'headings' in btn : btn === 'headings'),
             bold: this.buttons.includes('bold'),
             italic: this.buttons.includes('italic'),
             code: this.buttons.includes('code'),

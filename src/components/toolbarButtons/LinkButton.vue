@@ -6,8 +6,6 @@
 import ToolbarButton from './ToolbarButton.vue';
 
 export default {
-  name: 'LinkButton',
-
   components: {
     ToolbarButton
   },
@@ -21,8 +19,6 @@ export default {
 
   methods: {
     handleLink(editor) {
-      const attrs = editor.getAttributes('link');
-      const isEditing = Boolean(attrs.href);
 
       const selectedText = !editor.state.selection.empty
         ? editor.state.doc.textBetween(
@@ -48,10 +44,9 @@ export default {
             }
           },
           value: {
-            ...attrs,
             text: selectedText
           },
-          submitButton: isEditing ? window.panel.$t("update") : window.panel.$t("insert")
+          submitButton: window.panel.$t("insert")
         },
         on: {
           cancel: () => {

@@ -21,6 +21,7 @@ export default {
       editor: null
     }
   },
+
   computed: {
     counterValue() {
       return this.editor?.getText() || '';

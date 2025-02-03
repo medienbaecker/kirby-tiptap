@@ -2,13 +2,16 @@
   <nav class="k-toolbar" v-if="editor">
     <template v-for="button in normalizedButtons">
       <component v-if="!isSeperator(button)" :is="buttonComponents[getComponentName(button)]" :key="getKey(button)"
-        :editor="editor" :levels="getLevels(button)" />
+        v-bind="$props" :levels="getLevels(button)" />
       <hr v-else />
     </template>
   </nav>
 </template>
 
 <script>
+
+import { props } from './props.js'
+
 const buttonComponents = {
   headings: () => import('./toolbarButtons/HeadingsButton.vue'),
   bold: () => import('./toolbarButtons/BoldButton.vue'),
@@ -16,6 +19,7 @@ const buttonComponents = {
   strike: () => import('./toolbarButtons/StrikeButton.vue'),
   code: () => import('./toolbarButtons/CodeButton.vue'),
   link: () => import('./toolbarButtons/LinkButton.vue'),
+  image: () => import('./toolbarButtons/ImageButton.vue'),
   bulletList: () => import('./toolbarButtons/BulletListButton.vue'),
   orderedList: () => import('./toolbarButtons/OrderedListButton.vue')
 };
@@ -23,18 +27,8 @@ const buttonComponents = {
 export default {
   components: buttonComponents,
   props: {
-    editor: {
-      type: Object,
-      required: true
-    },
-    label: {
-      type: String,
-      required: true
-    },
-    buttons: {
-      type: Array,
-      required: true
-    }
+    editor: Object,
+    ...props
   },
   computed: {
     buttonComponents() {

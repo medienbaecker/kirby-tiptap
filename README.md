@@ -76,7 +76,6 @@ tiptap:
 - [x] Allows HTML like the textarea
 - [x] Better Link Dialog UX
   - [x] Merged email button with link (why have separate fields?)
-  - [x] Contextual link dialog submit button label (insert/update)
   - [x] Automatic KirbyTag handling (`link`, `email`, `tel`)
 
 ## Necessary for 1.0
@@ -93,17 +92,16 @@ tiptap:
     - [x] Counter
     - [ ] Validation (help)
   - [x] Allow only visible buttons' formatting
-    - [ ] Handle content that contains forbidden marks
-- [x] Fix reverting changes
+    - [ ] Handle content that contains disabled marks
+- [x] Reverting changes
 - [x] Handle permalinks/UUIDs
+- [x] File/image button
+- [x] Drag files/pages into editor
 
 ## Planned
 
-- [ ] File/image button
 - [ ] [Codeblocks](https://tiptap.dev/docs/editor/extensions/nodes/code-block)
-- [ ] Handle dropping files/pages
-  - [x] From files/pages sections
-  - [ ] Upload files
+- [ ] File uploads
 - [ ] Custom buttons
 
 ## Blockers
