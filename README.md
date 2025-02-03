@@ -1,4 +1,4 @@
-# Kirby tiptap field (work in progress)
+# Kirby Tiptap
 
 A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https://getkirby.com).
 
