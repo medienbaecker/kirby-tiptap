@@ -124,7 +124,6 @@ export default {
         editorProps: {
           handleDrop: (view, event, slice, moved) => {
             if (!moved && this.$panel.drag.data) {
-
               const coordinates = view.posAtCoords({
                 left: event.clientX,
                 top: event.clientY
@@ -132,10 +131,21 @@ export default {
 
               const dragData = this.$panel.drag.data;
 
-              // Dropping text (like Kirbytags)
-              if (typeof dragData === "string") {
-                const transaction = view.state.tr.insertText(dragData, coordinates.pos);
-                view.dispatch(transaction);
+              // Dropping text (KirbyTags)
+              if (this.$panel.drag.type === "text") {
+                const pos = coordinates.pos;
+                const prevChar = pos > 0 ? view.state.doc.textBetween(pos - 1, pos) : '';
+                const needsSpace = prevChar && prevChar !== ' ';
+
+                this.editor
+                  .chain()
+                  .focus()
+                  .insertContentAt(pos, needsSpace ? ' ' + dragData : dragData, {
+                    parseOptions: { preserveWhitespace: true }
+                  })
+                  .setTextSelection({ from: pos + (needsSpace ? 1 : 0), to: pos + dragData.length + (needsSpace ? 1 : 0) })
+                  .unsetAllMarks()
+                  .run();
               }
 
               // Dropping files

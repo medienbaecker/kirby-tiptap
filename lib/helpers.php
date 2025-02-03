@@ -15,18 +15,24 @@ class KirbyTagNode extends Node
   {
     $content = html_entity_decode($node->attrs->content ?? '');
 
-    // Check if this has a figure tag
-    if (strpos($content, '<figure') === 0) {
-      // Return block without paragraph
-      return [
-        'content' => $content,
-      ];
-    }
-
-    // Wrap all other content in paragraphs
     return [
-      'content' => "<p>{$content}</p>",
+      'content' => $content
     ];
+
+    // TODO: Find a way to fix images/figures in paragraphs. The below doesn't play nicely with links
+
+    // // Check if this has a figure tag
+    // if (strpos($content, '<figure') === 0) {
+    //   // Return block without paragraph
+    //   return [
+    //     'content' => $content,
+    //   ];
+    // }
+
+    // // Wrap all other content in paragraphs
+    // return [
+    //   'content' => "<p>{$content}</p>",
+    // ];
   }
 }
 
@@ -53,29 +59,33 @@ function convertTiptapToHtml($json, $parent)
       continue;
     }
 
-    if (isset($node['content'][0]['text'])) {
-      $text = $node['content'][0]['text'];
+    // Process each text node in the content array
+    foreach ($node['content'] as &$contentNode) {
+      if (isset($contentNode['text'])) {
+        $text = $contentNode['text'];
 
-      // Only process if text contains potential UUID patterns
-      if (str_contains($text, '://')) {
-        $text = preg_replace_callback('/(page|file):\/\/[a-zA-Z0-9-]+/', function ($matches) {
-          try {
-            if ($url = Uuid::for($matches[0])?->model()?->url()) {
-              return $url;
+        // Only process if text contains potential UUID patterns
+        if (str_contains($text, '://')) {
+          $text = preg_replace_callback('/(page|file):\/\/[a-zA-Z0-9-]+/', function ($matches) {
+            try {
+              if ($url = Uuid::for($matches[0])?->model()?->url()) {
+                return $url;
+              }
+            } catch (InvalidArgumentException) {
+              // ignore anything else than permalinks
             }
-          } catch (InvalidArgumentException) {
-            // ignore anything else than permalinks
-          }
-          return $matches[0];
-        }, $text);
-      }
+            return $matches[0];
+          }, $text);
+        }
 
-      // Then parse Kirbytags
-      $parsed = KirbyTags::parse($text, ['parent' => $parent]);
+        // Then parse Kirbytags
+        $parsed = KirbyTags::parse($text, ['parent' => $parent]);
 
-      if ($parsed !== strip_tags($parsed)) {
-        $node['type'] = 'kirbyTag';
-        $node['attrs'] = ['content' => $parsed];
+        if ($parsed !== strip_tags($parsed)) {
+          $contentNode['type'] = 'kirbyTag';
+          $contentNode['attrs'] = ['content' => $parsed];
+          unset($contentNode['text']);
+        }
       }
     }
   }
