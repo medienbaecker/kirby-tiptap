@@ -107,7 +107,7 @@ echo $page->text()->tiptapText(['offsetHeadings' => 1]);
 ## Planned
 
 - [ ] [Codeblocks](https://tiptap.dev/docs/editor/extensions/nodes/code-block)
-- [ ] File uploads
+- [ ] Image uploads
 - [ ] Custom buttons
 
 ## Blockers
@@ -119,10 +119,10 @@ echo $page->text()->tiptapText(['offsetHeadings' => 1]);
 
 - [ ] Kirbytag button (fetch all Kirbytags except `link`, `image` and `file`?)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
-- [ ]
 - [ ] Replacement for Writer blocks (?)
+- [ ] Attachement/file button (with uploads)
 - [ ] Settings for links
-  - [ ] Uploads
+  - [ ] Upload location
   - [ ] Link types
   - [ ] Fields in dialog
 - [ ] "Remove formatting" button (?)
