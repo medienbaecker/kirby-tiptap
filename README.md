@@ -32,6 +32,7 @@ The Writer field is what Kirby uses for the default [text blocks](https://getkir
 6. Complex nodes/marks differentiation, UX for lists
 7. Redundant email button
 8. Massive issues with copying text containing [gender stars](https://en.wikipedia.org/wiki/Gender_star) (https://github.com/getkirby/kirby/issues/3138)
+9. [Losing content](https://github.com/getkirby/kirby/issues/6507)
 
 ### [Markdown field plugin](https://github.com/fabianmichael/kirby-markdown-field/)
 
@@ -88,9 +89,9 @@ tiptap:
   - [x] Help
   - [x] size
   - [x] spellcheck
-  - [ ] maxlength/minlength
+  - [x] maxlength/minlength
     - [x] Counter
-    - [ ] Validation (help)
+    - [x] Validation
   - [x] Allow only visible buttons' formatting
     - [ ] Handle content that contains disabled marks
 - [x] Reverting changes

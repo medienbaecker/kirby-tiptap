@@ -4,6 +4,8 @@
 require_once __DIR__ . '/lib/helpers.php';
 
 use Kirby\Cms\App as Kirby;
+use Kirby\Exception\InvalidArgumentException;
+use Kirby\Toolkit\V;
 
 Kirby::plugin('medienbaecker/tiptap', [
   'options' => [
@@ -44,6 +46,42 @@ Kirby::plugin('medienbaecker/tiptap', [
           return array_keys($this->kirby()->extensions('tags'));
         }
       ],
+      'validations' => [
+        'minlength' => function ($value) {
+
+          $value = convertTiptapToHtml(
+            $value,
+            $this->model()
+          );
+
+          if (
+            $this->minlength &&
+            V::minLength(strip_tags($value), $this->minlength) === false
+          ) {
+            throw new InvalidArgumentException(
+              key: 'validation.minlength',
+              data: ['min' => $this->minlength]
+            );
+          }
+        },
+        'maxlength'  => function ($value) {
+
+          $value = convertTiptapToHtml(
+            $value,
+            $this->model()
+          );
+
+          if (
+            $this->maxlength &&
+            V::maxLength(strip_tags($value), $this->maxlength) === false
+          ) {
+            throw new InvalidArgumentException(
+              key: 'validation.maxlength',
+              data: ['max' => $this->maxlength]
+            );
+          }
+        },
+      ],
       'api' => function () {
         return [
           [
@@ -61,9 +99,9 @@ Kirby::plugin('medienbaecker/tiptap', [
     ]
   ],
   'fieldMethods' => [
-    'toHtml' => function ($field) {
+    'tiptapText' => function ($field) {
       return convertTiptapToHtml(
-        json_decode($field->value, true),
+        $field->value,
         $field->parent()
       );
     }

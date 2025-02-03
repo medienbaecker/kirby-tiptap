@@ -30,9 +30,29 @@ class KirbyTagNode extends Node
   }
 }
 
-function convertTiptapToHtml($json, $page)
+function convertTiptapToHtml($json, $parent)
 {
+  // Handle null or empty string cases
+  if ($json === null || $json === '') {
+    return '';
+  }
+
+  // If $json is a string, try to decode it
+  if (is_string($json)) {
+    $json = json_decode($json, true);
+  }
+
+  // Validate JSON structure
+  if (!is_array($json) || !isset($json['content']) || !is_array($json['content'])) {
+    return '';
+  }
+
   foreach ($json['content'] as &$node) {
+    // Skip if node or content is not properly structured
+    if (!is_array($node) || !isset($node['content']) || !is_array($node['content'])) {
+      continue;
+    }
+
     if (isset($node['content'][0]['text'])) {
       $text = $node['content'][0]['text'];
 
@@ -51,7 +71,7 @@ function convertTiptapToHtml($json, $page)
       }
 
       // Then parse Kirbytags
-      $parsed = KirbyTags::parse($text, ['parent' => $page]);
+      $parsed = KirbyTags::parse($text, ['parent' => $parent]);
 
       if ($parsed !== strip_tags($parsed)) {
         $node['type'] = 'kirbyTag';
@@ -60,10 +80,15 @@ function convertTiptapToHtml($json, $page)
     }
   }
 
-  return (new Editor([
-    'extensions' => [
-      new \Tiptap\Extensions\StarterKit(),
-      new KirbyTagNode()
-    ]
-  ]))->setContent($json)->getHTML();
+  try {
+    return (new Editor([
+      'extensions' => [
+        new \Tiptap\Extensions\StarterKit(),
+        new KirbyTagNode()
+      ]
+    ]))->setContent($json)->getHTML();
+  } catch (\Exception $e) {
+    // Handle any errors during HTML conversion
+    return '';
+  }
 }
