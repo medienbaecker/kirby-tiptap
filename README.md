@@ -6,14 +6,14 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 
 ## Features
 
-- **Best of both worlds:** Uses (and highlights) [KirbyTags](https://getkirby.com/docs/reference/plugins/extensions/kirbytags) for images/links while providing WYSIWYG formatting
-- **Full field functionality:** Supports all standard Kirby field features (`required`, `default`, `placeholder`, `counter`, `disabled`, `help`, `size`, `spellcheck`, `minlength`/`maxlength`)
-- **Smart text handling** with intuitive soft hyphen `(-)` and non-breaking space `(_)` replacements, and visible special characters
-- **Configurable buttons** with individual heading levels and a content sanitizer that automatically removes formatting you don't want
-- **Intuitive drag & drop support** for pages and files with intelligent spacing
-- **Improved link handling** with a dialog that automatically picks the right KirbyTag (`(link: )`, `(email: )`, `(file: )`or `(tel: )`) and a paste handler that adds link tags to the selected text
-- **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
-- **Abstracted JSON content** that can easily be manipulated
+- 🌏 **Best of both worlds:** Uses (and highlights) [KirbyTags](https://getkirby.com/docs/reference/plugins/extensions/kirbytags) for images/links while providing WYSIWYG formatting
+- 📦 **Supports all standard Kirby field features** like `required`, `default`, `placeholder`, `counter`, `disabled`, `help`, `size`, `spellcheck` and `minlength`/`maxlength`
+- 🤓 **Smart text handling** with intuitive soft hyphen `(-)` and non-breaking space `(_)` replacements, and visible special characters
+- 🔧 **Configurable buttons** with individual heading levels and a content sanitizer that automatically removes formatting you don't want
+- ✨ **Intuitive drag & drop support** for pages and files with intelligent spacing
+- 🔗 **Improved link handling** with a dialog that automatically picks the right KirbyTag (`(link: )`, `(email: )`, `(file: )`or `(tel: )`) and a paste handler that adds link tags to the selected text
+- 🌈 **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
+- 📋 **Abstracted JSON content** that can easily be manipulated by options like `offsetHeadings`
 
 ## Usage
 
