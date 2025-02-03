@@ -28,8 +28,6 @@ Kirby::plugin('medienbaecker/tiptap', [
           '|',
           'bold',
           'italic',
-          'strike',
-          'code',
           '|',
           'link',
           'image',

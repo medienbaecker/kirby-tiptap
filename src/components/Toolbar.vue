@@ -18,6 +18,7 @@ const buttonComponents = {
   italic: () => import('./toolbarButtons/ItalicButton.vue'),
   strike: () => import('./toolbarButtons/StrikeButton.vue'),
   code: () => import('./toolbarButtons/CodeButton.vue'),
+  codeBlock: () => import('./toolbarButtons/CodeBlockButton.vue'),
   link: () => import('./toolbarButtons/LinkButton.vue'),
   image: () => import('./toolbarButtons/ImageButton.vue'),
   bulletList: () => import('./toolbarButtons/BulletListButton.vue'),

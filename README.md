@@ -17,7 +17,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 
 ## Usage
 
-### Blueprint
+### Blueprint with all available buttons
 
 ```yml
 tiptap:
@@ -29,13 +29,15 @@ tiptap:
     - "|"
     - bold
     - italic
-    - code
     - strike
+    - code
+    - codeBlock
     - "|"
-    - "link"
+    - link
+    - image
     - "|"
-    - "bulletList"
-    - "orderedList"
+    - bulletList
+    - orderedList
 ```
 
 ### Template
@@ -55,7 +57,6 @@ echo $page->text()->tiptapText([
 ### Coming soon
 
 - [ ] Inline/raw mode without wrapping paragraphs
-- [ ] [Codeblocks](https://tiptap.dev/docs/editor/extensions/nodes/code-block)
 - [ ] Image uploads
 - [ ] Custom buttons
 

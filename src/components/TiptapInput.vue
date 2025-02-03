@@ -255,7 +255,7 @@ p.is-editor-empty:first-child::before {
 }
 
 /* Poor man's margin-trim  */
-.tiptap :where(p, h1, h2, h3, h4, h5, h6) {
+.tiptap :where(p, h1, h2, h3, h4, h5, h6, pre) {
   &:not(:first-child) {
     margin-block-start: 1em;
   }
@@ -335,6 +335,10 @@ p.is-editor-empty:first-child::before {
   border-radius: var(--rounded);
   outline: 1px solid var(--code-inline-color-border);
   outline-offset: -1px;
+}
+
+.tiptap pre code {
+  display: block;
 }
 
 /* Special colors for Kirbytags */
