@@ -2,7 +2,7 @@
 
 A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https://getkirby.com).
 
-![Preview](https://github.com/user-attachments/assets/bc67ae1f-3705-49be-8425-f0c74393c160)
+![Preview](https://github.com/user-attachments/assets/a2a8b993-be12-4f6a-bb1f-bd2fd33e355c)
 
 ## Features
 
@@ -13,7 +13,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - **Intuitive drag & drop support** for pages and files with intelligent spacing
 - **Improved link handling** with a dialog that automatically picks the right KirbyTag (`(link: )`, `(email: )`, `(file: )`or `(tel: )`) and a paste handler that adds link tags to the selected text
 - **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
-- **Abstracted JSON content** that can be easily manipulated
+- **Abstracted JSON content** that can easily be manipulated
 
 ## Usage
 
