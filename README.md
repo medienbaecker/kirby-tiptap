@@ -59,6 +59,16 @@ tiptap:
     - "orderedList"
 ```
 
+## In the frontend
+
+```php
+// Converting the fields' JSON into HTML without any options
+echo $page->text()->tiptapText();
+
+// Offsetting the heading levels by 1
+echo $page->text()->tiptapText(['offsetHeadings' => 1]);
+```
+
 ## Features
 
 - [x] Regular field features
@@ -78,11 +88,13 @@ tiptap:
 - [x] Kirbytag highlighting
 - [x] Custom highlights via config option
 - [x] Offset headings
+- [x] Image button
 - [x] Invisible characters
   - [x] Soft hyphen
   - [x] Non-breaking space
   - [x] Always (barely) visible instead of button
 - [x] Text replacement for `(-)` with soft hyphen
+- [x] Text replacement for `(_)` with non-breaking space
 - [x] Some improvements over Writer just because of tiptap's amazing groundwork
   - [x] Click outside reliably removes focus
   - [x] More reliable arrow keys behavior
@@ -91,13 +103,6 @@ tiptap:
 - [x] Better Link Dialog UX
   - [x] Merged email button with link (why have separate fields?)
   - [x] Automatic KirbyTag handling (`link`, `email`, `tel`)
-
-## Necessary for 1.0
-
-- [x] Reverting changes
-- [x] Handle permalinks/UUIDs
-- [x] File/image button
-- [x] Drag files/pages into editor
 
 ## Planned
 

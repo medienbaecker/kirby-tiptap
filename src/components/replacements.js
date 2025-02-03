@@ -9,6 +9,10 @@ export const Replacements = Extension.create({
         find: /\(-\)$/,
         replace: "\u00AD",
       }),
+      textInputRule({
+        find: /\(_\)$/,
+        replace: "\u00A0",
+      }),
     ]
   },
 })
