@@ -93,7 +93,7 @@ tiptap:
     - [x] Counter
     - [x] Validation
   - [x] Allow only visible buttons' formatting
-    - [ ] Handle content that contains disabled marks
+    - [x] Handle content that contains disabled marks
 - [x] Reverting changes
 - [x] Handle permalinks/UUIDs
 - [x] File/image button
