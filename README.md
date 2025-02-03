@@ -1,10 +1,78 @@
 # Kirby tiptap field (work in progress)
 
-[Kirby](https://getkirby.com/) + [tiptap](https://tiptap.dev/) = ❤️
-
-This field is somewhere between the [Writer](https://getkirby.com/docs/reference/panel/fields/writer) and [Textarea](https://getkirby.com/docs/reference/panel/fields/textarea) fields. It uses [KirbyTags](https://getkirby.com/docs/reference/#kirbytags) for stuff like images and links while showing formatting in a WYSIWYG style for other things.
+A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https://getkirby.com).
 
 ![Preview](https://github.com/user-attachments/assets/bc67ae1f-3705-49be-8425-f0c74393c160)
+
+## Features
+
+- **Best of both worlds:** Uses (and highlights) [KirbyTags](https://getkirby.com/docs/reference/plugins/extensions/kirbytags) for images/links while providing WYSIWYG formatting
+- **Full field functionality:** Supports all standard Kirby field features (`required`, `default`, `placeholder`, `counter`, `disabled`, `help`, `size`, `spellcheck`, `minlength`/`maxlength`)
+- **Smart text handling** with intuitive soft hyphen `(-)` and non-breaking space `(_)` replacements, and visible special characters
+- **Configurable buttons** with individual heading levels and a content sanitizer that automatically removes formatting you don't want
+- **Intuitive drag & drop support** for pages and files with intelligent spacing
+- **Improved link dialog** with automatic KirbyTag (`(link: )`, `(email: )`, `(file: )`or `(tel: )`)
+- **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
+- **Abstracted JSON content** that can be easily manipulated
+
+## Usage
+
+### Blueprint
+
+```yml
+tiptap:
+  buttons:
+    - headings:
+        - 1
+        - 2
+        - 3
+    - "|"
+    - bold
+    - italic
+    - code
+    - strike
+    - "|"
+    - "link"
+    - "|"
+    - "bulletList"
+    - "orderedList"
+```
+
+### Template
+
+```php
+// Basic usage
+echo $page->text()->tiptapText();
+
+// With heading level offset
+echo $page->text()->tiptapText([
+  'offsetHeadings' => 1
+]);
+```
+
+## Roadmap
+
+### Coming soon
+
+- [ ] [Codeblocks](https://tiptap.dev/docs/editor/extensions/nodes/code-block)
+- [ ] Image uploads
+- [ ] Custom buttons
+
+### Under consideration
+
+- [ ] Kirbytag button (fetch all Kirbytags except `link`, `image` and `file`?)
+- [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
+- [ ] Replacement for Writer blocks (?)
+- [ ] Attachement/file button (with uploads)
+- [ ] Settings for links
+  - [ ] Upload location
+  - [ ] Link types
+  - [ ] Fields in dialog
+- [ ] "Remove formatting" button (?)
+- [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)
+- [ ] [Blocks replacement](https://templates.tiptap.dev/)
+- [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)
+- [ ] [Real-time collaboration](https://tiptap.dev/product/collaboration)
 
 ## Motivation
 
@@ -33,100 +101,3 @@ The Writer field is what Kirby uses for the default [text blocks](https://getkir
 7. Redundant email button
 8. Massive issues with copying text containing [gender stars](https://en.wikipedia.org/wiki/Gender_star) (https://github.com/getkirby/kirby/issues/3138)
 9. [Losing content](https://github.com/getkirby/kirby/issues/6507)
-
-### [Markdown field plugin](https://github.com/fabianmichael/kirby-markdown-field/)
-
-Huge codebase that I don't understand. Trust me, I've tried.
-
-## Example blueprint
-
-```yml
-tiptap:
-  buttons:
-    - headings:
-        - 1
-        - 2
-        - 3
-    - "|"
-    - bold
-    - italic
-    - code
-    - strike
-    - "|"
-    - "link"
-    - "|"
-    - "bulletList"
-    - "orderedList"
-```
-
-## In the frontend
-
-```php
-// Converting the fields' JSON into HTML without any options
-echo $page->text()->tiptapText();
-
-// Offsetting the heading levels by 1
-echo $page->text()->tiptapText(['offsetHeadings' => 1]);
-```
-
-## Features
-
-- [x] Regular field features
-  - [x] Required
-  - [x] Default
-  - [x] Placeholder
-  - [x] Counter
-  - [x] Disabled
-  - [x] Help
-  - [x] Size
-  - [x] Disabling spellcheck
-  - [x] Validations: maxlength/minlength
-  - [x] Configurable buttons (including keyboard shortcuts, paste rules)
-- [x] Simplified node/marks distinction
-- [x] Saves JSON
-- [x] Configuration of headline levels
-- [x] Kirbytag highlighting
-- [x] Custom highlights via config option
-- [x] Offset headings
-- [x] Image button
-- [x] Invisible characters
-  - [x] Soft hyphen
-  - [x] Non-breaking space
-  - [x] Always (barely) visible instead of button
-- [x] Text replacement for `(-)` with soft hyphen
-- [x] Text replacement for `(_)` with non-breaking space
-- [x] Some improvements over Writer just because of tiptap's amazing groundwork
-  - [x] Click outside reliably removes focus
-  - [x] More reliable arrow keys behavior
-- [x] Drag files/pages with nice [dropcursor](https://tiptap.dev/docs/editor/extensions/functionality/dropcursor) UI
-- [x] Allows HTML like the textarea
-- [x] Better Link Dialog UX
-  - [x] Merged email button with link (why have separate fields?)
-  - [x] Automatic KirbyTag handling (`link`, `email`, `tel`)
-
-## Planned
-
-- [ ] [Codeblocks](https://tiptap.dev/docs/editor/extensions/nodes/code-block)
-- [ ] Image uploads
-- [ ] Custom buttons
-
-## Blockers
-
-- [ ] Different Link Dialogs in Textarea/Writer. See https://github.com/fabianmichael/kirby-markdown-field/issues/189#issuecomment-2072033717
-- [ ] Textarea uses `headlines`, Writer uses `headings` button
-
-## Future
-
-- [ ] Kirbytag button (fetch all Kirbytags except `link`, `image` and `file`?)
-- [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
-- [ ] Replacement for Writer blocks (?)
-- [ ] Attachement/file button (with uploads)
-- [ ] Settings for links
-  - [ ] Upload location
-  - [ ] Link types
-  - [ ] Fields in dialog
-- [ ] "Remove formatting" button (?)
-- [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)
-- [ ] [Blocks replacement](https://templates.tiptap.dev/)
-- [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)
-- [ ] [Real-time collaboration](https://tiptap.dev/product/collaboration)
