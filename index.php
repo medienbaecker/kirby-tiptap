@@ -99,10 +99,11 @@ Kirby::plugin('medienbaecker/tiptap', [
     ]
   ],
   'fieldMethods' => [
-    'tiptapText' => function ($field) {
+    'tiptapText' => function ($field, array $options = []) {
       return convertTiptapToHtml(
         $field->value,
-        $field->parent()
+        $field->parent(),
+        $options
       );
     }
   ]

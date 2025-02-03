@@ -61,10 +61,23 @@ tiptap:
 
 ## Features
 
+- [x] Regular field features
+  - [x] Required
+  - [x] Default
+  - [x] Placeholder
+  - [x] Counter
+  - [x] Disabled
+  - [x] Help
+  - [x] Size
+  - [x] Disabling spellcheck
+  - [x] Validations: maxlength/minlength
+  - [x] Configurable buttons (including keyboard shortcuts, paste rules)
 - [x] Simplified node/marks distinction
+- [x] Saves JSON
 - [x] Configuration of headline levels
 - [x] Kirbytag highlighting
 - [x] Custom highlights via config option
+- [x] Offset headings
 - [x] Invisible characters
   - [x] Soft hyphen
   - [x] Non-breaking space
@@ -81,19 +94,6 @@ tiptap:
 
 ## Necessary for 1.0
 
-- [x] Regular field features
-  - [x] Required
-  - [x] Placeholder
-  - [x] Counter
-  - [x] Disabled
-  - [x] Help
-  - [x] size
-  - [x] spellcheck
-  - [x] maxlength/minlength
-    - [x] Counter
-    - [x] Validation
-  - [x] Allow only visible buttons' formatting
-    - [x] Handle content that contains disabled marks
 - [x] Reverting changes
 - [x] Handle permalinks/UUIDs
 - [x] File/image button

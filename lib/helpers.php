@@ -36,8 +36,13 @@ class KirbyTagNode extends Node
   }
 }
 
-function convertTiptapToHtml($json, $parent)
+function convertTiptapToHtml($json, $parent, array $options = [])
 {
+  // Set default options
+  $options = array_merge([
+    'offsetHeadings' => 0
+  ], $options);
+
   // Handle null or empty string cases
   if ($json === null || $json === '') {
     return '';
@@ -55,7 +60,18 @@ function convertTiptapToHtml($json, $parent)
 
   foreach ($json['content'] as &$node) {
     // Skip if node or content is not properly structured
-    if (!is_array($node) || !isset($node['content']) || !is_array($node['content'])) {
+    if (!is_array($node)) {
+      continue;
+    }
+
+    // Handle heading offset
+    if ($options['offsetHeadings'] > 0 && isset($node['type']) && $node['type'] === 'heading') {
+      $currentLevel = $node['attrs']['level'] ?? 1;
+      $newLevel = min($currentLevel + $options['offsetHeadings'], 6); // Max h6
+      $node['attrs']['level'] = $newLevel;
+    }
+
+    if (!isset($node['content']) || !is_array($node['content'])) {
       continue;
     }
 
