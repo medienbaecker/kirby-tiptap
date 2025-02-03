@@ -54,6 +54,7 @@ echo $page->text()->tiptapText([
 
 ### Coming soon
 
+- [ ] Inline/raw mode without wrapping paragraphs
 - [ ] [Codeblocks](https://tiptap.dev/docs/editor/extensions/nodes/code-block)
 - [ ] Image uploads
 - [ ] Custom buttons
