@@ -69,7 +69,7 @@ export default {
 
 /* Turning buttons grey when not focused */
 :where(.k-tiptap-input):not(:focus-within) {
-  --toolbar-text: light-dark(var(--color-gray-300), var(--color-gray-700));
+  --toolbar-text: var(--color-gray-400);
 }
 
 /* Turning toolbar sticky when focused */
