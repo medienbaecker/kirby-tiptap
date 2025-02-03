@@ -76,18 +76,18 @@ export default {
     emitContent(editor) {
       const content = editor.getJSON();
       const sanitizedContent = this.sanitizer.sanitizeContent(content);
-      const hasContent = sanitizedContent?.content?.length > 0;
 
-      const json = hasContent
-        ? JSON.stringify({
-          type: 'doc',
-          content: sanitizedContent.content
-        })
-        : '';
+      const isEmpty = !sanitizedContent?.content?.length ||
+        (sanitizedContent.content.length === 1 &&
+          sanitizedContent.content[0].type === 'paragraph' &&
+          !sanitizedContent.content[0]?.content);
 
-      this.$emit("input", {
-        json
+      const json = isEmpty ? '' : JSON.stringify({
+        type: 'doc',
+        content: sanitizedContent.content
       });
+
+      this.$emit('input', { json });
     },
 
     /**
