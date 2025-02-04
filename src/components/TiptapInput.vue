@@ -255,7 +255,7 @@ p.is-editor-empty:first-child::before {
 }
 
 /* Poor man's margin-trim  */
-.tiptap :where(p, h1, h2, h3, h4, h5, h6, pre) {
+.tiptap :where(p, h1, h2, h3, h4, h5, h6, pre, ul, ol) {
   &:not(:first-child) {
     margin-block-start: 1em;
   }

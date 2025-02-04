@@ -8,32 +8,28 @@ use Tiptap\Core\Node;
 class KirbyTagNode extends Node
 {
   public static $name = 'kirbyTag';
-
   public static $priority = 100;
 
   public function renderHTML($node, $HTMLAttributes = [])
   {
     $content = html_entity_decode($node->attrs->content ?? '');
-
-    return [
-      'content' => $content
-    ];
-
-    // TODO: Find a way to fix images/figures in paragraphs. The below doesn't play nicely with links
-
-    // // Check if this has a figure tag
-    // if (strpos($content, '<figure') === 0) {
-    //   // Return block without paragraph
-    //   return [
-    //     'content' => $content,
-    //   ];
-    // }
-
-    // // Wrap all other content in paragraphs
-    // return [
-    //   'content' => "<p>{$content}</p>",
-    // ];
+    return ['content' => $content];
   }
+}
+
+function cleanListItemContent($node)
+{
+  if ($node['type'] === 'listItem' && isset($node['content'])) {
+    if (count($node['content']) === 1 && $node['content'][0]['type'] === 'paragraph') {
+      $node['content'] = $node['content'][0]['content'];
+    }
+  }
+
+  if (isset($node['content']) && is_array($node['content'])) {
+    $node['content'] = array_map('cleanListItemContent', $node['content']);
+  }
+
+  return $node;
 }
 
 function convertTiptapToHtml($json, $parent, array $options = [])
@@ -43,12 +39,12 @@ function convertTiptapToHtml($json, $parent, array $options = [])
     'offsetHeadings' => 0
   ], $options);
 
-  // Handle null or empty string cases
+  // Handle invalid input
   if ($json === null || $json === '') {
     return '';
   }
 
-  // If $json is a string, try to decode it
+  // Parse JSON if needed
   if (is_string($json)) {
     $json = json_decode($json, true);
   }
@@ -58,8 +54,11 @@ function convertTiptapToHtml($json, $parent, array $options = [])
     return '';
   }
 
+  // Clean list items
+  $json = cleanListItemContent($json);
+
+  // Process nodes
   foreach ($json['content'] as &$node) {
-    // Skip if node or content is not properly structured
     if (!is_array($node)) {
       continue;
     }
@@ -67,45 +66,47 @@ function convertTiptapToHtml($json, $parent, array $options = [])
     // Handle heading offset
     if ($options['offsetHeadings'] > 0 && isset($node['type']) && $node['type'] === 'heading') {
       $currentLevel = $node['attrs']['level'] ?? 1;
-      $newLevel = min($currentLevel + $options['offsetHeadings'], 6); // Max h6
-      $node['attrs']['level'] = $newLevel;
+      $node['attrs']['level'] = min($currentLevel + $options['offsetHeadings'], 6);
     }
 
     if (!isset($node['content']) || !is_array($node['content'])) {
       continue;
     }
 
-    // Process each text node in the content array
+    // Process content nodes
     foreach ($node['content'] as &$contentNode) {
-      if (isset($contentNode['text'])) {
-        $text = $contentNode['text'];
+      if (!isset($contentNode['text'])) {
+        continue;
+      }
 
-        // Only process if text contains potential UUID patterns
-        if (str_contains($text, '://')) {
-          $text = preg_replace_callback('/(page|file):\/\/[a-zA-Z0-9-]+/', function ($matches) {
-            try {
-              if ($url = Uuid::for($matches[0])?->model()?->url()) {
-                return $url;
-              }
-            } catch (InvalidArgumentException) {
-              // ignore anything else than permalinks
+      $text = $contentNode['text'];
+
+      // Process UUIDs
+      if (str_contains($text, '://')) {
+        $text = preg_replace_callback('/(page|file):\/\/[a-zA-Z0-9-]+/', function ($matches) {
+          try {
+            if ($url = Uuid::for($matches[0])?->model()?->url()) {
+              return $url;
             }
-            return $matches[0];
-          }, $text);
-        }
+          } catch (InvalidArgumentException) {
+            // Ignore invalid UUIDs
+          }
+          return $matches[0];
+        }, $text);
+      }
 
-        // Then parse Kirbytags
-        $parsed = KirbyTags::parse($text, ['parent' => $parent]);
+      // Process KirbyTags
+      $parsed = KirbyTags::parse($text, ['parent' => $parent]);
 
-        if ($parsed !== strip_tags($parsed)) {
-          $contentNode['type'] = 'kirbyTag';
-          $contentNode['attrs'] = ['content' => $parsed];
-          unset($contentNode['text']);
-        }
+      if ($parsed !== strip_tags($parsed)) {
+        $contentNode['type'] = 'kirbyTag';
+        $contentNode['attrs'] = ['content' => $parsed];
+        unset($contentNode['text']);
       }
     }
   }
 
+  // Convert to HTML
   try {
     return (new Editor([
       'extensions' => [
@@ -113,8 +114,7 @@ function convertTiptapToHtml($json, $parent, array $options = [])
         new KirbyTagNode()
       ]
     ]))->setContent($json)->getHTML();
-  } catch (\Exception $e) {
-    // Handle any errors during HTML conversion
+  } catch (\Exception) {
     return '';
   }
 }
