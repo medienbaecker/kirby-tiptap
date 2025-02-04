@@ -1,5 +1,5 @@
 <template>
-  <ToolbarButton icon="image" title="Image" :editor="editor" :command="handleImage" active-check="image" />
+  <ToolbarButton icon="image" title="Image" :editor="editor" :command="handleImage" />
 </template>
 
 <script>

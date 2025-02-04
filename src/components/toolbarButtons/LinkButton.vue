@@ -1,5 +1,5 @@
 <template>
-  <ToolbarButton icon="url" title="Link" :editor="editor" :command="handleLink" active-check="link" />
+  <ToolbarButton icon="url" title="Link" :editor="editor" :command="handleLink" />
 </template>
 
 <script>
