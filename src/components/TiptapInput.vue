@@ -141,7 +141,7 @@ export default {
         type: 'doc',
         content: sanitizedContent.content,
         inline: this.inline
-      });
+      }, null, this.pretty ? 2 : 0);
 
       this.$emit('input', { json });
     },

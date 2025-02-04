@@ -51,6 +51,7 @@ tiptap:
   counter: false # disable character counter
   size: small # small, medium, large, huge or the default auto
   spellcheck: false # disable spellcheck
+  pretty: true # pretty-print JSON in content file
   required: true
   placeholder: My placeholder
   default: My default content

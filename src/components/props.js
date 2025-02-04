@@ -3,6 +3,7 @@ export const props = {
   type: String,
   label: String,
   value: String,
+  pretty: Boolean,
   placeholder: String,
   disabled: Boolean,
   required: Boolean,
