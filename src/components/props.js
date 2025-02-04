@@ -1,6 +1,5 @@
 export const props = {
   name: String,
-  type: String,
   label: String,
   value: String,
   pretty: Boolean,
