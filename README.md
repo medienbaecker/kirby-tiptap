@@ -2,7 +2,7 @@
 
 A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https://getkirby.com).
 
-![Preview](https://github.com/user-attachments/assets/a2a8b993-be12-4f6a-bb1f-bd2fd33e355c)
+![Preview](https://github.com/user-attachments/assets/4f047ada-3325-4bc2-a8af-875f48c53f81)
 
 ## Features
 
