@@ -130,6 +130,7 @@ export default {
 
     emitContent(editor) {
       const content = editor.getJSON();
+
       const sanitizedContent = this.sanitizer.sanitizeContent(content);
 
       const isEmpty = !sanitizedContent?.content?.length ||
@@ -183,10 +184,6 @@ export default {
         .focus()
         .insertContentAt(pos, content, {
           parseOptions: { preserveWhitespace: true }
-        })
-        .setTextSelection({
-          from: pos + (needsSpace ? 1 : 0),
-          to: pos + dragData.length + (needsSpace ? 1 : 0)
         })
         .unsetAllMarks()
         .run();
@@ -260,7 +257,7 @@ export default {
   outline: none;
   width: 100%;
   min-height: var(--tiptap-size);
-  line-height: 1.5rem;
+  line-height: var(--leading-normal);
 }
 
 /* Sizes to be configured with the size option */
@@ -292,11 +289,11 @@ p.is-editor-empty:first-child::before {
 /* Poor man's margin-trim  */
 .k-tiptap-input:not([data-inline="true"]) .tiptap>* {
   &:not(:first-child) {
-    margin-block-start: 1em;
+    margin-block-start: calc(1em * var(--leading-normal));
   }
 
   &:not(:last-child) {
-    margin-block-end: 1em;
+    margin-block-end: calc(var(--text-sm) * var(--leading-normal));
   }
 }
 
@@ -359,9 +356,8 @@ p.is-editor-empty:first-child::before {
   list-style-type: decimal;
 }
 
-/* Code/Kirbytags */
-.tiptap code,
-.tiptap .kirbytag {
+/* Code */
+.tiptap code {
   padding: var(--spacing-1);
   font-size: var(--code-inline-font-size);
   font-family: var(--code-font-family);
@@ -376,11 +372,13 @@ p.is-editor-empty:first-child::before {
   display: block;
 }
 
-/* Special colors for Kirbytags */
+/* Kirbytags */
 .tiptap .kirbytag {
-  color: var(--color-green-900);
-  background: var(--color-green-100);
-  outline: 1px solid var(--color-green-400);
+  margin: calc(.1em * -1);
+  padding: .1em;
+  border-radius: var(--rounded);
+  color: var(--color-yellow-900);
+  background: var(--color-yellow-200);
 }
 
 /* Invisible characters */
