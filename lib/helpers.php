@@ -49,6 +49,9 @@ function convertTiptapToHtml($json, $parent, array $options = [])
     $json = json_decode($json, true);
   }
 
+  // Check if inline mode is active
+  $isInline = $json['inline'] ?? false;
+
   // Validate JSON structure
   if (!is_array($json) || !isset($json['content']) || !is_array($json['content'])) {
     return '';
@@ -108,12 +111,25 @@ function convertTiptapToHtml($json, $parent, array $options = [])
 
   // Convert to HTML
   try {
-    return (new Editor([
+    $html = (new Editor([
       'extensions' => [
         new \Tiptap\Extensions\StarterKit(),
         new KirbyTagNode()
       ]
     ]))->setContent($json)->getHTML();
+
+    // For inline mode, convert paragraphs to line breaks
+    if ($isInline) {
+      // Remove opening <p> tags
+      $html = str_replace('<p>', '', $html);
+      // Convert closing </p> tags to line breaks
+      $html = str_replace('</p>', '<br>', $html);
+      // Keep existing <br> tags
+      $html = preg_replace('/<br>(\s*<br>)+/', '<br><br>', $html); // normalize multiple breaks
+      $html = rtrim($html, '<br>'); // remove trailing break
+    }
+
+    return $html;
   } catch (\Exception) {
     return '';
   }

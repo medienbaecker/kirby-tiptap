@@ -35,6 +35,7 @@ Kirby::plugin('medienbaecker/tiptap', [
           'bulletList',
           'orderedList'
         ]) {
+          if ($buttons === false) return [];
           return $buttons;
         },
         'highlights' => function () {

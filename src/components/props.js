@@ -1,4 +1,6 @@
 export const props = {
+  name: String,
+  type: String,
   label: String,
   value: String,
   placeholder: String,
@@ -10,6 +12,7 @@ export const props = {
   maxlength: Number,
   size: String,
   buttons: Array,
+  inline: Boolean,
   highlights: Array,
   kirbytags: Array,
   endpoints: Object,

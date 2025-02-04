@@ -1,6 +1,7 @@
 <template>
   <div class="k-tiptap-input-wrapper">
-    <toolbar v-if="editor && !disabled" v-bind="$props" :editor="editor" />
+    <toolbar v-if="editor && !disabled && allowedButtons.length" v-bind="$props" :editor="editor"
+      :buttons="allowedButtons" />
     <editor-content :editor="editor" />
   </div>
 </template>
@@ -26,24 +27,82 @@ export default {
     sanitizer: null
   }),
 
+  computed: {
+    /**
+     * Returns filtered buttons based on inline mode
+     * @returns {Array} Filtered buttons array
+     */
+    allowedButtons() {
+      if (!this.inline) {
+        return this.buttons;
+      }
+
+      const blockElements = ['codeBlock', 'bulletList', 'orderedList', 'image'];
+
+      return this.buttons
+        .filter(btn => {
+          // Handle headings object specially
+          if (typeof btn === 'object' && 'headings' in btn) {
+            return false;
+          }
+          // Handle regular buttons
+          return !blockElements.includes(btn);
+        })
+        .filter((btn, i, arr) => {
+          // Remove separators at beginning or end
+          return btn !== '|' || (i !== 0 && i !== arr.length - 1);
+        });
+    },
+
+    /**
+     * Returns StarterKit configuration based on allowed buttons
+     * @returns {Object} StarterKit configuration
+     */
+    starterKitConfig() {
+      const defaultConfig = {
+        dropcursor: {
+          width: 2,
+          color: 'var(--color-blue-600)'
+        }
+      };
+
+      const buttonConfigs = {
+        heading: btn => typeof btn === 'object' ? 'headings' in btn : btn === 'headings',
+        bold: 'bold',
+        italic: 'italic',
+        strike: 'strike',
+        code: 'code',
+        codeBlock: 'codeBlock',
+        bulletList: 'bulletList',
+        orderedList: 'orderedList'
+      };
+
+      return Object.entries(buttonConfigs).reduce((config, [feature, buttonName]) => {
+        if (typeof buttonName === 'function') {
+          config[feature] = this.allowedButtons.some(buttonName);
+        } else {
+          config[feature] = this.allowedButtons.includes(buttonName);
+        }
+        return config;
+      }, defaultConfig);
+    }
+  },
+
   created() {
     this.sanitizer = new ContentSanitizer(this.buttons);
   },
 
   watch: {
     value: {
-      /**
-       * We have to watch for external value changes because the user can "Revert" changes
-       * Note: couldn't this be handled more elegantly?
-       */
-      handler(newValue, oldValue) {
-        if (this.editor && newValue !== oldValue) {
+      handler(newValue) {
+        if (this.editor) {
           const newContent = this.parseContent(newValue);
           const currentContent = this.editor.getJSON();
 
-          // Only update if content actually differs
           if (JSON.stringify(newContent) !== JSON.stringify(currentContent)) {
+            const { from, to } = this.editor.state.selection;
             this.editor.commands.setContent(newContent, false);
+            this.editor.commands.setTextSelection({ from, to });
           }
         }
       },
@@ -69,10 +128,6 @@ export default {
       }
     },
 
-    /**
-     * Emits the current editor content state
-     * @param {Editor} editor - The Tiptap editor instance
-     */
     emitContent(editor) {
       const content = editor.getJSON();
       const sanitizedContent = this.sanitizer.sanitizeContent(content);
@@ -84,36 +139,84 @@ export default {
 
       const json = isEmpty ? '' : JSON.stringify({
         type: 'doc',
-        content: sanitizedContent.content
+        content: sanitizedContent.content,
+        inline: this.inline
       });
 
       this.$emit('input', { json });
     },
 
-    /**
-     * Creates and configures a new Tiptap editor instance
-     */
+    handlePaste(view, event, slice) {
+      const selection = view.state.selection;
+      const selectedText = !selection.empty
+        ? view.state.doc.textBetween(selection.from, selection.to)
+        : '';
+
+      if (selectedText) {
+        const pastedText = event.clipboardData.getData('text/plain').trim();
+        const urlPattern = /^(https?:\/\/|mailto:|tel:)/i;
+
+        if (urlPattern.test(pastedText)) {
+          const kirbyTag = `(link: ${pastedText} text: ${selectedText})`;
+
+          this.editor
+            .chain()
+            .focus()
+            .insertContentAt(selection, kirbyTag)
+            .run();
+
+          event.preventDefault();
+          return true;
+        }
+      }
+      return false;
+    },
+
+    handleTextDrop(coordinates, dragData) {
+      const pos = coordinates.pos;
+      const prevChar = pos > 0 ? this.editor.state.doc.textBetween(pos - 1, pos) : '';
+      const needsSpace = prevChar && prevChar !== ' ';
+      const content = needsSpace ? ' ' + dragData : dragData;
+
+      this.editor
+        .chain()
+        .focus()
+        .insertContentAt(pos, content, {
+          parseOptions: { preserveWhitespace: true }
+        })
+        .setTextSelection({
+          from: pos + (needsSpace ? 1 : 0),
+          to: pos + dragData.length + (needsSpace ? 1 : 0)
+        })
+        .unsetAllMarks()
+        .run();
+    },
+
+    handleDrop(view, event, slice, moved) {
+      if (!moved && this.$panel.drag.data) {
+        const coordinates = view.posAtCoords({
+          left: event.clientX,
+          top: event.clientY
+        });
+
+        if (this.$panel.drag.type === "text") {
+          this.handleTextDrop(coordinates, this.$panel.drag.data);
+        } else if (this.$helper.isUploadEvent(event)) {
+          alert('File uploads are not possible yet');
+        }
+
+        return true;
+      }
+      return false;
+    },
+
     createEditor() {
       const content = this.parseContent(this.value);
 
       this.editor = new Editor({
         content,
         extensions: [
-          StarterKit.configure({
-            dropcursor: {
-              width: 2,
-              color: 'var(--color-blue-600)'
-            },
-            heading: this.buttons.some(btn =>
-              typeof btn === 'object' ? 'headings' in btn : btn === 'headings'
-            ),
-            bold: this.buttons.includes('bold'),
-            italic: this.buttons.includes('italic'),
-            code: this.buttons.includes('code'),
-            strike: this.buttons.includes('strike'),
-            bulletList: this.buttons.includes('bulletList'),
-            orderedList: this.buttons.includes('orderedList'),
-          }),
+          StarterKit.configure(this.starterKitConfig),
           Placeholder.configure({
             placeholder: this.placeholder
           }),
@@ -130,83 +233,15 @@ export default {
           Replacements
         ],
         editorProps: {
-          transformPasted: (content) => {
-            return this.sanitizer.sanitizeContent(content);
-          },
-
-          handlePaste: (view, event, slice) => {
-            // Check if there's text selected and if the pasted content is a URL
-            const selection = view.state.selection;
-            const selectedText = !selection.empty
-              ? view.state.doc.textBetween(selection.from, selection.to)
-              : '';
-
-            if (selectedText) {
-              const pastedText = event.clipboardData.getData('text/plain').trim();
-
-              const urlPattern = /^(https?:\/\/|mailto:|tel:)/i;
-              if (urlPattern.test(pastedText)) {
-                // Insert Kirby tag
-                const kirbyTag = `(link: ${pastedText} text: ${selectedText})`;
-
-                this.editor
-                  .chain()
-                  .focus()
-                  .insertContentAt(selection, kirbyTag)
-                  .run();
-
-                event.preventDefault();
-                return true;
-              }
-            }
-
-            // Fall back to default paste handling
-            return false;
-          },
-
-          handleDrop: (view, event, slice, moved) => {
-            if (!moved && this.$panel.drag.data) {
-              const coordinates = view.posAtCoords({
-                left: event.clientX,
-                top: event.clientY
-              });
-
-              const dragData = this.$panel.drag.data;
-
-              // Dropping text (KirbyTags)
-              if (this.$panel.drag.type === "text") {
-                const pos = coordinates.pos;
-                const prevChar = pos > 0 ? view.state.doc.textBetween(pos - 1, pos) : '';
-                const needsSpace = prevChar && prevChar !== ' ';
-
-                this.editor
-                  .chain()
-                  .focus()
-                  .insertContentAt(pos, needsSpace ? ' ' + dragData : dragData, {
-                    parseOptions: { preserveWhitespace: true }
-                  })
-                  .setTextSelection({ from: pos + (needsSpace ? 1 : 0), to: pos + dragData.length + (needsSpace ? 1 : 0) })
-                  .unsetAllMarks()
-                  .run();
-              }
-
-              // Dropping files
-              if (this.$helper.isUploadEvent(event)) {
-                alert('File uploads are not possible yet')
-              }
-
-              return true;
-            }
-            return false;
-          }
+          transformPasted: content => this.sanitizer.sanitizeContent(content),
+          handlePaste: this.handlePaste,
+          handleDrop: this.handleDrop
         },
         onCreate: ({ editor }) => {
           editor.view.dom.setAttribute("spellcheck", this.spellcheck);
-          this.$emit('editor', editor); // Emit editor instance to parent
+          this.$emit('editor', editor);
         },
-        onUpdate: ({ editor }) => {
-          this.emitContent(editor);
-        }
+        onUpdate: ({ editor }) => this.emitContent(editor)
       });
     }
   }
@@ -255,7 +290,7 @@ p.is-editor-empty:first-child::before {
 }
 
 /* Poor man's margin-trim  */
-.tiptap :where(p, h1, h2, h3, h4, h5, h6, pre, ul, ol) {
+.k-tiptap-input:not([data-inline="true"]) .tiptap>* {
   &:not(:first-child) {
     margin-block-start: 1em;
   }
