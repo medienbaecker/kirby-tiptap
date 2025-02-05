@@ -60,6 +60,27 @@ function convertTiptapToHtml($json, $parent, array $options = [])
   // Clean list items
   $json = cleanListItemContent($json);
 
+  // Handle inline mode
+  if ($isInline) {
+    $newContent = [];
+    foreach ($json['content'] as $index => $node) {
+      if ($node['type'] === 'paragraph') {
+        // Add line break between paragraphs
+        if ($index > 0) {
+          $newContent[] = ['type' => 'hardBreak'];
+        }
+        // Add all content from the paragraph
+        foreach ($node['content'] as $content) {
+          $newContent[] = $content;
+        }
+      } else {
+        $newContent[] = $node;
+      }
+    }
+    $json['content'] = $newContent;
+    $json['type'] = 'paragraph'; // Wrap everything in a single paragraph
+  }
+
   // Process nodes
   foreach ($json['content'] as &$node) {
     if (!is_array($node)) {
@@ -105,6 +126,8 @@ function convertTiptapToHtml($json, $parent, array $options = [])
         $contentNode['type'] = 'kirbyTag';
         $contentNode['attrs'] = ['content' => $parsed];
         unset($contentNode['text']);
+      } else {
+        $contentNode['text'] = $text;
       }
     }
   }
@@ -118,15 +141,9 @@ function convertTiptapToHtml($json, $parent, array $options = [])
       ]
     ]))->setContent($json)->getHTML();
 
-    // For inline mode, convert paragraphs to line breaks
-    if ($isInline) {
-      // Remove opening <p> tags
-      $html = str_replace('<p>', '', $html);
-      // Convert closing </p> tags to line breaks
-      $html = str_replace('</p>', '<br>', $html);
-      // Keep existing <br> tags
-      $html = preg_replace('/<br>(\s*<br>)+/', '<br><br>', $html); // normalize multiple breaks
-      $html = rtrim($html, '<br>'); // remove trailing break
+    // Handle Smartypants
+    if (option('smartypants', false) !== false) {
+      $html = smartypants($html);
     }
 
     return $html;
