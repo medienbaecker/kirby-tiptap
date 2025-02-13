@@ -66,6 +66,7 @@ export default {
   border-bottom: 1px solid var(--toolbar-border);
   border-end-start-radius: 0;
   border-end-end-radius: 0;
+  scrollbar-width: thin;
 }
 
 /* Turning buttons grey when not focused */

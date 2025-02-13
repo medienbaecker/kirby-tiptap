@@ -1,5 +1,5 @@
 <template>
-  <div class="k-headings-buttons">
+  <div class="tiptap-headings">
     <ToolbarButton v-for="level in levels" :key="level" :icon="`h${level}`" :title="`Heading ${level}`" :editor="editor"
       :command="() => toggleHeading(level)" :active-check="() => editor.isActive('heading', { level })" />
   </div>
@@ -29,3 +29,9 @@ export default {
   }
 }
 </script>
+
+<style>
+.tiptap-headings {
+  white-space: nowrap;
+}
+</style>
