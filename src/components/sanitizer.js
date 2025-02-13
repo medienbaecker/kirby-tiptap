@@ -20,6 +20,11 @@ export class ContentSanitizer {
     const sanitizeNode = (node) => {
       if (!node) return node
 
+      // Ensure paragraphs always have a content array
+      if (node.type === "paragraph" && !node.content) {
+        node.content = []
+      }
+
       // Filter out disabled marks
       if (node.marks) {
         node.marks = node.marks.filter((mark) =>
@@ -37,7 +42,7 @@ export class ContentSanitizer {
           (this.headingLevels.length &&
             !this.headingLevels.includes(node.attrs?.level))
         ) {
-          node = { type: "paragraph", content: node.content }
+          node = { type: "paragraph", content: node.content || [] }
         }
       }
 
@@ -47,7 +52,7 @@ export class ContentSanitizer {
       ) {
         node = {
           type: "paragraph",
-          content: node.content?.flatMap((item) => item.content || []),
+          content: node.content?.flatMap((item) => item.content || []) || [],
         }
       }
 
