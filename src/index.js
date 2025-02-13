@@ -1,8 +1,12 @@
 import Tiptap from "./components/Tiptap.vue"
+import TiptapFieldPreview from "./components/TiptapFieldPreview.vue"
 
 panel.plugin("medienbaecker/tiptap", {
   fields: {
     tiptap: Tiptap,
+  },
+  components: {
+    "k-tiptap-field-preview": TiptapFieldPreview,
   },
   icons: {
     "code-block":
