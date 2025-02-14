@@ -13,6 +13,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 🛼 **Inline mode** for paragraph-free content with buttons being disabled automatically
 - 🧠 **One method to rule them all** with `tiptapText()` handling [UUID resolution](https://getkirby.com/docs/reference/templates/field-methods/permalinks-to-urls), [smartypants](https://getkirby.com/docs/reference/system/options/smartypants), automatic [inline mode](https://getkirby.com/docs/reference/templates/helpers/kirbytextinline) and more
 - ✨ **Intuitive drag & drop support** for pages and files with intelligent spacing
+- 👀 **Custom field preview** showing formatted text in structure fields
 - 🔗 **Improved link handling** with a dialog that automatically picks the right KirbyTag (`(link: )`, `(email: )`, `(file: )`or `(tel: )`) and a paste handler that adds link tags to the selected text
 - 🌈 **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
 - 📋 **Abstracted JSON structure** for easy content manipulation with features like `offsetHeadings`
