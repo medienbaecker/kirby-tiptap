@@ -1,8 +1,8 @@
 <template>
-  <nav class="k-toolbar" v-if="editor">
+  <nav class="k-toolbar tiptap-toolbar" v-if="editor">
     <template v-for="button in normalizedButtons">
       <component v-if="!isSeperator(button)" :is="buttonComponents[getComponentName(button)]" :key="getKey(button)"
-        v-bind="$props" :levels="getLevels(button)" />
+        :editor="editor" :levels="getLevels(button)" />
       <hr v-else />
     </template>
   </nav>
@@ -60,13 +60,21 @@ export default {
 </script>
 
 <style>
-/* Base styles for the toolbar */
-.k-toolbar {
-  margin-bottom: 0;
+.tiptap-toolbar {
+
+  /* Default styles */
   border-bottom: 1px solid var(--toolbar-border);
   border-end-start-radius: 0;
   border-end-end-radius: 0;
+
+  /* Improving on k-toolbar: */
+
+  /* Grow toolbar height with scrollbar */
+  height: auto;
   scrollbar-width: thin;
+
+  /* More subtle hover for better combination with blue (active) */
+  --toolbar-hover: light-dark(var(--color-gray-100), var(--color-gray-800));
 }
 
 /* Turning buttons grey when not focused */
@@ -75,7 +83,7 @@ export default {
 }
 
 /* Turning toolbar sticky when focused */
-:where(.k-tiptap-input):focus-within .k-toolbar {
+:where(.k-tiptap-input):focus-within .tiptap-toolbar {
   position: sticky;
   top: var(--header-sticky-offset);
   inset-inline: 0;

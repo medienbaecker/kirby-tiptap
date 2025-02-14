@@ -32,6 +32,6 @@ export default {
 
 <style>
 .tiptap-headings {
-  white-space: nowrap;
+  display: flex;
 }
 </style>

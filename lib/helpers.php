@@ -32,6 +32,46 @@ function cleanListItemContent($node)
   return $node;
 }
 
+function processContent(&$node, $parent)
+{
+  // Process current node's text if it exists
+  if (isset($node['text'])) {
+    $text = $node['text'];
+
+    // Process UUIDs
+    if (str_contains($text, '://')) {
+      $text = preg_replace_callback('/(page|file):\/\/[a-zA-Z0-9-]+/', function ($matches) {
+        try {
+          if ($url = Uuid::for($matches[0])?->model()?->url()) {
+            return $url;
+          }
+        } catch (InvalidArgumentException) {
+          // Ignore invalid UUIDs
+        }
+        return $matches[0];
+      }, $text);
+    }
+
+    // Process KirbyTags
+    $parsed = KirbyTags::parse($text, ['parent' => $parent]);
+
+    if ($parsed !== strip_tags($parsed)) {
+      $node['type'] = 'kirbyTag';
+      $node['attrs'] = ['content' => $parsed];
+      unset($node['text']);
+    } else {
+      $node['text'] = $text;
+    }
+  }
+
+  // Recursively process nested content
+  if (isset($node['content']) && is_array($node['content'])) {
+    foreach ($node['content'] as &$contentNode) {
+      processContent($contentNode, $parent);
+    }
+  }
+}
+
 function convertTiptapToHtml($json, $parent, array $options = [])
 {
   // Set default options
@@ -93,43 +133,8 @@ function convertTiptapToHtml($json, $parent, array $options = [])
       $node['attrs']['level'] = min($currentLevel + $options['offsetHeadings'], 6);
     }
 
-    if (!isset($node['content']) || !is_array($node['content'])) {
-      continue;
-    }
-
-    // Process content nodes
-    foreach ($node['content'] as &$contentNode) {
-      if (!isset($contentNode['text'])) {
-        continue;
-      }
-
-      $text = $contentNode['text'];
-
-      // Process UUIDs
-      if (str_contains($text, '://')) {
-        $text = preg_replace_callback('/(page|file):\/\/[a-zA-Z0-9-]+/', function ($matches) {
-          try {
-            if ($url = Uuid::for($matches[0])?->model()?->url()) {
-              return $url;
-            }
-          } catch (InvalidArgumentException) {
-            // Ignore invalid UUIDs
-          }
-          return $matches[0];
-        }, $text);
-      }
-
-      // Process KirbyTags
-      $parsed = KirbyTags::parse($text, ['parent' => $parent]);
-
-      if ($parsed !== strip_tags($parsed)) {
-        $contentNode['type'] = 'kirbyTag';
-        $contentNode['attrs'] = ['content' => $parsed];
-        unset($contentNode['text']);
-      } else {
-        $contentNode['text'] = $text;
-      }
-    }
+    // Process all content recursively
+    processContent($node, $parent);
   }
 
   // Convert to HTML

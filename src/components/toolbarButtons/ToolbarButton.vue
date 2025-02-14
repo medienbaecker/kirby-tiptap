@@ -1,31 +1,16 @@
 <template>
-  <k-button :icon="icon" :title="title" :ariaLabel="title" :class="['k-toolbar-button', 'k-markdown-button']"
+  <k-button :icon="icon" :title="title" :ariaLabel="title" :class="['k-toolbar-button', 'tiptap-button']"
     :current="isActive" @mousedown.prevent @click="runCommand" />
 </template>
 
 <script>
 export default {
   props: {
-    icon: {
-      type: String,
-      required: true
-    },
-    title: {
-      type: String,
-      required: true
-    },
-    editor: {
-      type: Object,
-      required: true
-    },
-    command: {
-      type: String,
-      required: true
-    },
-    activeCheck: {
-      type: [String, Function],
-      required: true
-    }
+    icon: String,
+    title: String,
+    editor: Object,
+    command: [String, Function],
+    activeCheck: [String, Function]
   },
   computed: {
     isActive() {
@@ -47,4 +32,14 @@ export default {
 }
 </script>
 
-<style></style>
+<style>
+.tiptap-button {
+  display: flex;
+}
+
+/* Makes sure nested buttons (like the first heading) are also rounded */
+.tiptap-button:first-child {
+  border-start-start-radius: var(--rounded);
+  border-end-start-radius: var(--rounded)
+}
+</style>
