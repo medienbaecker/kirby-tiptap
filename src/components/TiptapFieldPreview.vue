@@ -9,7 +9,6 @@
 <script>
 import { generateHTML } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
-
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 
 export default {
@@ -21,9 +20,39 @@ export default {
     html() {
       const json = JSON.parse(this.value);
 
-      return generateHTML(json, [
-        StarterKit
-      ]);
+      // Handle inline mode
+      if (json.inline === true) {
+        const newContent = [];
+
+        json.content.forEach((node, index) => {
+          if (node.type === 'paragraph') {
+            // Add line break between paragraphs
+            if (index > 0) {
+              newContent.push({ type: 'hardBreak' });
+            }
+            // Add all content from the paragraph
+            node.content.forEach(content => {
+              newContent.push(content);
+            });
+          } else {
+            newContent.push(node);
+          }
+        });
+
+        // Create new JSON structure with single paragraph
+        const inlineJson = {
+          type: 'doc',
+          content: [{
+            type: 'paragraph',
+            content: newContent
+          }]
+        };
+
+        return generateHTML(inlineJson, [StarterKit]);
+      }
+
+      // Regular non-inline mode
+      return generateHTML(json, [StarterKit]);
     }
   }
 };
