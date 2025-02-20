@@ -129,14 +129,26 @@ export default {
     },
 
     emitContent(editor) {
+      if (!editor) {
+        this.$emit('input', { json: '' });
+        return;
+      }
+
       const content = editor.getJSON();
+
+      if (!content) {
+        this.$emit('input', { json: '' });
+        return;
+      }
 
       const sanitizedContent = this.sanitizer.sanitizeContent(content);
 
-      const isEmpty = !sanitizedContent?.content?.length ||
-        (sanitizedContent.content.length === 1 &&
-          sanitizedContent.content[0].type === 'paragraph' &&
-          !sanitizedContent.content[0]?.content);
+      if (!sanitizedContent || !sanitizedContent.content) {
+        this.$emit('input', { json: '' });
+        return;
+      }
+
+      const isEmpty = this.isContentEmpty(sanitizedContent);
 
       const json = isEmpty ? '' : JSON.stringify({
         type: 'doc',
@@ -145,6 +157,28 @@ export default {
       }, null, this.pretty ? 2 : 0);
 
       this.$emit('input', { json });
+    },
+
+    isContentEmpty(sanitizedContent) {
+      // Check if content array exists and has items
+      if (!Array.isArray(sanitizedContent.content) || sanitizedContent.content.length === 0) {
+        return true;
+      }
+
+      // If there's only one element
+      if (sanitizedContent.content.length === 1) {
+        const firstNode = sanitizedContent.content[0];
+
+        // Check if element has content array
+        if (!Array.isArray(firstNode.content)) {
+          return true;
+        }
+
+        // Check if content is empty
+        return firstNode.content.length === 0;
+      }
+
+      return false;
     },
 
     handlePaste(view, event, slice) {
