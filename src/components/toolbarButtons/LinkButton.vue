@@ -18,14 +18,63 @@ export default {
   },
 
   methods: {
-    handleLink(editor) {
+    /**
+     * Basic email validation using regex
+     */
+    isValidEmail(text) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(text);
+    },
 
+    /**
+     * Validates URLs by attempting to construct a URL object
+     */
+    isValidUrl(text) {
+      try {
+        new URL(text);
+        return text.startsWith('http://') || text.startsWith('https://');
+      } catch {
+        return false;
+      }
+    },
+
+    /**
+     * Determines initial dialog values based on selected text
+     * - For emails: prefills mailto: link
+     * - For URLs: prefills the URL
+     * - For regular text: uses it as link text
+     */
+    getInitialValues(selectedText) {
+      if (this.isValidEmail(selectedText)) {
+        return {
+          href: `mailto:${selectedText}`,
+          text: ''
+        };
+      }
+
+      if (this.isValidUrl(selectedText)) {
+        return {
+          href: selectedText,
+          text: ''
+        };
+      }
+
+      return {
+        href: '',
+        text: selectedText
+      };
+    },
+
+    handleLink(editor) {
+      // Get text from current selection, or empty string if nothing selected
       const selectedText = !editor.state.selection.empty
         ? editor.state.doc.textBetween(
           editor.state.selection.from,
           editor.state.selection.to
         )
         : '';
+
+      const initialValues = this.getInitialValues(selectedText);
 
       this.$panel.dialog.open({
         component: 'k-link-dialog',
@@ -34,18 +83,14 @@ export default {
             href: {
               label: window.panel.$t("link"),
               type: "link",
-              placeholder: window.panel.$t("url.placeholder"),
-              icon: "url"
+              placeholder: window.panel.$t("url.placeholder")
             },
             text: {
               label: window.panel.$t("link.text"),
               type: "text",
-              value: selectedText
             }
           },
-          value: {
-            text: selectedText
-          },
+          value: initialValues,
           submitButton: window.panel.$t("insert")
         },
         on: {
@@ -61,7 +106,7 @@ export default {
               return;
             }
 
-            // Turn permalinks into UUIDs
+            // Convert permalinks to UUIDs
             const href = values.href
               .replace("/@/file/", "file://")
               .replace("/@/page/", "page://")
@@ -73,6 +118,9 @@ export default {
       });
     },
 
+    /**
+     * Converts links to Kirbytags based on link type
+     */
     getKirbyTag(href, text) {
       if (href.startsWith('mailto:')) {
         const email = href.replace('mailto:', '');
@@ -88,7 +136,6 @@ export default {
           : `(tel: ${phone})`;
       }
 
-      // Default link handling
       return text
         ? `(link: ${href} text: ${text})`
         : `(link: ${href})`;
