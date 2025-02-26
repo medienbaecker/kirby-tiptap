@@ -169,6 +169,11 @@ export default {
       if (sanitizedContent.content.length === 1) {
         const firstNode = sanitizedContent.content[0];
 
+        // Special handling for headings - they're not empty even without content
+        if (firstNode.type === 'heading') {
+          return false;
+        }
+
         // Check if element has content array
         if (!Array.isArray(firstNode.content)) {
           return true;
