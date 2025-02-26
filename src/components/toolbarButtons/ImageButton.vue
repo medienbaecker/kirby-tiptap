@@ -21,6 +21,8 @@ export default {
     handleImage() {
       const restoreSelection = this.restoreSelectionCallback();
 
+      console.log(this.endpoints);
+
       this.$panel.dialog.open({
         component: 'k-files-dialog',
         props: {
