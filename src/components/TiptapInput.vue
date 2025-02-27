@@ -261,6 +261,7 @@ export default {
             highlights: this.highlights
           }),
           InvisibleCharacters.configure({
+            injectCSS: false,
             builders: [
               new SoftHyphenCharacter(),
               new NonBreakingSpaceCharacter()
@@ -421,15 +422,27 @@ p.is-editor-empty:first-child::before {
 }
 
 /* Invisible characters */
-.Tiptap-invisible-character--soft-hyphen::before {
-  content: '';
-  height: 1.25lh;
-  vertical-align: text-top;
-  border-inline-end: 1px solid currentColor;
-  margin-inline: .5px;
+.Tiptap-invisible-character {
+  display: inline-block;
+  position: relative;
+  opacity: .33;
+}
+
+.Tiptap-invisible-character--soft-hyphen {
+  width: 1px;
+  height: 1lh;
+  background-color: currentColor;
+  vertical-align: top;
+}
+
+.Tiptap-invisible-character--non-breaking-space {
+  vertical-align: baseline;
 }
 
 .Tiptap-invisible-character--non-breaking-space::before {
-  content: 'ˍ';
+  content: ' ';
+  position: absolute;
+  height: 1px;
+  background-color: currentColor;
 }
 </style>
