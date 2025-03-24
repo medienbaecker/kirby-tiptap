@@ -2,7 +2,7 @@
 
 A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https://getkirby.com).
 
-![Preview](https://github.com/user-attachments/assets/4f047ada-3325-4bc2-a8af-875f48c53f81)
+![Kirby Tiptap editor with formatting toolbar and example content demonstrating KirbyTags, special character visibility, and the tiptapText() method functionality.](https://github.com/user-attachments/assets/9588f26b-1304-49b2-89f5-cc45e4442935)
 
 ## Features
 
