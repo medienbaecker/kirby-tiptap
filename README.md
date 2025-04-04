@@ -75,6 +75,26 @@ echo $page->text()->tiptapText([
 ]);
 ```
 
+### Configuration
+
+```php
+// site/config/config.php
+return [
+
+  // Supports https://getkirby.com/docs/reference/system/options/smartypants
+  'smartypants' => true,
+
+  // Custom highlights via regex (can be styled via panel CSS)
+  'medienbaecker.tiptap.highlights' => [
+    [
+      'pattern' => '\\b[a-zA-ZäöüÄÖÜß\\w]{20,}\\b',
+      'class' => 'long-word'
+    ]
+  ]
+
+];
+```
+
 ## Ideas for future improvements
 
 - [ ] Custom buttons
