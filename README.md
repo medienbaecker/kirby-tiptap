@@ -75,28 +75,21 @@ echo $page->text()->tiptapText([
 ]);
 ```
 
-## Roadmap
+## Ideas for future improvements
 
-### Coming soon
-
-- [ ] Image uploads
 - [ ] Custom buttons
-
-### Under consideration
-
-- [ ] Kirbytag button (fetch all Kirbytags except `link`, `image` and `file`?)
+- [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
+- [ ] Image/file uploads? (I don't necessarily like how the core textarea handles this with a `link` button allowing to select files and a separate file button with upload functionality)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
-- [ ] Replacement for Writer blocks (?)
-- [ ] Attachement/file button (with uploads)
-- [ ] Settings for links
-  - [ ] Upload location
-  - [ ] Link types
-  - [ ] Fields in dialog
-- [ ] "Remove formatting" button (?)
-- [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)
-- [ ] [Blocks replacement](https://templates.tiptap.dev/)
-- [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)
-- [ ] [Real-time collaboration](https://tiptap.dev/product/collaboration)
+- [ ] Replacement for Writer/Textarea blocks?
+- [ ] Settings for links?
+  - [ ] Link types?
+  - [ ] Fields in dialog?
+- [ ] "Remove formatting" button?
+- [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)?
+- [ ] [Blocks replacement](https://templates.tiptap.dev/)?
+- [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)?
+- [ ] [Real-time collaboration](https://tiptap.dev/product/collaboration)?
 
 ## Motivation
 
