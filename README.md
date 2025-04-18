@@ -96,6 +96,7 @@ return [
 
 ## Ideas for future improvements
 
+- [ ] Localisation of formatting button titles
 - [ ] Custom buttons
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
 - [ ] Image/file uploads? (I don't necessarily like how the core textarea handles this with a `link` button allowing to select files and a separate file button with upload functionality)
