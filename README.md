@@ -27,20 +27,23 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 ```yml
 tiptap:
   buttons:
+    # Default buttons:
     - headings:
         - 1
         - 2
         - 3
     - bold
     - italic
-    - strike
-    - code
-    - codeBlock
     - link
     - image
     - bulletList
     - orderedList
+    # Additional buttons:
+    - strike
+    - code
+    - codeBlock
     - removeFormatting
+    # Divider:
     - "|"
 ```
 
