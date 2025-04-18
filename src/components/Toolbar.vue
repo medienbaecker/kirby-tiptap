@@ -22,7 +22,8 @@ const buttonComponents = {
   link: () => import('./toolbarButtons/LinkButton.vue'),
   image: () => import('./toolbarButtons/ImageButton.vue'),
   bulletList: () => import('./toolbarButtons/BulletListButton.vue'),
-  orderedList: () => import('./toolbarButtons/OrderedListButton.vue')
+  orderedList: () => import('./toolbarButtons/OrderedListButton.vue'),
+  removeFormatting: () => import('./toolbarButtons/RemoveFormattingButton.vue')
 };
 
 export default {

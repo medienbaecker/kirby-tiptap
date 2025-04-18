@@ -31,18 +31,17 @@ tiptap:
         - 1
         - 2
         - 3
-    - "|"
     - bold
     - italic
     - strike
     - code
     - codeBlock
-    - "|"
     - link
     - image
-    - "|"
     - bulletList
     - orderedList
+    - removeFormatting
+    - "|"
 ```
 
 #### Available options
@@ -105,7 +104,6 @@ return [
 - [ ] Settings for links?
   - [ ] Link types?
   - [ ] Fields in dialog?
-- [ ] "Remove formatting" button?
 - [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)?
 - [ ] [Blocks replacement](https://templates.tiptap.dev/)?
 - [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)?
