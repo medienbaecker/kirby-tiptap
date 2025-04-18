@@ -15,5 +15,6 @@ export const props = {
   inline: Boolean,
   highlights: Array,
   kirbytags: Array,
+  links: Object,
   endpoints: Object,
 }

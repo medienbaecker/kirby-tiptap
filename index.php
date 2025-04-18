@@ -43,7 +43,10 @@ Kirby::plugin('medienbaecker/tiptap', [
         },
         'kirbytags' => function () {
           return array_keys($this->kirby()->extensions('tags'));
-        }
+        },
+        'links' => function ($links = []) {
+          return $links;
+        },
       ],
       'validations' => [
         'minlength' => function ($value) {

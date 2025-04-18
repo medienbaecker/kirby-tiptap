@@ -2,7 +2,7 @@
   <nav class="k-toolbar tiptap-toolbar" v-if="editor">
     <template v-for="button in normalizedButtons">
       <component v-if="!isSeperator(button)" :is="buttonComponents[getComponentName(button)]" :key="getKey(button)"
-        :editor="editor" :levels="getLevels(button)" :endpoints="endpoints" />
+        :editor="editor" :levels="getLevels(button)" :links="links" :endpoints="endpoints" />
       <hr v-else />
     </template>
   </nav>
