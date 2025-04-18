@@ -119,9 +119,6 @@ return [
 - [ ] Image/file uploads? (I don't necessarily like how the core textarea handles this with a `link` button allowing to select files and a separate file button with upload functionality)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
 - [ ] Replacement for Writer/Textarea blocks?
-- [ ] Settings for links?
-  - [ ] Link types?
-  - [ ] Fields in dialog?
 - [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)?
 - [ ] [Blocks replacement](https://templates.tiptap.dev/)?
 - [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)?
