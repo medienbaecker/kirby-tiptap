@@ -105,7 +105,8 @@ return [
   'medienbaecker.tiptap.highlights' => [
     [
       'pattern' => '\\b[a-zA-ZäöüÄÖÜß\\w]{20,}\\b',
-      'class' => 'long-word'
+      'class' => 'long-word',
+      'title' => 'Long word (20+ characters)'
     ]
   ]
 

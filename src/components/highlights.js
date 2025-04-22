@@ -46,7 +46,7 @@ export const Highlights = Extension.create({
 
               // Apply custom highlights
               this.options.highlights.forEach(
-                ({ pattern, class: className }) => {
+                ({ pattern, class: className, title }) => {
                   const regex =
                     typeof pattern === "string"
                       ? new RegExp(pattern, "g")
@@ -54,11 +54,18 @@ export const Highlights = Extension.create({
 
                   let match
                   while ((match = regex.exec(node.text))) {
+                    const attrs = { class: className }
+
+                    // Add title attribute if provided
+                    if (title) {
+                      attrs.title = title
+                    }
+
                     decorations.push(
                       Decoration.inline(
                         pos + match.index,
                         pos + match.index + match[0].length,
-                        { class: className }
+                        attrs
                       )
                     )
                   }
