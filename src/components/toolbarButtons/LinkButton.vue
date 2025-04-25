@@ -23,37 +23,42 @@ const normalizeOptions = options => {
  * into an object { href, text, bar: 'baz' }
  */
 const parseKirbyTag = (tagString, fields) => {
-  // Get the tag type and prepare result object
+  // Get tag type
   const typeMatch = tagString.match(/^\((\w+):/);
   const type = typeMatch ? typeMatch[1] : 'link';
   const result = {};
 
-  // Extract attributes using a more reliable method
-  const attributes = {};
-  const attrPattern = /\s*(\w+):\s*([^)]*?)(?=\s+\w+:|$|\))/g;
-  let match;
+  // Create a regex for finding field markers
+  const fieldPattern = /\s+(\w+):\s+/g;
 
-  // Clone the string for safe manipulation
-  let workingString = tagString.slice(1, -1); // Remove outer parentheses
+  // Find all field positions
+  const matches = [...tagString.matchAll(fieldPattern)];
 
-  // Find all attributes
-  while ((match = attrPattern.exec(workingString)) !== null) {
-    attributes[match[1]] = match[2].trim();
+  // Handle the main tag value (the URL/email/phone)
+  const firstFieldPos = matches.length > 0 ? matches[0].index : tagString.length - 1;
+  const typeColonPos = tagString.indexOf(':');
+  const mainValue = tagString.substring(typeColonPos + 1, firstFieldPos).trim();
+
+  if (type === 'link') {
+    result.href = mainValue;
+  } else if (type === 'email') {
+    result.href = `mailto:${mainValue}`;
+  } else if (type === 'tel') {
+    result.href = `tel:${mainValue}`;
   }
 
-  // Set the href based on tag type
-  if (type === 'link') result.href = attributes.link || '';
-  else if (type === 'email') result.href = `mailto:${attributes.email || ''}`;
-  else if (type === 'tel') result.href = `tel:${attributes.tel || ''}`;
+  // Process each field
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    const fieldName = match[1];
+    const startPos = match.index + match[0].length;
+    const endPos = i < matches.length - 1 ? matches[i + 1].index : tagString.length - 1;
 
-  // Add text property
-  result.text = attributes.text || '';
+    // Skip the field if it's the same as the tag type
+    if (fieldName === type) continue;
 
-  // Add all other properties (skip the ones we've already handled)
-  Object.entries(attributes).forEach(([k, v]) => {
-    if (['link', 'email', 'tel', 'text'].includes(k)) return;
-    result[k] = v;
-  });
+    result[fieldName] = tagString.substring(startPos, endPos).trim();
+  }
 
   return result;
 };
