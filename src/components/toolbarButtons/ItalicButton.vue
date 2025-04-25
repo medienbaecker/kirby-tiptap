@@ -1,5 +1,6 @@
 <template>
-  <ToolbarButton icon="italic" title="Italic" :editor="editor" command="toggleItalic" active-check="italic" />
+  <ToolbarButton icon="italic" :title="$t('toolbar.button.italic')" :editor="editor" command="toggleItalic"
+    active-check="italic" />
 </template>
 
 <script>

@@ -1,5 +1,5 @@
 <template>
-  <ToolbarButton icon="strikethrough" title="Strike-through" :editor="editor" command="toggleStrike"
+  <ToolbarButton icon="strikethrough" :title="$t('toolbar.button.strike')" :editor="editor" command="toggleStrike"
     active-check="strike" />
 </template>
 

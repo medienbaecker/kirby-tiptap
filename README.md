@@ -116,7 +116,8 @@ return [
 
 ## Ideas for future improvements
 
-- [ ] Localisation of formatting button titles
+- [ ] Editing image KirbyTag
+- [ ] Prevent custom highlights in KirbyTags
 - [ ] Custom buttons
 - [ ] Option to prevent HTML code (e.g. `<script>`)
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)

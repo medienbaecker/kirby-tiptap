@@ -1,5 +1,6 @@
 <template>
-  <ToolbarButton icon="code" title="Code" :editor="editor" command="toggleCode" active-check="code" />
+  <ToolbarButton icon="code" :title="$t('toolbar.button.code')" :editor="editor" command="toggleCode"
+    active-check="code" />
 </template>
 
 <script>

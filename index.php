@@ -108,5 +108,17 @@ Kirby::plugin('medienbaecker/tiptap', [
         $options
       );
     }
+  ],
+  'translations' => [
+    'en' => [
+      'tiptap.toolbar.button.image' => 'Image',
+      'tiptap.toolbar.button.horizontalRule' => 'Horizontal Rule',
+      'tiptap.toolbar.button.codeBlock' => 'Code Block',
+    ],
+    'de' => [
+      'tiptap.toolbar.button.image' => 'Bild',
+      'tiptap.toolbar.button.horizontalRule' => 'Trennlinie',
+      'tiptap.toolbar.button.codeBlock' => 'Codeblock',
+    ]
   ]
 ]);

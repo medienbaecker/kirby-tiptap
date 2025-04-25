@@ -1,5 +1,5 @@
 <template>
-  <ToolbarButton icon="list-bullet" title="Bullet List" :editor="editor" command="toggleBulletList"
+  <ToolbarButton icon="list-bullet" :title="$t('toolbar.button.ul')" :editor="editor" command="toggleBulletList"
     active-check="bulletList" />
 </template>
 

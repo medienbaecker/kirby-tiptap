@@ -1,6 +1,6 @@
 <template>
-  <ToolbarButton icon="horizontal-rule" title="Horizontal Rule" :editor="editor" command="setHorizontalRule"
-    active-check="horizontalRule" />
+  <ToolbarButton icon="horizontal-rule" :title="$t('tiptap.toolbar.button.horizontalRule')" :editor="editor"
+    command="setHorizontalRule" active-check="horizontalRule" />
 </template>
 
 <script>

@@ -1,5 +1,5 @@
 <template>
-  <ToolbarButton icon="list-numbers" title="Ordered List" :editor="editor" command="toggleOrderedList"
+  <ToolbarButton icon="list-numbers" :title="$t('toolbar.button.ol')" :editor="editor" command="toggleOrderedList"
     active-check="orderedList" />
 </template>
 

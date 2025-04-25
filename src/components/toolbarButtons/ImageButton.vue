@@ -1,5 +1,6 @@
 <template>
-  <ToolbarButton icon="image" title="Image" :editor="editor" :command="handleImage" active-check="false" />
+  <ToolbarButton icon="image" :title="$t('tiptap.toolbar.button.image')" :editor="editor" :command="handleImage"
+    active-check="false" />
 </template>
 
 <script>

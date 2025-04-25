@@ -1,6 +1,6 @@
 <template>
-  <ToolbarButton icon="code-block" title="Code Block" :editor="editor" command="toggleCodeBlock"
-    active-check="codeBlock" />
+  <ToolbarButton icon="code-block" :title="$t('tiptap.toolbar.button.codeBlock')" :editor="editor"
+    command="toggleCodeBlock" active-check="codeBlock" />
 </template>
 
 <script>

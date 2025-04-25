@@ -1,5 +1,5 @@
 <template>
-  <ToolbarButton icon="clear" title="Remove formatting" :editor="editor" :command="removeFormatting"
+  <ToolbarButton icon="clear" :title="$t('toolbar.button.clear')" :editor="editor" :command="removeFormatting"
     active-check="false" />
 </template>
 
