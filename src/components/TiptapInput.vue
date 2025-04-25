@@ -74,7 +74,8 @@ export default {
         code: 'code',
         codeBlock: 'codeBlock',
         bulletList: 'bulletList',
-        orderedList: 'orderedList'
+        orderedList: 'orderedList',
+        horizontalRule: 'horizontalRule',
       };
 
       return Object.entries(buttonConfigs).reduce((config, [feature, buttonName]) => {
