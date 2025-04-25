@@ -37,7 +37,7 @@ export default {
         return this.buttons;
       }
 
-      const blockElements = ['codeBlock', 'bulletList', 'orderedList', 'image'];
+      const blockElements = ['codeBlock', 'bulletList', 'orderedList', 'image', 'horizontalRule'];
 
       return this.buttons
         .filter(btn => {
@@ -410,6 +410,39 @@ p.is-editor-empty:first-child::before {
 
 .tiptap pre code {
   display: block;
+}
+
+/* Horizontal rule */
+
+.tiptap hr {
+  cursor: pointer;
+  height: 1px;
+  background-color: currentColor;
+  color: var(--color-gray-300);
+  margin: 1rem 0;
+  position: relative;
+  overflow: visible;
+
+  /* Making it a bit easier to click */
+  &:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -.25rem;
+    bottom: -.25rem;
+    left: -.25rem;
+    right: -.25rem;
+    opacity: .25;
+    border-radius: 20rem;
+  }
+
+  &.ProseMirror-selectednode {
+    color: var(--color-blue-600);
+
+    &:after {
+      background-color: var(--color-blue-400);
+    }
+  }
 }
 
 /* Kirbytags */

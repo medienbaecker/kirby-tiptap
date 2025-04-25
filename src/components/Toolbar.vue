@@ -23,6 +23,7 @@ const buttonComponents = {
   image: () => import('./toolbarButtons/ImageButton.vue'),
   bulletList: () => import('./toolbarButtons/BulletListButton.vue'),
   orderedList: () => import('./toolbarButtons/OrderedListButton.vue'),
+  horizontalRule: () => import('./toolbarButtons/HorizontalRuleButton.vue'),
   removeFormatting: () => import('./toolbarButtons/RemoveFormattingButton.vue')
 };
 
