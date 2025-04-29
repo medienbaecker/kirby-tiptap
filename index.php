@@ -1,6 +1,6 @@
 <?php
 
-@require_once __DIR__ . '/vendor/autoload.php';
+@include_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/lib/helpers.php';
 
 use Kirby\Cms\App as Kirby;
