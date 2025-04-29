@@ -19,6 +19,19 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 🔧 **Allows HTML code** so you can paste your ⁠favourite `<script>`, `⁠<marquee>`, or ⁠`<blink>` tag
 - 📋 **Abstracted JSON structure** for easy content manipulation with features like `offsetHeadings`
 
+## Installation
+
+### Composer
+
+```
+composer require medienbaecker/kirby-tiptap
+```
+
+### Manual
+
+1. Download or clone this repository
+2. Place the folder in your `⁠site/plugins` directory
+
 ## Usage
 
 ### Blueprints
