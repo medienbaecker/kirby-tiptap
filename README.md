@@ -129,11 +129,11 @@ return [
 
 ## Ideas for future improvements
 
-- [ ] Editing image KirbyTag
-- [ ] Prevent custom highlights in KirbyTags
-- [ ] Custom buttons
-- [ ] Option to prevent HTML code (e.g. `<script>`)
+- [ ] (Optionally) use UUIDs instead of filenames for image KirbyTags
+- [ ] Prevent custom highlights inside of KirbyTags
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
+- [ ] Option to prevent HTML code (e.g. `<script>`)
+- [ ] Custom buttons via plugins
 - [ ] Image/file uploads? (I don't necessarily like how the core textarea handles this with a `link` button allowing to select files and a separate file button with upload functionality)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
 - [ ] Replacement for Writer/Textarea blocks?
