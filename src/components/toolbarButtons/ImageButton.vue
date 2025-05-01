@@ -44,20 +44,43 @@ export default {
         tagEl = findParentWithClass(node, 'kirbytag');
         isEditing = Boolean(tagEl) && tagEl.textContent.startsWith('(image:');
       }
-      // Case 2: Entire tag is selected
+      // Case 2: Selection
       else {
-        // Get the exact selected text
-        const selectedText = state.doc.textBetween(from, to);
-
-        // Check if the selection looks like a complete image tag
-        if (/^\(image:[^\)]+\)$/.test(selectedText)) {
+        // First check if the selection is a complete tag
+        const selectedText = state.doc.textBetween(from, to).trim();
+        if (selectedText.startsWith('(image:') && selectedText.endsWith(')')) {
           isEditing = true;
           replaceRange = { from, to };
-          initial = parseKirbyTag(selectedText);
+          try {
+            initial = parseKirbyTag(selectedText);
+          } catch (e) {
+            console.error("Error parsing tag:", e);
+            isEditing = false;
+          }
+        }
+        // If not a complete tag, check if selection intersects with a tag
+        else {
+          // Check if selection starts inside a tag
+          const { node: startNode } = view.domAtPos(from);
+          const startTagEl = findParentWithClass(startNode, 'kirbytag');
+          if (startTagEl && startTagEl.textContent.startsWith('(image:')) {
+            isEditing = true;
+            tagEl = startTagEl;
+          }
+
+          // If not starting in a tag, check if it ends in one
+          if (!isEditing) {
+            const { node: endNode } = view.domAtPos(to);
+            const endTagEl = findParentWithClass(endNode, 'kirbytag');
+            if (endTagEl && endTagEl.textContent.startsWith('(image:')) {
+              isEditing = true;
+              tagEl = endTagEl;
+            }
+          }
         }
       }
 
-      // If editing via cursor position, get the tag range
+      // If editing via cursor position or partial tag selection, get the tag range
       if (isEditing && tagEl && !replaceRange) {
         const start = view.posAtDOM(tagEl, 0);
         const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
@@ -159,12 +182,31 @@ export default {
 
         return tagEl.textContent.startsWith('(image:');
       }
-      // Case 2: Entire tag is selected
+      // Case 2: Selection
       else {
-        const selectedText = editor.state.doc.textBetween(from, to);
-        return /^\(image:[^\)]+\)$/.test(selectedText.trim());
+        // First check if the exact selection might be a complete tag
+        const selectedText = editor.state.doc.textBetween(from, to).trim();
+        if (selectedText.startsWith('(image:') && selectedText.endsWith(')')) {
+          return true;
+        }
+
+        // If not, check if any endpoint of the selection is inside an image tag
+        const { node: startNode } = editor.view.domAtPos(from);
+        const startTagEl = findParentWithClass(startNode, 'kirbytag');
+        if (startTagEl && startTagEl.textContent.startsWith('(image:')) {
+          return true;
+        }
+
+        const { node: endNode } = editor.view.domAtPos(to);
+        const endTagEl = findParentWithClass(endNode, 'kirbytag');
+        if (endTagEl && endTagEl.textContent.startsWith('(image:')) {
+          return true;
+        }
+
+        return false;
       }
     }
+
   }
 }
 </script>

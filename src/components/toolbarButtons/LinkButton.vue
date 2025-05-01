@@ -114,16 +114,16 @@ export default {
           tagEl.textContent.startsWith('(tel:')
         );
       }
-      // Case 2: Entire tag is selected
+      // Case 2: Selection
       else {
-        // Get the exact selected text and trim whitespace
+        // First check if the selection is a complete tag
         const selectedText = state.doc.textBetween(from, to).trim();
 
-        // More explicit pattern matching for link tags
+        // Check for complete tags of different types
         if (
-          /^\(link:[^)]+\)$/.test(selectedText) ||
-          /^\(email:[^)]+\)$/.test(selectedText) ||
-          /^\(tel:[^)]+\)$/.test(selectedText)
+          (selectedText.startsWith('(link:') && selectedText.endsWith(')')) ||
+          (selectedText.startsWith('(email:') && selectedText.endsWith(')')) ||
+          (selectedText.startsWith('(tel:') && selectedText.endsWith(')'))
         ) {
           isEditing = true;
           replaceRange = { from, to };
@@ -142,21 +142,52 @@ export default {
             isEditing = false;
           }
         }
+        // Check if selection intersects with a tag
+        else {
+          // Check if selection starts inside a tag
+          const { node: startNode } = view.domAtPos(from);
+          const startTagEl = findParentWithClass(startNode, 'kirbytag');
+          if (startTagEl) {
+            const txt = startTagEl.textContent;
+            if (txt.startsWith('(link:') || txt.startsWith('(email:') || txt.startsWith('(tel:')) {
+              isEditing = true;
+              tagEl = startTagEl;
+            }
+          }
+
+          // If not starting in a tag, check if it ends in one
+          if (!isEditing) {
+            const { node: endNode } = view.domAtPos(to);
+            const endTagEl = findParentWithClass(endNode, 'kirbytag');
+            if (endTagEl) {
+              const txt = endTagEl.textContent;
+              if (txt.startsWith('(link:') || txt.startsWith('(email:') || txt.startsWith('(tel:')) {
+                isEditing = true;
+                tagEl = endTagEl;
+              }
+            }
+          }
+        }
       }
 
-      // If editing via cursor position, get the tag range
+      // If editing via cursor position or partial tag selection, get the tag range
       if (isEditing && tagEl && !replaceRange) {
         const start = view.posAtDOM(tagEl, 0);
         const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
         replaceRange = { from: start, to: end };
-        initial = parseKirbyTag(tagEl.textContent);
 
-        // Check if the tag is a link, email, or tel tag
-        const tagType = initial._type;
-        if (tagType === 'email') {
-          initial.href = 'mailto:' + initial.href;
-        } else if (tagType === 'tel') {
-          initial.href = 'tel:' + initial.href;
+        try {
+          initial = parseKirbyTag(tagEl.textContent);
+
+          // Set href properly based on tag type
+          if (initial._type === 'email') {
+            initial.href = 'mailto:' + initial.href;
+          } else if (initial._type === 'tel') {
+            initial.href = 'tel:' + initial.href;
+          }
+        } catch (e) {
+          console.error("Error parsing tag:", e);
+          isEditing = false;
         }
       }
 
@@ -167,8 +198,11 @@ export default {
         initial = type === 'text' ? { href: '', text: selText } : { href, text: '' };
       }
 
+      // Add a null check before using Object.entries with this.linkFields
+      const fields = this.linkFields || {};
+
       // Process field values based on field types
-      Object.entries(this.linkFields).forEach(([name, field]) => {
+      Object.entries(fields).forEach(([name, field]) => {
         if (!initial[name]) return;
 
         // Handle array field types
@@ -251,10 +285,38 @@ export default {
           txt.startsWith('(tel:')
         );
       }
-      // Case 2: Entire tag is selected
+      // Case 2: Selection
       else {
+        // First check if the exact selection might be a complete tag
         const selectedText = editor.state.doc.textBetween(from, to).trim();
-        return /^\((link|email|tel):[^)]+\)$/.test(selectedText);
+        if (
+          (selectedText.startsWith('(link:') && selectedText.endsWith(')')) ||
+          (selectedText.startsWith('(email:') && selectedText.endsWith(')')) ||
+          (selectedText.startsWith('(tel:') && selectedText.endsWith(')'))
+        ) {
+          return true;
+        }
+
+        // If not, check if any endpoint of the selection is inside a link tag
+        const { node: startNode } = editor.view.domAtPos(from);
+        const startTagEl = findParentWithClass(startNode, 'kirbytag');
+        if (startTagEl) {
+          const txt = startTagEl.textContent;
+          if (txt.startsWith('(link:') || txt.startsWith('(email:') || txt.startsWith('(tel:')) {
+            return true;
+          }
+        }
+
+        const { node: endNode } = editor.view.domAtPos(to);
+        const endTagEl = findParentWithClass(endNode, 'kirbytag');
+        if (endTagEl) {
+          const txt = endTagEl.textContent;
+          if (txt.startsWith('(link:') || txt.startsWith('(email:') || txt.startsWith('(tel:')) {
+            return true;
+          }
+        }
+
+        return false;
       }
     }
   },
