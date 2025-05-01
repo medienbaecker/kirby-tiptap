@@ -1,11 +1,11 @@
 <template>
   <ToolbarButton icon="image" :title="$t('tiptap.toolbar.button.image')" :editor="editor" :command="handleImage"
-    active-check="false" />
+    :active-check="isImageActive" />
 </template>
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
-import { props } from '../props.js'
+import { parseKirbyTag, generateKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
 
 export default {
   components: {
@@ -13,35 +13,106 @@ export default {
   },
 
   props: {
-    editor: Object,
-    ...props
+    editor: {
+      type: Object,
+      required: true
+    },
+    endpoints: {
+      type: Object,
+      default: () => ({})
+    }
   },
 
   methods: {
-
+    /**
+     * Handles clicking the image button
+     * Opens file selection dialog for inserting/editing image tags
+     */
     handleImage() {
+      const { state, view } = this.editor;
+      const { from, to, empty } = state.selection;
+
+      // Check if we're editing an existing image tag
+      let isEditing = false;
+      let tagEl = null;
+      let replaceRange = null;
+      let initial = {};
+
+      // Case 1: Cursor inside a tag
+      if (empty) {
+        const { node } = view.domAtPos(from);
+        tagEl = findParentWithClass(node, 'kirbytag');
+        isEditing = Boolean(tagEl) && tagEl.textContent.startsWith('(image:');
+      }
+      // Case 2: Entire tag is selected
+      else {
+        // Get the exact selected text
+        const selectedText = state.doc.textBetween(from, to);
+
+        // Check if the selection looks like a complete image tag
+        if (/^\(image:[^\)]+\)$/.test(selectedText)) {
+          isEditing = true;
+          replaceRange = { from, to };
+          initial = parseKirbyTag(selectedText);
+        }
+      }
+
+      // If editing via cursor position, get the tag range
+      if (isEditing && tagEl && !replaceRange) {
+        const start = view.posAtDOM(tagEl, 0);
+        const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
+        replaceRange = { from: start, to: end };
+        initial = parseKirbyTag(tagEl.textContent);
+      }
+
       const restoreSelection = this.restoreSelectionCallback();
 
-      console.log(this.endpoints);
-
+      // The file dialog expects the selected files in the value prop as an array of IDs
       this.$panel.dialog.open({
         component: 'k-files-dialog',
         props: {
           multiple: false,
           types: ['image'],
           endpoint: `${this.endpoints.field}/files`,
-          selected: []
+          // Pass the initial file ID as the value if we're editing
+          value: initial.uuid ? [initial.uuid] : []
         },
         on: {
           cancel: restoreSelection,
           submit: (files) => {
+            if (!files?.length) {
+              this.$panel.notification.error(
+                window.panel.$t('error.validation.required')
+              );
+              return;
+            }
+
             this.$panel.dialog.close();
-            restoreSelection(() => this.insertFile(files));
+
+            restoreSelection(() => {
+              if (files?.length) {
+                const file = files[0];
+                const kirbyTag = this.getKirbyTag(file, initial);
+
+                if (isEditing && replaceRange) {
+                  this.editor.chain().focus()
+                    .deleteRange(replaceRange)
+                    .insertContent(kirbyTag)
+                    .run();
+                } else {
+                  this.editor.commands.insertContent(kirbyTag);
+                }
+              }
+            });
           }
         }
       });
     },
 
+    /**
+     * Creates a callback to restore editor selection after operations
+     * @returns {Function} Callback to restore the selection
+     */
     restoreSelectionCallback() {
       const { from, to } = this.editor.state.selection;
 
@@ -56,16 +127,43 @@ export default {
       };
     },
 
-    insertFile(files) {
-      if (!files?.length) return;
+    /**
+     * Creates a Kirby image tag with file information and any existing attributes
+     * @param {Object} file - The file object from the dialog
+     * @param {Object} existing - Existing tag attributes if editing
+     * @returns {string} Formatted Kirbytag
+     */
+    getKirbyTag(file, existing = {}) {
+      // Preserve attributes from the existing tag if editing
+      const { _type, uuid, ...attrs } = existing;
 
-      const file = files[0];
-      const kirbyTag = this.getKirbyTag(file);
-      this.editor.commands.insertContent(kirbyTag);
+      // Generate the tag with the file and existing attributes
+      return generateKirbyTag('image', file.filename, attrs);
     },
 
-    getKirbyTag(file) {
-      return `(image: ${file.filename})`;
+    /**
+     * Checks if the cursor is positioned within an image tag
+     * @param {Object} editor - The Tiptap editor instance
+     * @returns {boolean} Whether an image tag is active
+     */
+    isImageActive(editor) {
+      if (!editor.isFocused) return false;
+
+      const { from, to, empty } = editor.state.selection;
+
+      // Case 1: Cursor inside a tag
+      if (empty) {
+        const { node } = editor.view.domAtPos(from);
+        const tagEl = findParentWithClass(node, 'kirbytag');
+        if (!tagEl) return false;
+
+        return tagEl.textContent.startsWith('(image:');
+      }
+      // Case 2: Entire tag is selected
+      else {
+        const selectedText = editor.state.doc.textBetween(from, to);
+        return /^\(image:[^\)]+\)$/.test(selectedText.trim());
+      }
     }
   }
 }

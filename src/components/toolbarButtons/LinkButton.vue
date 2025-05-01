@@ -5,6 +5,7 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
+import { parseKirbyTag, generateKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
 
 /**
  * Normalizes options objects to arrays for the link dialog
@@ -19,62 +20,27 @@ const normalizeOptions = options => {
   return [];
 };
 
-/**
- * Parse a Kirby‐tag string like "(link: https://… text: Foo bar: baz)"
- * into an object { href, text, bar: 'baz' }
- */
-const parseKirbyTag = (tagString, fields) => {
-  // Get tag type
-  const typeMatch = tagString.match(/^\((\w+):/);
-  const type = typeMatch ? typeMatch[1] : 'link';
-  const result = {};
-
-  // Create a regex for finding field markers
-  const fieldPattern = /\s+(\w+):\s+/g;
-
-  // Find all field positions
-  const matches = [...tagString.matchAll(fieldPattern)];
-
-  // Handle the main tag value (the URL/email/phone)
-  const firstFieldPos = matches.length > 0 ? matches[0].index : tagString.length - 1;
-  const typeColonPos = tagString.indexOf(':');
-  const mainValue = tagString.substring(typeColonPos + 1, firstFieldPos).trim();
-
-  if (type === 'link') {
-    result.href = mainValue;
-  } else if (type === 'email') {
-    result.href = `mailto:${mainValue}`;
-  } else if (type === 'tel') {
-    result.href = `tel:${mainValue}`;
-  }
-
-  // Process each field
-  for (let i = 0; i < matches.length; i++) {
-    const match = matches[i];
-    const fieldName = match[1];
-    const startPos = match.index + match[0].length;
-    const endPos = i < matches.length - 1 ? matches[i + 1].index : tagString.length - 1;
-
-    // Skip the field if it's the same as the tag type
-    if (fieldName === type) continue;
-
-    result[fieldName] = tagString.substring(startPos, endPos).trim();
-  }
-
-  return result;
-};
-
 export default {
-  components: { ToolbarButton },
+  components: {
+    ToolbarButton
+  },
 
   props: {
-    editor: { type: Object, required: true },
-    links: { type: Object, default: () => ({}) }
+    editor: {
+      type: Object,
+      required: true
+    },
+    links: {
+      type: Object,
+      default: () => ({})
+    }
   },
 
   methods: {
     /**
      * Validates input and determines its type (email, URL, phone, or plain text)
+     * @param {string} text - Text to validate
+     * @returns {Object} Object with type and href/text properties
      */
     validateInput(text) {
       // Email validation
@@ -102,75 +68,106 @@ export default {
 
     /**
      * Converts field values into a formatted Kirby tag string
+     * @param {Object} values - Values from the link dialog
+     * @returns {string} Formatted Kirbytag
      */
     generateTag(values) {
-      const { href, text, ...attrs } = values;
-      let tag;
+      const { href, text, _type, ...attrs } = values; // Exclude _type from attributes
 
-      // Create tag based on link type
+      // Determine tag type based on href
+      let type = 'link';
+      let mainValue = href;
+
       if (href.startsWith('mailto:')) {
-        const email = href.replace('mailto:', '');
-        tag = `(email: ${email}${text ? ` text: ${text}` : ''})`;
+        type = 'email';
+        mainValue = href.replace('mailto:', '');
       } else if (href.startsWith('tel:')) {
-        const phone = href.replace('tel:', '');
-        tag = `(tel: ${phone}${text ? ` text: ${text}` : ''})`;
-      } else {
-        tag = `(link: ${href}${text ? ` text: ${text}` : ''})`;
+        type = 'tel';
+        mainValue = href.replace('tel:', '');
       }
 
-      // Add extra attributes, filtering out empty values
-      const extras = Object.entries(attrs)
-        .filter(([, v]) => {
-          if (v === '' || v === false || v == null) return false;
-          if (Array.isArray(v) && v.length === 0) return false;
-          return true;
-        })
-        .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(' ') : v}`)
-        .join(' ');
-
-      return extras ? tag.replace(/\)$/, ` ${extras})`) : tag;
-    },
-
-    /**
-     * Traverses up the DOM tree to find an element with the specified class
-     */
-    findParentWithClass(node, className) {
-      let cur = node.nodeType === 3 ? node.parentNode : node;
-      while (cur) {
-        if (cur.classList?.contains(className)) return cur;
-        cur = cur.parentNode;
-      }
-      return null;
+      // Use the shared utility
+      return generateKirbyTag(type, mainValue, { text, ...attrs });
     },
 
     /**
      * Handles the link button click - opens dialog for creating or editing links
+     * @param {Object} editor - The Tiptap editor instance
      */
     handleLink(editor) {
       const { state, view } = editor;
       const { from, to, empty } = state.selection;
 
-      // 1. Detect if we're editing an existing tag
-      const { node } = view.domAtPos(from);
-      const tagEl = this.findParentWithClass(node, 'kirbytag');
-      const isEditing = Boolean(tagEl);
-
-      let initial = {};
+      // Check if we're editing an existing tag
+      let isEditing = false;
+      let tagEl = null;
       let replaceRange = null;
+      let initial = {};
 
-      // 2. Get initial field values
-      if (isEditing) {
+      // Case 1: Cursor inside a tag
+      if (empty) {
+        const { node } = view.domAtPos(from);
+        tagEl = findParentWithClass(node, 'kirbytag');
+        isEditing = Boolean(tagEl) && (
+          tagEl.textContent.startsWith('(link:') ||
+          tagEl.textContent.startsWith('(email:') ||
+          tagEl.textContent.startsWith('(tel:')
+        );
+      }
+      // Case 2: Entire tag is selected
+      else {
+        // Get the exact selected text and trim whitespace
+        const selectedText = state.doc.textBetween(from, to).trim();
+
+        // More explicit pattern matching for link tags
+        if (
+          /^\(link:[^)]+\)$/.test(selectedText) ||
+          /^\(email:[^)]+\)$/.test(selectedText) ||
+          /^\(tel:[^)]+\)$/.test(selectedText)
+        ) {
+          isEditing = true;
+          replaceRange = { from, to };
+
+          try {
+            initial = parseKirbyTag(selectedText);
+
+            // Set href properly based on tag type
+            if (initial._type === 'email') {
+              initial.href = 'mailto:' + initial.href;
+            } else if (initial._type === 'tel') {
+              initial.href = 'tel:' + initial.href;
+            }
+          } catch (e) {
+            console.error("Error parsing tag:", e);
+            isEditing = false;
+          }
+        }
+      }
+
+      // If editing via cursor position, get the tag range
+      if (isEditing && tagEl && !replaceRange) {
         const start = view.posAtDOM(tagEl, 0);
         const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
         replaceRange = { from: start, to: end };
-        initial = parseKirbyTag(tagEl.textContent, this.linkFields);
-      } else {
+        initial = parseKirbyTag(tagEl.textContent);
+
+        // Check if the tag is a link, email, or tel tag
+        const tagType = initial._type;
+        if (tagType === 'email') {
+          initial.href = 'mailto:' + initial.href;
+        } else if (tagType === 'tel') {
+          initial.href = 'tel:' + initial.href;
+        }
+      }
+
+      // If not editing, handle selection as new link
+      if (!isEditing) {
         const selText = !empty ? state.doc.textBetween(from, to) : '';
         const { type, href, text } = this.validateInput(selText);
         initial = type === 'text' ? { href: '', text: selText } : { href, text: '' };
       }
 
-      // 3. Process field values based on field types
+      // Process field values based on field types
       Object.entries(this.linkFields).forEach(([name, field]) => {
         if (!initial[name]) return;
 
@@ -189,7 +186,7 @@ export default {
         }
       });
 
-      // 4. Open the dialog
+      // Open the dialog
       this.$panel.dialog.open({
         component: 'k-link-dialog',
         props: {
@@ -233,27 +230,39 @@ export default {
 
     /**
      * Checks if the cursor is positioned within a link tag
+     * @param {Object} editor - The Tiptap editor instance
+     * @returns {boolean} Whether a link tag is active
      */
     isLinkActive(editor) {
       if (!editor.isFocused) return false;
-      const tag = this.findParentWithClass(
-        editor.view.domAtPos(editor.state.selection.from).node,
-        'kirbytag'
-      );
-      if (!tag) return false;
 
-      const txt = tag.textContent;
-      return (
-        txt.startsWith('(link:') ||
-        txt.startsWith('(email:') ||
-        txt.startsWith('(tel:')
-      );
+      const { from, to, empty } = editor.state.selection;
+
+      // Case 1: Cursor inside a tag
+      if (empty) {
+        const { node } = editor.view.domAtPos(from);
+        const tagEl = findParentWithClass(node, 'kirbytag');
+        if (!tagEl) return false;
+
+        const txt = tagEl.textContent;
+        return (
+          txt.startsWith('(link:') ||
+          txt.startsWith('(email:') ||
+          txt.startsWith('(tel:')
+        );
+      }
+      // Case 2: Entire tag is selected
+      else {
+        const selectedText = editor.state.doc.textBetween(from, to).trim();
+        return /^\((link|email|tel):[^)]+\)$/.test(selectedText);
+      }
     }
   },
 
   computed: {
     /**
      * Builds the field configuration for the link dialog
+     * @returns {Object} Configuration for link dialog fields
      */
     linkFields() {
       // Configure the href field with options if provided
