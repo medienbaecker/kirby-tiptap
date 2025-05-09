@@ -130,7 +130,6 @@ return [
 ## Ideas for future improvements
 
 - [ ] (Optionally) use UUIDs instead of filenames for image KirbyTags
-- [ ] Prevent custom highlights inside of KirbyTags
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
 - [ ] Option to prevent HTML code (e.g. `<script>`)
 - [ ] Custom buttons via plugins
