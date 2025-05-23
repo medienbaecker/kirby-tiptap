@@ -100,9 +100,10 @@ tiptap:
 // Basic usage
 echo $page->text()->tiptapText();
 
-// With heading level offset
+// With options
 echo $page->text()->tiptapText([
-  'offsetHeadings' => 1
+  'offsetHeadings' => 1,
+  'allowHtml' => true
 ]);
 ```
 
