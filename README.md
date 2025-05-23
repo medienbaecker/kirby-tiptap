@@ -16,7 +16,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 👀 **Custom field preview** showing formatted text in structure/object fields
 - 🔗 **Improved link handling** with a dialog that allows custom link types and custom fields, automatically picks the right KirbyTag (`(link: )`, `(email: )`, `(file: )`or `(tel: )`) and allows editing existing links by pre-filling the link dialog
 - 🌈 **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
-- 🔧 **Allows HTML code** so you can paste your ⁠favourite `<script>`, `⁠<marquee>`, or ⁠`<blink>` tag
+- 🔧 **Optional setting to allow HTML code** so you can paste your ⁠favourite `<script>`, `⁠<marquee>`, or ⁠`<blink>` tag directly
 - 📋 **Abstracted JSON structure** for easy content manipulation with features like `offsetHeadings`
 
 ## Installation
@@ -131,7 +131,6 @@ return [
 
 - [ ] (Optionally) use UUIDs instead of filenames for image KirbyTags
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
-- [ ] Option to prevent HTML code (e.g. `<script>`)
 - [ ] Custom buttons via plugins
 - [ ] Image/file uploads? (I don't necessarily like how the core textarea handles this with a `link` button allowing to select files and a separate file button with upload functionality)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)

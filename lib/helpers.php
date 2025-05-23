@@ -17,6 +17,40 @@ class KirbyTagNode extends Node
   }
 }
 
+// Custom text node that conditionally escapes HTML based on context
+class ConditionalTextNode extends \Tiptap\Nodes\Text
+{
+  private $allowHtml;
+
+  public function __construct($allowHtml = false)
+  {
+    $this->allowHtml = $allowHtml;
+    parent::__construct();
+  }
+
+  public function renderText($node)
+  {
+    // Always escape HTML in code contexts for security
+    if (isset($node->_inCodeBlock) && $node->_inCodeBlock) {
+      return htmlspecialchars($node->text, ENT_QUOTES, 'UTF-8');
+    }
+
+    // Always escape HTML in inline code for security
+    if (isset($node->marks)) {
+      foreach ($node->marks as $mark) {
+        if ($mark->type === 'code') {
+          return htmlspecialchars($node->text, ENT_QUOTES, 'UTF-8');
+        }
+      }
+    }
+
+    // For regular text, respect the allowHtml setting
+    return $this->allowHtml
+      ? $node->text
+      : htmlspecialchars($node->text, ENT_QUOTES, 'UTF-8');
+  }
+}
+
 function cleanListItemContent($node)
 {
   if ($node['type'] === 'listItem' && isset($node['content'])) {
@@ -32,11 +66,19 @@ function cleanListItemContent($node)
   return $node;
 }
 
-function processContent(&$node, $parent)
+function processContent(&$node, $parent, $allowHtml = false, $inCodeBlock = false)
 {
+  // Track if we're entering a code block context
+  if (isset($node['type']) && $node['type'] === 'codeBlock') {
+    $inCodeBlock = true;
+  }
+
   // Process current node's text if it exists
   if (isset($node['text'])) {
     $text = $node['text'];
+
+    // Mark text nodes that are inside code blocks
+    $node['_inCodeBlock'] = $inCodeBlock;
 
     // Process UUIDs
     if (str_contains($text, '://')) {
@@ -55,7 +97,8 @@ function processContent(&$node, $parent)
     // Process KirbyTags
     $parsed = KirbyTags::parse($text, ['parent' => $parent]);
 
-    if ($parsed !== strip_tags($parsed)) {
+    // Only treat as KirbyTag if KirbyTags actually transformed the content
+    if ($parsed !== $text) {
       $node['type'] = 'kirbyTag';
       $node['attrs'] = ['content' => $parsed];
       unset($node['text']);
@@ -67,7 +110,7 @@ function processContent(&$node, $parent)
   // Recursively process nested content
   if (isset($node['content']) && is_array($node['content'])) {
     foreach ($node['content'] as &$contentNode) {
-      processContent($contentNode, $parent);
+      processContent($contentNode, $parent, $allowHtml, $inCodeBlock);
     }
   }
 }
@@ -76,7 +119,8 @@ function convertTiptapToHtml($json, $parent, array $options = [])
 {
   // Set default options
   $options = array_merge([
-    'offsetHeadings' => 0
+    'offsetHeadings' => 0,
+    'allowHtml' => false
   ], $options);
 
   // Handle invalid input
@@ -86,21 +130,25 @@ function convertTiptapToHtml($json, $parent, array $options = [])
 
   // Parse JSON if needed
   if (is_string($json)) {
-    $json = json_decode($json, true);
+    $decoded = json_decode($json, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+      return ''; // Invalid JSON
+    }
+    $json = $decoded;
   }
-
-  // Check if inline mode is active
-  $isInline = $json['inline'] ?? false;
 
   // Validate JSON structure
   if (!is_array($json) || !isset($json['content']) || !is_array($json['content'])) {
     return '';
   }
 
-  // Clean list items
+  // Check if inline mode is active
+  $isInline = $json['inline'] ?? false;
+
+  // Clean list items to remove unnecessary paragraph wrappers
   $json = cleanListItemContent($json);
 
-  // Handle inline mode
+  // Handle inline mode by flattening paragraphs
   if ($isInline) {
     $newContent = [];
     foreach ($json['content'] as $index => $node) {
@@ -110,8 +158,10 @@ function convertTiptapToHtml($json, $parent, array $options = [])
           $newContent[] = ['type' => 'hardBreak'];
         }
         // Add all content from the paragraph
-        foreach ($node['content'] as $content) {
-          $newContent[] = $content;
+        if (isset($node['content'])) {
+          foreach ($node['content'] as $content) {
+            $newContent[] = $content;
+          }
         }
       } else {
         $newContent[] = $node;
@@ -134,14 +184,17 @@ function convertTiptapToHtml($json, $parent, array $options = [])
     }
 
     // Process all content recursively
-    processContent($node, $parent);
+    processContent($node, $parent, $options['allowHtml']);
   }
 
   // Convert to HTML
   try {
     $html = (new Editor([
       'extensions' => [
-        new \Tiptap\Extensions\StarterKit(),
+        new \Tiptap\Extensions\StarterKit([
+          'text' => false, // Disable default text node
+        ]),
+        new ConditionalTextNode($options['allowHtml']), // Use our custom text handler
         new KirbyTagNode()
       ]
     ]))->setContent($json)->getHTML();
