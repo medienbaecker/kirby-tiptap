@@ -5,6 +5,7 @@ namespace Medienbaecker\Tiptap;
 use Tiptap\Editor;
 use Medienbaecker\Tiptap\Nodes\KirbyTagNode;
 use Medienbaecker\Tiptap\Nodes\ConditionalTextNode;
+use Medienbaecker\Tiptap\Nodes\ParagraphWithClass;
 
 /**
  * Converts Tiptap JSON content to HTML
@@ -78,9 +79,11 @@ class HtmlConverter
         'extensions' => [
           new \Tiptap\Extensions\StarterKit([
             'text' => false, // Disable default text node
+            'paragraph' => false, // Disable default paragraph node
           ]),
           new ConditionalTextNode($options['allowHtml']), // Use our custom text handler
-          new KirbyTagNode()
+          new KirbyTagNode(),
+          new ParagraphWithClass()
         ]
       ]))->setContent($json)->getHTML();
 

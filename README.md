@@ -58,6 +58,8 @@ tiptap:
     - codeBlock
     - horizontalRule
     - removeFormatting
+    # Custom buttons (configured in config.php):
+    - twoColumn
     # Divider:
     - "|"
 ```
@@ -128,11 +130,61 @@ return [
 ];
 ```
 
+### Custom Buttons
+
+The plugin supports custom buttons that can set any attributes on nodes. Configure them in your `config.php`:
+
+```php
+'medienbaecker.tiptap' => [
+  'buttons' => [
+    'twoColumn' => [
+      'icon' => 'columns',
+      'title' => 'Two Columns',
+      'nodes' => ['paragraph'],
+      'attributes' => [
+        'class' => 'two-column'
+      ]
+    ],
+    'textCenter' => [
+      'icon' => 'align-center',
+      'title' => 'Center Text',
+      'nodes' => ['paragraph', 'heading'],
+      'attributes' => [
+        'class' => 'text-center'
+      ]
+    ]
+  ]
+]
+```
+
+Then use them in blueprints just like core buttons:
+
+```yaml
+tiptap:
+  buttons:
+    - bold
+    - italic
+    - twoColumn # Custom button
+    - textCenter # Custom button
+```
+
+Add corresponding CSS to your frontend and `panel.css`:
+
+```css
+.two-column {
+  column-count: 2;
+  column-gap: 2rem;
+}
+
+.text-center {
+  text-align: center;
+}
+```
+
 ## Ideas for future improvements
 
 - [ ] (Optionally) use UUIDs instead of filenames for image KirbyTags
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
-- [ ] Custom buttons via plugins
 - [ ] Image/file uploads? (I don't necessarily like how the core textarea handles this with a `link` button allowing to select files and a separate file button with upload functionality)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
 - [ ] Replacement for Writer/Textarea blocks?

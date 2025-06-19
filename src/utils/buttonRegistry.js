@@ -168,6 +168,26 @@ class ButtonRegistry {
   }
 
   /**
+   * Register custom buttons from plugin options
+   * @param {Object} customButtons - Custom button configurations
+   */
+  registerCustomButtons(customButtons) {
+    if (!customButtons) return
+    
+    Object.entries(customButtons).forEach(([name, config]) => {
+      this.registerButton(name, {
+        component: () => import('../components/toolbarButtons/CustomButton.vue'),
+        meta: { 
+          icon: config.icon || 'style', 
+          group: 'custom',
+          buttonName: name,
+          buttonConfig: config
+        }
+      })
+    })
+  }
+
+  /**
    * Clear all registrations (useful for testing)
    */
   clear() {

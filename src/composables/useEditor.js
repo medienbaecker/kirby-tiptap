@@ -6,6 +6,7 @@ import { InvisibleCharacters } from '@tiptap-pro/extension-invisible-characters'
 import { Highlights } from '../extensions/highlights'
 import { SoftHyphenCharacter, NonBreakingSpaceCharacter } from '../extensions/invisibles'
 import { Replacements } from '../extensions/replacements'
+import { NodeAttributes } from '../extensions/nodeAttributes'
 
 /**
  * Composable for Tiptap editor configuration and management
@@ -30,11 +31,14 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 
     return props.buttons
       .filter(btn => {
-        // Handle headings object specially
-        if (typeof btn === 'object' && 'headings' in btn) {
-          return false
+        // Handle object buttons (headings, paragraphClass, etc.)
+        if (typeof btn === 'object') {
+          // Filter out headings and paragraphClass (block-level features)
+          if ('headings' in btn || btn.type === 'paragraphClass') {
+            return false
+          }
         }
-        // Handle regular buttons
+        // Handle string buttons
         return !blockElements.includes(btn)
       })
       .filter((btn, i, arr) => {
@@ -81,26 +85,35 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
    */
   const createEditor = (initialContent, eventHandlers) => {
     try {
+      const extensions = [
+        StarterKit.configure(starterKitConfig.value),
+        Placeholder.configure({
+          placeholder: props.placeholder
+        }),
+        Highlights.configure({
+          kirbytags: props.kirbytags,
+          highlights: props.highlights
+        }),
+        InvisibleCharacters.configure({
+          injectCSS: false,
+          builders: [
+            new SoftHyphenCharacter(),
+            new NonBreakingSpaceCharacter()
+          ],
+        }),
+        Replacements
+      ]
+
+      // Only add NodeAttributes extension if custom buttons are configured
+      if (props.customButtons && Object.keys(props.customButtons).length > 0) {
+        extensions.push(NodeAttributes.configure({
+          customButtons: props.customButtons
+        }))
+      }
+
       editor.value = new Editor({
         content: initialContent,
-        extensions: [
-          StarterKit.configure(starterKitConfig.value),
-          Placeholder.configure({
-            placeholder: props.placeholder
-          }),
-          Highlights.configure({
-            kirbytags: props.kirbytags,
-            highlights: props.highlights
-          }),
-          InvisibleCharacters.configure({
-            injectCSS: false,
-            builders: [
-              new SoftHyphenCharacter(),
-              new NonBreakingSpaceCharacter()
-            ],
-          }),
-          Replacements
-        ],
+        extensions,
         editorProps: {
           transformPasted: content => sanitizer.sanitizeContent(content),
           handlePaste: eventHandlers.handlePaste,

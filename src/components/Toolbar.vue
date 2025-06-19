@@ -1,8 +1,13 @@
 <template>
   <nav class="k-toolbar tiptap-toolbar" v-if="editor">
     <template v-for="button in normalizedButtons">
-      <component v-if="!isSeperator(button)" :is="buttonComponents[getComponentName(button)]" :key="getKey(button)"
-        :editor="editor" :levels="getLevels(button)" :links="links" :endpoints="endpoints" />
+      <component v-if="!isSeperator(button)" :is="getComponentType(button)" :key="getKey(button)"
+        :editor="editor" 
+        :levels="getLevels(button)" 
+        :links="links" 
+        :endpoints="endpoints"
+        :buttonName="getButtonName(button)"
+        :buttonConfig="getButtonConfig(button)" />
       <hr v-else />
     </template>
   </nav>
@@ -19,6 +24,13 @@ export default {
   props: {
     editor: Object,
     ...props
+  },
+
+  created() {
+    // Register custom buttons when component is created
+    if (this.customButtons) {
+      buttonRegistry.registerCustomButtons(this.customButtons)
+    }
   },
 
   computed: {
@@ -68,10 +80,35 @@ export default {
 
     // Normalize buttons to include metadata
     normalizedButtons() {
-      return this.buttons.map(button => ({
-        type: typeof button === 'object' && button.headings ? 'headings' : button,
-        levels: (typeof button === 'object' && button.headings) ? button.headings : null
-      }))
+      return this.buttons.map(button => {
+        // Handle separator
+        if (button === '|') {
+          return { type: '|' }
+        }
+        
+        // Handle object-style buttons (headings, paragraphClass, etc.)
+        if (typeof button === 'object') {
+          // Legacy headings format
+          if (button.headings) {
+            return {
+              type: 'headings',
+              levels: button.headings
+            }
+          }
+          
+          // New configurable format (paragraphClass, etc.)
+          return {
+            type: button.type || 'unknown',
+            className: button.className,
+            icon: button.icon,
+            title: button.title,
+            ...button // Spread any additional properties
+          }
+        }
+        
+        // Handle string buttons
+        return { type: button }
+      })
     }
   },
 
@@ -80,16 +117,38 @@ export default {
       return button.type === '|'
     },
 
-    getComponentName(button) {
-      return button.type
+    getComponentType(button) {
+      return this.buttonComponents[button.type]
     },
 
     getKey(button) {
-      return button.type + (button.levels ? `-${button.levels.join('-')}` : '')
+      if (button.levels) {
+        return button.type + `-${button.levels.join('-')}`
+      }
+      if (button.className) {
+        return button.type + `-${button.className}`
+      }
+      return button.type
     },
 
     getLevels(button) {
       return button.levels
+    },
+
+    getButtonName(button) {
+      // For custom buttons, return the button type (which is the name)
+      if (this.customButtons && this.customButtons[button.type]) {
+        return button.type
+      }
+      return null
+    },
+
+    getButtonConfig(button) {
+      // For custom buttons, return the configuration
+      if (this.customButtons && this.customButtons[button.type]) {
+        return this.customButtons[button.type]
+      }
+      return null
     }
   }
 }

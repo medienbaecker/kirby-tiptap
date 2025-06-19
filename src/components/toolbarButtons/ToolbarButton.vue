@@ -12,12 +12,64 @@ export default {
     command: [String, Function],
     activeCheck: [String, Function]
   },
+  data() {
+    return {
+      active: false,
+      updateTimer: null
+    }
+  },
   computed: {
     isActive() {
-      if (!this.editor || !this.editor.isFocused) return false;
-      return typeof this.activeCheck === 'function'
-        ? this.activeCheck(this.editor)
-        : this.editor.isActive(this.activeCheck);
+      return this.active
+    }
+  },
+  watch: {
+    editor: {
+      immediate: true,
+      handler(editor) {
+        if (!editor) return
+        
+        // Set up throttled update handler
+        const updateActiveState = () => {
+          if (!this.editor || !this.editor.isFocused) {
+            this.active = false
+            return
+          }
+          
+          this.active = typeof this.activeCheck === 'function'
+            ? this.activeCheck(this.editor)
+            : this.editor.isActive(this.activeCheck)
+        }
+        
+        // Initial state
+        updateActiveState()
+        
+        // Listen to editor updates with throttling
+        editor.on('selectionUpdate', () => {
+          // Clear existing timer
+          if (this.updateTimer) {
+            clearTimeout(this.updateTimer)
+          }
+          
+          // Throttle updates to max once per 50ms
+          this.updateTimer = setTimeout(updateActiveState, 50)
+        })
+        
+        editor.on('transaction', ({ transaction }) => {
+          // Only update on selection changes or doc changes
+          if (transaction.docChanged || transaction.selectionSet) {
+            if (this.updateTimer) {
+              clearTimeout(this.updateTimer)
+            }
+            this.updateTimer = setTimeout(updateActiveState, 50)
+          }
+        })
+      }
+    }
+  },
+  beforeDestroy() {
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer)
     }
   },
   methods: {
