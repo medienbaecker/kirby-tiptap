@@ -9,7 +9,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 🌏 **Best of both worlds:** Uses (and highlights) [KirbyTags](https://getkirby.com/docs/reference/plugins/extensions/kirbytags) for images/links while providing WYSIWYG formatting
 - 📦 **Supports all standard Kirby field features** like `required`, `default`, `placeholder`, `counter`, `disabled`, `help`, `size`, `spellcheck` and `minlength`/`maxlength`
 - 🤓 **Smart text handling** with intuitive soft hyphen `(-)` and non-breaking space `(_)` replacements, and visible special characters
-- 🔧 **Configurable buttons** with customizable heading levels and a content sanitizer that automatically removes formatting you don't want
+- 🔧 **Configurable buttons** with customizable heading levels and custom buttons that can add any attributes to nodes
 - 🛼 **Inline mode** for paragraph-free content with buttons being disabled automatically
 - 🧠 **One method to rule them all** with `tiptapText()` handling [UUID resolution](https://getkirby.com/docs/reference/templates/field-methods/permalinks-to-urls), [smartypants](https://getkirby.com/docs/reference/system/options/smartypants), automatic [inline mode](https://getkirby.com/docs/reference/templates/helpers/kirbytextinline) and more
 - ✨ **Intuitive drag & drop support** for pages and files with intelligent spacing
@@ -67,33 +67,52 @@ tiptap:
 #### Available options
 
 ```yml
-tiptap:
-  inline: true # remove block elements like paragraphs
-  counter: false # disable character counter
-  size: small # small, medium, large, huge or the default auto
-  spellcheck: false # disable spellcheck
-  pretty: true # pretty-print JSON in content file
-  links:
-    # Set link types in the link dialog
-    options:
-      - page
-      - url
-    # Add fields to the link dialog
-    fields:
-      class:
-        label: Classes
-        type: checkboxes
-        options:
-          border: Border
-          shadow: Shadow
-          rounded: Rounded
-  required: true
-  placeholder: My placeholder
-  default: My default content
-  disabled: true
-  help: My help
-  maxlength: 10
-  minlength: 10
+fields:
+  text:
+    type: tiptap
+    inline: true # remove block elements like paragraphs
+    counter: false # disable character counter
+    size: small # small, medium, large, huge or the default auto
+    spellcheck: false # disable spellcheck
+    pretty: true # pretty-print JSON in content file
+    links:
+      # Set link types in the link dialog
+      options:
+        - page
+        - url
+      # Add fields to the link dialog
+      fields:
+        class:
+          label: Classes
+          type: checkboxes
+          options:
+            border: Border
+            shadow: Shadow
+            rounded: Rounded
+    required: true
+    placeholder: My placeholder
+    default: My default content
+    disabled: true
+    help: My help
+    maxlength: 10
+    minlength: 10
+```
+
+### Block configuration
+
+Add Tiptap to your block editor alongside other content blocks:
+
+```yml
+# In your page blueprint
+fields:
+  content:
+    type: blocks
+    fieldsets:
+      - heading
+      - text
+      - tiptap # Add the Tiptap block
+      - image
+```
 ```
 
 ### Template
@@ -130,13 +149,13 @@ return [
 ];
 ```
 
-### Custom Buttons
+### Custom buttons
 
-The plugin supports custom buttons that can set any attributes on nodes. Configure them in your `config.php`:
+The plugin supports custom buttons that can add any attributes to nodes. This allows you to create semantic markup or add styling classes. Configure them in your `config.php`:
 
 ```php
-'medienbaecker.tiptap' => [
-  'buttons' => [
+return [
+  'medienbaecker.tiptap.buttons' => [
     'twoColumn' => [
       'icon' => 'columns',
       'title' => 'Two Columns',
@@ -144,17 +163,9 @@ The plugin supports custom buttons that can set any attributes on nodes. Configu
       'attributes' => [
         'class' => 'two-column'
       ]
-    ],
-    'textCenter' => [
-      'icon' => 'align-center',
-      'title' => 'Center Text',
-      'nodes' => ['paragraph', 'heading'],
-      'attributes' => [
-        'class' => 'text-center'
-      ]
     ]
   ]
-]
+];
 ```
 
 Then use them in blueprints just like core buttons:
@@ -164,20 +175,16 @@ tiptap:
   buttons:
     - bold
     - italic
+    - "|"
     - twoColumn # Custom button
-    - textCenter # Custom button
 ```
 
-Add corresponding CSS to your frontend and `panel.css`:
+Add corresponding CSS to your frontend and `panel.css` for styling:
 
 ```css
 .two-column {
   column-count: 2;
   column-gap: 2rem;
-}
-
-.text-center {
-  text-align: center;
 }
 ```
 
