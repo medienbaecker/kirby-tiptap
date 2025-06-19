@@ -58,9 +58,7 @@ tiptap:
     - codeBlock
     - horizontalRule
     - removeFormatting
-    # Custom buttons (configured in config.php):
-    - twoColumn
-    # Divider:
+    # Divider: (as many as you want)
     - "|"
 ```
 
@@ -74,7 +72,7 @@ fields:
     counter: false # disable character counter
     size: small # small, medium, large, huge or the default auto
     spellcheck: false # disable spellcheck
-    pretty: true # pretty-print JSON in content file
+    pretty: true # pretty-print JSON in content file (incompatible with structure fields)
     links:
       # Set link types in the link dialog
       options:
@@ -113,9 +111,6 @@ fields:
       - tiptap # Add the Tiptap block
       - image
 ```
-```
-
-### Template
 
 ```php
 // Basic usage
