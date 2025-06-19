@@ -60,10 +60,10 @@ Kirby::plugin('medienbaecker/tiptap', [
             $this->minlength &&
             V::minLength(strip_tags($value), $this->minlength) === false
           ) {
-            throw new InvalidArgumentException(
-              key: 'validation.minlength',
-              data: ['min' => $this->minlength]
-            );
+            throw new InvalidArgumentException([
+              'key' => 'validation.minlength',
+              'data' => ['min' => $this->minlength]
+            ]);
           }
         },
         'maxlength'  => function ($value) {
@@ -77,10 +77,10 @@ Kirby::plugin('medienbaecker/tiptap', [
             $this->maxlength &&
             V::maxLength(strip_tags($value), $this->maxlength) === false
           ) {
-            throw new InvalidArgumentException(
-              key: 'validation.maxlength',
-              data: ['max' => $this->maxlength]
-            );
+            throw new InvalidArgumentException([
+              'key' => 'validation.maxlength',
+              'data' => ['max' => $this->maxlength]
+            ]);
           }
         },
       ],

@@ -1,3 +1,7 @@
+/**
+ * Content sanitizer for Tiptap content based on enabled buttons
+ * Ensures only permitted formatting is retained in the editor
+ */
 export class ContentSanitizer {
   constructor(buttons) {
     this.buttons = buttons

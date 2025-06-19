@@ -9,53 +9,87 @@
 </template>
 
 <script>
-
 import { props } from './props.js'
+import { buttonRegistry } from '../utils/buttonRegistry.js'
 
-const buttonComponents = {
-  headings: () => import('./toolbarButtons/HeadingsButton.vue'),
-  bold: () => import('./toolbarButtons/BoldButton.vue'),
-  italic: () => import('./toolbarButtons/ItalicButton.vue'),
-  strike: () => import('./toolbarButtons/StrikeButton.vue'),
-  code: () => import('./toolbarButtons/CodeButton.vue'),
-  codeBlock: () => import('./toolbarButtons/CodeBlockButton.vue'),
-  link: () => import('./toolbarButtons/LinkButton.vue'),
-  image: () => import('./toolbarButtons/ImageButton.vue'),
-  bulletList: () => import('./toolbarButtons/BulletListButton.vue'),
-  orderedList: () => import('./toolbarButtons/OrderedListButton.vue'),
-  horizontalRule: () => import('./toolbarButtons/HorizontalRuleButton.vue'),
-  removeFormatting: () => import('./toolbarButtons/RemoveFormattingButton.vue')
-};
+// Component cache to avoid recreating async components
+const componentCache = new Map()
 
 export default {
-  components: buttonComponents,
   props: {
     editor: Object,
     ...props
   },
+
   computed: {
+    // Dynamically load button components from registry with caching
     buttonComponents() {
-      return buttonComponents;
+      const components = {}
+      
+      // Get all buttons from registry
+      for (const [name, config] of buttonRegistry.getAllButtons()) {
+        // Use cached component or create new one
+        if (!componentCache.has(name)) {
+          try {
+            // Vue 2 compatible async component definition with error handling
+            componentCache.set(name, () => {
+              return config.component().catch(error => {
+                console.error(`Failed to load button component: ${name}`, error)
+                // Return fallback component
+                return {
+                  name: `${name}ButtonError`,
+                  render(h) {
+                    return h('k-button', {
+                      props: {
+                        icon: 'alert',
+                        title: `Error loading ${name} button`,
+                        disabled: true
+                      },
+                      class: 'tiptap-button-error'
+                    })
+                  }
+                }
+              })
+            })
+          } catch (error) {
+            console.warn(`Failed to setup button component: ${name}`, error)
+            // Immediate fallback for synchronous errors
+            componentCache.set(name, {
+              name: `${name}ButtonFallback`,
+              render: h => h('div', { class: 'tiptap-button-fallback' }, 'Button Error')
+            })
+          }
+        }
+        components[name] = componentCache.get(name)
+      }
+      
+      return components
     },
+
+    // Normalize buttons to include metadata
     normalizedButtons() {
       return this.buttons.map(button => ({
         type: typeof button === 'object' && button.headings ? 'headings' : button,
         levels: (typeof button === 'object' && button.headings) ? button.headings : null
-      }));
+      }))
     }
   },
+
   methods: {
     isSeperator(button) {
-      return button.type === '|';
+      return button.type === '|'
     },
+
     getComponentName(button) {
-      return button.type;
+      return button.type
     },
+
     getKey(button) {
-      return button.type + (button.levels ? `-${button.levels.join('-')}` : '');
+      return button.type + (button.levels ? `-${button.levels.join('-')}` : '')
     },
+
     getLevels(button) {
-      return button.levels;
+      return button.levels
     }
   }
 }

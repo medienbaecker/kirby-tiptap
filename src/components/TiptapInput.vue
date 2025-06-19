@@ -7,282 +7,52 @@
 </template>
 
 <script>
-import { Editor, EditorContent } from '@tiptap/vue-2'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import { InvisibleCharacters } from '@tiptap-pro/extension-invisible-characters'
-import { Highlights } from './highlights'
+import { EditorContent } from '@tiptap/vue-2'
+import { onMounted } from 'vue'
 import Toolbar from './Toolbar.vue'
-import { SoftHyphenCharacter, NonBreakingSpaceCharacter } from './invisibles'
-import { Replacements } from './replacements'
-import { ContentSanitizer } from './sanitizer'
+import { ContentSanitizer } from '../utils/contentSanitizer'
 import { props } from './props.js'
+import { useEditor } from '../composables/useEditor'
+import { useContent } from '../composables/useContent'
+import { createPasteHandler, createDropHandler } from '../utils/eventHandlers'
 
 export default {
   components: { EditorContent, Toolbar },
   props,
 
-  data: () => ({
-    editor: null,
-    sanitizer: null
-  }),
-
-  computed: {
-    /**
-     * Returns filtered buttons based on inline mode
-     * @returns {Array} Filtered buttons array
-     */
-    allowedButtons() {
-      if (!this.inline) {
-        return this.buttons;
-      }
-
-      const blockElements = ['codeBlock', 'bulletList', 'orderedList', 'image', 'horizontalRule'];
-
-      return this.buttons
-        .filter(btn => {
-          // Handle headings object specially
-          if (typeof btn === 'object' && 'headings' in btn) {
-            return false;
-          }
-          // Handle regular buttons
-          return !blockElements.includes(btn);
-        })
-        .filter((btn, i, arr) => {
-          // Remove separators at beginning or end
-          return btn !== '|' || (i !== 0 && i !== arr.length - 1);
-        });
-    },
-
-    /**
-     * Returns StarterKit configuration based on allowed buttons
-     * @returns {Object} StarterKit configuration
-     */
-    starterKitConfig() {
-      const defaultConfig = {
-        dropcursor: {
-          width: 2,
-          color: 'var(--color-blue-600)'
-        }
-      };
-
-      const buttonConfigs = {
-        heading: btn => typeof btn === 'object' ? 'headings' in btn : btn === 'headings',
-        bold: 'bold',
-        italic: 'italic',
-        strike: 'strike',
-        code: 'code',
-        codeBlock: 'codeBlock',
-        bulletList: 'bulletList',
-        orderedList: 'orderedList',
-        horizontalRule: 'horizontalRule',
-      };
-
-      return Object.entries(buttonConfigs).reduce((config, [feature, buttonName]) => {
-        if (typeof buttonName === 'function') {
-          config[feature] = this.allowedButtons.some(buttonName);
-        } else {
-          config[feature] = this.allowedButtons.includes(buttonName);
-        }
-        return config;
-      }, defaultConfig);
+  setup(props, { emit }) {
+    const sanitizer = new ContentSanitizer(props.buttons)
+    
+    const { editor, allowedButtons, createEditor } = useEditor(
+      props,
+      sanitizer,
+      (editor) => emitContent(editor),
+      (editor) => emit('editor', editor)
+    )
+    
+    const { parseContent, emitContent, watchValue } = useContent(
+      editor,
+      sanitizer,
+      props,
+      emit
+    )
+    
+    const eventHandlers = {
+      handlePaste: createPasteHandler(editor),
+      handleDrop: createDropHandler(editor, window.panel, window.helper)
+    }
+    
+    onMounted(() => {
+      const content = parseContent(props.value)
+      createEditor(content, eventHandlers)
+      watchValue()
+    })
+    
+    return {
+      editor,
+      allowedButtons
     }
   },
-
-  created() {
-    this.sanitizer = new ContentSanitizer(this.buttons);
-  },
-
-  watch: {
-    value: {
-      handler(newValue) {
-        if (this.editor) {
-          const newContent = this.parseContent(newValue);
-          const currentContent = this.editor.getJSON();
-
-          if (JSON.stringify(newContent) !== JSON.stringify(currentContent)) {
-            const { from, to } = this.editor.state.selection;
-            this.editor.commands.setContent(newContent, false);
-            this.editor.commands.setTextSelection({ from, to });
-          }
-        }
-      },
-      deep: true
-    }
-  },
-
-  mounted() {
-    this.createEditor()
-  },
-
-  beforeDestroy() {
-    this.editor?.destroy()
-  },
-
-  methods: {
-    parseContent(value) {
-      try {
-        const content = typeof value === 'string' ? JSON.parse(value) : value;
-        return this.sanitizer.sanitizeContent(content);
-      } catch {
-        return value;
-      }
-    },
-
-    emitContent(editor) {
-      if (!editor) {
-        this.$emit('input', { json: '' });
-        return;
-      }
-
-      const content = editor.getJSON();
-
-      if (!content) {
-        this.$emit('input', { json: '' });
-        return;
-      }
-
-      const sanitizedContent = this.sanitizer.sanitizeContent(content);
-
-      if (!sanitizedContent || !sanitizedContent.content) {
-        this.$emit('input', { json: '' });
-        return;
-      }
-
-      const isEmpty = this.isContentEmpty(sanitizedContent);
-
-      const json = isEmpty ? '' : JSON.stringify({
-        type: 'doc',
-        content: sanitizedContent.content,
-        inline: this.inline
-      }, null, this.pretty ? 2 : 0);
-
-      this.$emit('input', { json });
-    },
-
-    isContentEmpty(sanitizedContent) {
-      // Check if content array exists and has items
-      if (!Array.isArray(sanitizedContent.content) || sanitizedContent.content.length === 0) {
-        return true;
-      }
-
-      // If there's only one element
-      if (sanitizedContent.content.length === 1) {
-        const firstNode = sanitizedContent.content[0];
-
-        // Special handling for headings - they're not empty even without content
-        if (firstNode.type === 'heading') {
-          return false;
-        }
-
-        // Check if element has content array
-        if (!Array.isArray(firstNode.content)) {
-          return true;
-        }
-
-        // Check if content is empty
-        return firstNode.content.length === 0;
-      }
-
-      return false;
-    },
-
-    handlePaste(view, event, slice) {
-      const selection = view.state.selection;
-      const selectedText = !selection.empty
-        ? view.state.doc.textBetween(selection.from, selection.to)
-        : '';
-
-      if (selectedText) {
-        const pastedText = event.clipboardData.getData('text/plain').trim();
-        const urlPattern = /^(https?:\/\/|mailto:|tel:)/i;
-
-        if (urlPattern.test(pastedText)) {
-          const kirbyTag = `(link: ${pastedText} text: ${selectedText})`;
-
-          this.editor
-            .chain()
-            .focus()
-            .insertContentAt(selection, kirbyTag)
-            .run();
-
-          event.preventDefault();
-          return true;
-        }
-      }
-      return false;
-    },
-
-    handleTextDrop(coordinates, dragData) {
-      const pos = coordinates.pos;
-      const prevChar = pos > 0 ? this.editor.state.doc.textBetween(pos - 1, pos) : '';
-      const needsSpace = prevChar && prevChar !== ' ';
-      const content = needsSpace ? ' ' + dragData : dragData;
-
-      this.editor
-        .chain()
-        .focus()
-        .insertContentAt(pos, content, {
-          parseOptions: { preserveWhitespace: true }
-        })
-        .unsetAllMarks()
-        .run();
-    },
-
-    handleDrop(view, event, slice, moved) {
-      if (!moved && this.$panel.drag.data) {
-        const coordinates = view.posAtCoords({
-          left: event.clientX,
-          top: event.clientY
-        });
-
-        if (this.$panel.drag.type === "text") {
-          this.handleTextDrop(coordinates, this.$panel.drag.data);
-        } else if (this.$helper.isUploadEvent(event)) {
-          alert('File uploads are not possible yet');
-        }
-
-        return true;
-      }
-      return false;
-    },
-
-    createEditor() {
-      const content = this.parseContent(this.value);
-
-      this.editor = new Editor({
-        content,
-        extensions: [
-          StarterKit.configure(this.starterKitConfig),
-          Placeholder.configure({
-            placeholder: this.placeholder
-          }),
-          Highlights.configure({
-            kirbytags: this.kirbytags,
-            highlights: this.highlights
-          }),
-          InvisibleCharacters.configure({
-            injectCSS: false,
-            builders: [
-              new SoftHyphenCharacter(),
-              new NonBreakingSpaceCharacter()
-            ],
-          }),
-          Replacements
-        ],
-        editorProps: {
-          transformPasted: content => this.sanitizer.sanitizeContent(content),
-          handlePaste: this.handlePaste,
-          handleDrop: this.handleDrop
-        },
-        onCreate: ({ editor }) => {
-          editor.view.dom.setAttribute("spellcheck", this.spellcheck);
-          this.$emit('editor', editor);
-        },
-        onUpdate: ({ editor }) => this.emitContent(editor)
-      });
-    }
-  }
 };
 </script>
 
@@ -474,7 +244,7 @@ p.is-editor-empty:first-child::before {
 }
 
 .Tiptap-invisible-character--non-breaking-space::before {
-  content: ' ';
+  content: ' ';
   position: absolute;
   height: 1px;
   background-color: currentColor;
