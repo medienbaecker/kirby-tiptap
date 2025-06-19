@@ -45,9 +45,8 @@ export const NodeAttributes = Extension.create({
             }
           },
           parseHTML: element => {
-            return {
-              [attr]: element.getAttribute(attr) || null
-            }
+            const value = element.getAttribute(attr)
+            return value ? { [attr]: value } : {}
           }
         }
       })
@@ -66,7 +65,7 @@ export const NodeAttributes = Extension.create({
     const classCache = new WeakMap()
     
     const parseClasses = (node) => {
-      if (!node.attrs.class) return new Set()
+      if (!node.attrs.class || typeof node.attrs.class !== 'string') return new Set()
       
       if (classCache.has(node)) {
         const cached = classCache.get(node)

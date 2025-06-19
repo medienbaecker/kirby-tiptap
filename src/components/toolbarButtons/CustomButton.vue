@@ -90,7 +90,7 @@ export default {
       })
     },
     getParsedClasses(node) {
-      if (!node.attrs.class) return new Set()
+      if (!node.attrs.class || typeof node.attrs.class !== 'string') return new Set()
       
       // Check if we have cached classes for this node
       if (classCache.has(node)) {
