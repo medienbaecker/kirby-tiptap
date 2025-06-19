@@ -48,9 +48,14 @@ export default {
 			watchValue()
 		})
 
+		const focus = () => {
+			editor.value?.commands.focus()
+		}
+
 		return {
 			editor,
-			allowedButtons
+			allowedButtons,
+			focus
 		}
 	},
 };

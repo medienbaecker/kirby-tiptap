@@ -1,9 +1,13 @@
 import Tiptap from "./components/Tiptap.vue"
+import TiptapBlock from "./components/TiptapBlock.vue"
 import TiptapFieldPreview from "./components/TiptapFieldPreview.vue"
 
 panel.plugin("medienbaecker/tiptap", {
   fields: {
     tiptap: Tiptap,
+  },
+  blocks: {
+    tiptap: TiptapBlock,
   },
   components: {
     "k-tiptap-field-preview": TiptapFieldPreview,

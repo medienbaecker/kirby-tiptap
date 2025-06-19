@@ -9,4 +9,9 @@ export default defineConfig({
   alias: {
     "@/": `${resolve(currentDir, "../kirby/panel/src")}/`,
   },
+  vite: {
+    server: {
+      cors: true,
+    },
+  },
 })

@@ -12,6 +12,9 @@ Kirby::plugin('medienbaecker/tiptap', [
 		'highlights' => [],
 		'buttons' => []
 	],
+	'blueprints' => [
+		'blocks/tiptap' => __DIR__ . '/blueprints/blocks/tiptap.yml',
+	],
 	'fields' => [
 		'tiptap' => [
 			'mixins' => [

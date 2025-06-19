@@ -1,0 +1,17 @@
+name: Tiptap
+icon: text
+preview: tiptap
+wysiwyg: true
+fields:
+  text:
+    type: tiptap
+    placeholder: field.blocks.text.placeholder
+    buttons:
+      - bold
+      - italic
+      - "|"
+      - link
+      - "|"
+      - bulletList
+      - orderedList
+      - twoColumns
