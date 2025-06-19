@@ -20,6 +20,10 @@ class ComposerStaticInitabb9c652026590162df86ca21b76e07c
             'Symfony\\Component\\Process\\' => 26,
             'Spatie\\ShikiPhp\\' => 16,
         ),
+        'K' => 
+        array (
+            'Kirby\\' => 6,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -34,6 +38,10 @@ class ComposerStaticInitabb9c652026590162df86ca21b76e07c
         'Spatie\\ShikiPhp\\' => 
         array (
             0 => __DIR__ . '/..' . '/spatie/shiki-php/src',
+        ),
+        'Kirby\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/getkirby/composer-installer/src',
         ),
     );
 
