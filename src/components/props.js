@@ -18,4 +18,5 @@ export const props = {
   kirbytags: Array,
   links: Object,
   endpoints: Object,
+  uploads: [Object, Boolean],
 }

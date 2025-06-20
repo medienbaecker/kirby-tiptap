@@ -1,5 +1,18 @@
 <template>
-  <k-button :icon="icon" :title="title" :ariaLabel="title" :class="['k-toolbar-button', 'tiptap-button']"
+  <div v-if="dropdown && dropdown.length" class="tiptap-button-wrapper">
+    <!-- Dropdown button when dropdown items exist -->
+    <k-button :icon="icon" :title="title" :ariaLabel="title" :class="['k-toolbar-button', 'tiptap-button']"
+      :current="isActive" @mousedown.prevent @click="toggleDropdown" />
+    <k-dropdown-content
+      ref="dropdown"
+      :options="dropdownOptions"
+      align-x="start"
+      @action="onDropdownAction"
+    />
+  </div>
+  
+  <!-- Regular button when no dropdown -->
+  <k-button v-else :icon="icon" :title="title" :ariaLabel="title" :class="['k-toolbar-button', 'tiptap-button']"
     :current="isActive" @mousedown.prevent @click="runCommand" />
 </template>
 
@@ -10,7 +23,8 @@ export default {
     title: String,
     editor: Object,
     command: [String, Function],
-    activeCheck: [String, Function]
+    activeCheck: [String, Function],
+    dropdown: Array
   },
   data() {
     return {
@@ -21,6 +35,17 @@ export default {
   computed: {
     isActive() {
       return this.active
+    },
+    dropdownOptions() {
+      if (!this.dropdown) return []
+      
+      const options = this.dropdown.map((item, index) => ({
+        text: item.label,
+        icon: item.icon,
+        click: `item-${index}` // Use string action that we'll handle in @action
+      }));
+      
+      return options;
     }
   },
   watch: {
@@ -31,10 +56,7 @@ export default {
         
         // Set up throttled update handler
         const updateActiveState = () => {
-          if (!this.editor || !this.editor.isFocused) {
-            this.active = false
-            return
-          }
+          if (!this.editor) return
           
           this.active = typeof this.activeCheck === 'function'
             ? this.activeCheck(this.editor)
@@ -74,10 +96,34 @@ export default {
   },
   methods: {
     runCommand() {
+      // If dropdown exists and has items, run the first dropdown item's click handler
+      if (this.dropdown && this.dropdown.length) {
+        this.dropdown[0].click?.()
+        return
+      }
+      
+      // Otherwise, run the original command
       if (typeof this.command === 'function') {
         this.command(this.editor);
       } else {
         this.editor.chain().focus()[this.command]().run();
+      }
+    },
+    
+    toggleDropdown() {
+      if (this.$refs.dropdown) {
+        this.$refs.dropdown.toggle()
+      }
+    },
+    
+    onDropdownAction(action) {
+      // Parse the action string to get the index
+      if (typeof action === 'string' && action.startsWith('item-')) {
+        const index = parseInt(action.replace('item-', ''));
+        const item = this.dropdown[index];
+        if (item && typeof item.click === 'function') {
+          item.click();
+        }
       }
     }
   }
@@ -87,6 +133,11 @@ export default {
 <style>
 .tiptap-button {
   display: flex;
+}
+
+.tiptap-button-wrapper {
+  position: relative;
+  display: inline-block;
 }
 
 /* Makes sure nested buttons (like the first heading) are also rounded */

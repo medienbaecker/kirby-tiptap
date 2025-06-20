@@ -28,7 +28,7 @@ export const parseKirbyTag = (tagString) => {
   // Store the main value with an appropriate key based on tag type
   if (tagType === "link" || tagType === "email" || tagType === "tel") {
     result.href = mainValue
-  } else if (tagType === "image") {
+  } else if (tagType === "image" || tagType === "file" || tagType === "video") {
     result.uuid = mainValue
   } else {
     result.value = mainValue // Generic fallback

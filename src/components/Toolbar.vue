@@ -2,7 +2,7 @@
 	<nav class="k-toolbar tiptap-toolbar" v-if="editor">
 		<template v-for="button in normalizedButtons">
 			<component v-if="!isSeperator(button)" :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
-				:levels="getLevels(button)" :links="links" :endpoints="endpoints" :buttonName="getButtonName(button)"
+				:levels="getLevels(button)" :links="links" :endpoints="endpoints" :uploads="uploads" :buttonName="getButtonName(button)"
 				:buttonConfig="getButtonConfig(button)" />
 			<hr v-else />
 		</template>
@@ -171,6 +171,11 @@ export default {
 /* Turning buttons grey when not focused */
 :where(.k-tiptap-input):not(:focus-within) {
 	--toolbar-text: var(--color-gray-400);
+}
+
+/* Override active button blue with gray when editor not focused */
+.k-tiptap-input:not(:focus-within) .tiptap-toolbar .k-button[aria-current=true] {
+	--button-color-text: var(--color-gray-400);
 }
 
 /* Turning toolbar sticky when focused */

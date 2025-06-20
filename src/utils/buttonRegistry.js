@@ -139,8 +139,14 @@ class ButtonRegistry {
       meta: { icon: 'url', group: 'text' }
     })
 
+    this.registerButton('file', {
+      component: () => import('../components/toolbarButtons/FileButton.vue'),
+      meta: { icon: 'image', group: 'blocks' }
+    })
+
+    // Keep 'image' as an alias for backward compatibility
     this.registerButton('image', {
-      component: () => import('../components/toolbarButtons/ImageButton.vue'),
+      component: () => import('../components/toolbarButtons/FileButton.vue'),
       meta: { icon: 'image', group: 'blocks' }
     })
 
