@@ -96,7 +96,7 @@ fields:
     minlength: 10
 ```
 
-### Block configuration
+### Blocks field
 
 Add Tiptap to your block editor alongside other content blocks:
 
@@ -111,6 +111,8 @@ fields:
       - tiptap # Add the Tiptap block
       - image
 ```
+
+### Frontend/templates
 
 ```php
 // Basic usage
@@ -163,7 +165,7 @@ return [
 ];
 ```
 
-Then use them in blueprints just like core buttons:
+Then use them in blueprints just like any other button:
 
 ```yaml
 tiptap:
@@ -189,7 +191,6 @@ Add corresponding CSS to your frontend and `panel.css` for styling:
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
 - [ ] Image/file uploads? (I don't necessarily like how the core textarea handles this with a `link` button allowing to select files and a separate file button with upload functionality)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
-- [ ] Replacement for Writer/Textarea blocks?
 - [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)?
 - [ ] [Blocks replacement](https://templates.tiptap.dev/)?
 - [ ] [Forced content structure](https://tiptap.dev/docs/examples/advanced/forced-content-structure)?
