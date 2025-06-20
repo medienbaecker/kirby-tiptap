@@ -14,7 +14,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 🧠 **One method to rule them all** with `tiptapText()` handling [UUID resolution](https://getkirby.com/docs/reference/templates/field-methods/permalinks-to-urls), [smartypants](https://getkirby.com/docs/reference/system/options/smartypants), automatic [inline mode](https://getkirby.com/docs/reference/templates/helpers/kirbytextinline) and more
 - ✨ **Intuitive drag & drop support** for pages and files with intelligent spacing
 - 👀 **Custom field preview** showing formatted text in structure/object fields
-- 🔗 **Improved link handling** with a dialog that allows custom link types and custom fields, automatically picks the right KirbyTag (`(link: )`, `(email: )`, `(file: )`or `(tel: )`) and allows editing existing links by pre-filling the link dialog
+- 🔗 **Improved link and file handling** with dialogs that allow custom fields, automatically pick the right KirbyTag (`(link: )`, `(email: )`, `(file: )` or `(tel: )`) and allow editing existing links/files by pre-filling dialogs
 - 🌈 **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
 - 🔧 **Optional setting to allow HTML code** so you can paste your ⁠favourite `<script>`, `⁠<marquee>`, or ⁠`<blink>` tag directly
 - 📋 **Abstracted JSON structure** for easy content manipulation with features like `offsetHeadings`
@@ -49,7 +49,7 @@ tiptap:
     - bold
     - italic
     - link
-    - image
+    - file
     - bulletList
     - orderedList
     # Additional buttons:
@@ -188,9 +188,7 @@ Add corresponding CSS to your frontend and `panel.css` for styling:
 ## Ideas for future improvements
 
 - [ ] Blockquote button + styling
-- [ ] (Optionally) use UUIDs instead of filenames for image KirbyTags
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
-- [ ] Image/file uploads? (I don't necessarily like how the core textarea handles this with a `link` button allowing to select files and a separate file button with upload functionality)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
 - [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)?
 - [ ] [Blocks replacement](https://templates.tiptap.dev/)?
