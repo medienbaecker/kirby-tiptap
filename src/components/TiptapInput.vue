@@ -8,7 +8,7 @@
 
 <script>
 import { EditorContent } from '@tiptap/vue-2'
-import { onMounted } from 'vue'
+import { onMounted, getCurrentInstance } from 'vue'
 import Toolbar from './Toolbar.vue'
 import { ContentSanitizer } from '../utils/contentSanitizer'
 import { props } from './props.js'
@@ -21,6 +21,7 @@ export default {
 	props,
 
 	setup(props, { emit }) {
+		const instance = getCurrentInstance()
 		const sanitizer = new ContentSanitizer(props.buttons)
 
 		const { editor, allowedButtons, createEditor } = useEditor(
@@ -39,7 +40,7 @@ export default {
 
 		const eventHandlers = {
 			handlePaste: createPasteHandler(editor),
-			handleDrop: createDropHandler(editor, window.panel, window.helper)
+			handleDrop: createDropHandler(editor, instance.proxy.$panel, instance.proxy.$helper, props.endpoints, props.uploads)
 		}
 
 		onMounted(() => {

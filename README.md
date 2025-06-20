@@ -187,6 +187,7 @@ Add corresponding CSS to your frontend and `panel.css` for styling:
 
 ## Ideas for future improvements
 
+- [ ] Blockquote button + styling
 - [ ] (Optionally) use UUIDs instead of filenames for image KirbyTags
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
 - [ ] Image/file uploads? (I don't necessarily like how the core textarea handles this with a `link` button allowing to select files and a separate file button with upload functionality)
