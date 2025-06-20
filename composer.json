@@ -1,16 +1,16 @@
 {
-  "name": "medienbaecker/kirby-tiptap",
-  "description": "Kirby Tiptap",
-  "license": "MIT",
-  "type": "kirby-plugin",
-  "authors": [
-    {
-      "name": "Thomas Günther",
-      "email": "mail@medienbaecker.com"
-    }
-  ],
-  "require": {
-    "getkirby/composer-installer": "^1.1",
-    "ueberdosis/tiptap-php": "^1.4"
-  }
+	"name": "medienbaecker/kirby-tiptap",
+	"description": "Kirby Tiptap",
+	"license": "MIT",
+	"type": "kirby-plugin",
+	"authors": [
+		{
+			"name": "Thomas Günther",
+			"email": "mail@medienbaecker.com"
+		}
+	],
+	"require": {
+		"getkirby/composer-installer": "^1.1",
+		"ueberdosis/tiptap-php": "^1.4"
+	}
 }

@@ -244,7 +244,7 @@ export default {
 			// Detect if we're editing an existing file tag
 			const { state, view } = this.editor;
 			const { from, empty } = state.selection;
-			
+
 			let isEditing = false;
 			let replaceRange = null;
 
@@ -252,7 +252,7 @@ export default {
 				const { node } = view.domAtPos(from);
 				const tagEl = findParentWithClass(node, 'kirbytag');
 				isEditing = Boolean(tagEl) && this.isFileTag(tagEl.textContent);
-				
+
 				if (isEditing) {
 					const start = view.posAtDOM(tagEl, 0);
 					const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
@@ -323,7 +323,7 @@ export default {
 					// Store context locally before clearing
 					const { restoreSelection, replaceRange } = this.editingContext;
 					this.editingContext = null;
-					
+
 					restoreSelection(() => {
 						this.editor.chain().focus()
 							.deleteRange(replaceRange)
@@ -334,7 +334,7 @@ export default {
 					this.editor.commands.insertContent(content);
 					this.editingContext = null;
 				}
-				
+
 				this.$panel.notification.success('File uploaded and inserted successfully');
 			} catch (error) {
 				this.$panel.notification.error(`Failed to insert uploaded file: ${error.message}`);

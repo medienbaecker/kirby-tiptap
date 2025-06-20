@@ -9,33 +9,33 @@ namespace Medienbaecker\Tiptap\Nodes;
  */
 class ConditionalTextNode extends \Tiptap\Nodes\Text
 {
-  private $allowHtml;
+	private $allowHtml;
 
-  public function __construct($allowHtml = false)
-  {
-    $this->allowHtml = $allowHtml;
-    parent::__construct();
-  }
+	public function __construct($allowHtml = false)
+	{
+		$this->allowHtml = $allowHtml;
+		parent::__construct();
+	}
 
-  public function renderText($node)
-  {
-    // Always escape HTML in code contexts for security
-    if (isset($node->_inCodeBlock) && $node->_inCodeBlock) {
-      return htmlspecialchars($node->text, ENT_QUOTES, 'UTF-8');
-    }
+	public function renderText($node)
+	{
+		// Always escape HTML in code contexts for security
+		if (isset($node->_inCodeBlock) && $node->_inCodeBlock) {
+			return htmlspecialchars($node->text, ENT_QUOTES, 'UTF-8');
+		}
 
-    // Always escape HTML in inline code for security
-    if (isset($node->marks)) {
-      foreach ($node->marks as $mark) {
-        if ($mark->type === 'code') {
-          return htmlspecialchars($node->text, ENT_QUOTES, 'UTF-8');
-        }
-      }
-    }
+		// Always escape HTML in inline code for security
+		if (isset($node->marks)) {
+			foreach ($node->marks as $mark) {
+				if ($mark->type === 'code') {
+					return htmlspecialchars($node->text, ENT_QUOTES, 'UTF-8');
+				}
+			}
+		}
 
-    // For regular text, respect the allowHtml setting
-    return $this->allowHtml
-      ? $node->text
-      : htmlspecialchars($node->text, ENT_QUOTES, 'UTF-8');
-  }
+		// For regular text, respect the allowHtml setting
+		return $this->allowHtml
+			? $node->text
+			: htmlspecialchars($node->text, ENT_QUOTES, 'UTF-8');
+	}
 }

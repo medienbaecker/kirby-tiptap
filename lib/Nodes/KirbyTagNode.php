@@ -10,12 +10,12 @@ use Tiptap\Core\Node;
  */
 class KirbyTagNode extends Node
 {
-  public static $name = 'kirbyTag';
-  public static $priority = 100;
+	public static $name = 'kirbyTag';
+	public static $priority = 100;
 
-  public function renderHTML($node, $HTMLAttributes = [])
-  {
-    $content = html_entity_decode($node->attrs->content ?? '');
-    return ['content' => $content];
-  }
+	public function renderHTML($node, $HTMLAttributes = [])
+	{
+		$content = html_entity_decode($node->attrs->content ?? '');
+		return ['content' => $content];
+	}
 }

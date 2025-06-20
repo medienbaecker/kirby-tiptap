@@ -180,8 +180,8 @@ Add corresponding CSS to your frontend and `panel.css` for styling:
 
 ```css
 .two-column {
-  column-count: 2;
-  column-gap: 2rem;
+	column-count: 2;
+	column-gap: 2rem;
 }
 ```
 

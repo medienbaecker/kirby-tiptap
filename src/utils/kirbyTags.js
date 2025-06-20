@@ -5,51 +5,51 @@
  * @returns {Object} Parsed tag attributes
  */
 export const parseKirbyTag = (tagString) => {
-  // Get tag type
-  const typeMatch = tagString.match(/^\((\w+):/)
-  const tagType = typeMatch ? typeMatch[1] : ""
-  const result = {
-    // Store the tag type in a property that won't be used as an attribute
-    _type: tagType,
-  }
+	// Get tag type
+	const typeMatch = tagString.match(/^\((\w+):/);
+	const tagType = typeMatch ? typeMatch[1] : "";
+	const result = {
+		// Store the tag type in a property that won't be used as an attribute
+		_type: tagType,
+	};
 
-  // Create a regex for finding field markers
-  const fieldPattern = /\s+(\w+):\s+/g
+	// Create a regex for finding field markers
+	const fieldPattern = /\s+(\w+):\s+/g;
 
-  // Find all field positions
-  const matches = [...tagString.matchAll(fieldPattern)]
+	// Find all field positions
+	const matches = [...tagString.matchAll(fieldPattern)];
 
-  // Handle the main tag value
-  const firstFieldPos =
-    matches.length > 0 ? matches[0].index : tagString.length - 1
-  const typeColonPos = tagString.indexOf(":")
-  const mainValue = tagString.substring(typeColonPos + 1, firstFieldPos).trim()
+	// Handle the main tag value
+	const firstFieldPos =
+		matches.length > 0 ? matches[0].index : tagString.length - 1;
+	const typeColonPos = tagString.indexOf(":");
+	const mainValue = tagString.substring(typeColonPos + 1, firstFieldPos).trim();
 
-  // Store the main value with an appropriate key based on tag type
-  if (tagType === "link" || tagType === "email" || tagType === "tel") {
-    result.href = mainValue
-  } else if (tagType === "image" || tagType === "file" || tagType === "video") {
-    result.uuid = mainValue
-  } else {
-    result.value = mainValue // Generic fallback
-  }
+	// Store the main value with an appropriate key based on tag type
+	if (tagType === "link" || tagType === "email" || tagType === "tel") {
+		result.href = mainValue;
+	} else if (tagType === "image" || tagType === "file" || tagType === "video") {
+		result.uuid = mainValue;
+	} else {
+		result.value = mainValue; // Generic fallback
+	}
 
-  // Process each field
-  for (let i = 0; i < matches.length; i++) {
-    const match = matches[i]
-    const fieldName = match[1]
-    const startPos = match.index + match[0].length
-    const endPos =
-      i < matches.length - 1 ? matches[i + 1].index : tagString.length - 1
+	// Process each field
+	for (let i = 0; i < matches.length; i++) {
+		const match = matches[i];
+		const fieldName = match[1];
+		const startPos = match.index + match[0].length;
+		const endPos =
+			i < matches.length - 1 ? matches[i + 1].index : tagString.length - 1;
 
-    // Skip the field if it's the same as the tag type
-    if (fieldName === tagType) continue
+		// Skip the field if it's the same as the tag type
+		if (fieldName === tagType) continue;
 
-    result[fieldName] = tagString.substring(startPos, endPos).trim()
-  }
+		result[fieldName] = tagString.substring(startPos, endPos).trim();
+	}
 
-  return result
-}
+	return result;
+};
 
 /**
  * Generates a Kirby tag string from an object of attributes
@@ -59,25 +59,25 @@ export const parseKirbyTag = (tagString) => {
  * @returns {string} Formatted kirbytag
  */
 export const generateKirbyTag = (type, mainValue, attrs = {}) => {
-  // Start with the basic tag
-  let tag = `(${type}: ${mainValue}`
+	// Start with the basic tag
+	let tag = `(${type}: ${mainValue}`;
 
-  // Add extra attributes, filtering out empty values
-  Object.entries(attrs)
-    .filter(([, v]) => {
-      if (v === "" || v === false || v == null) return false
-      if (Array.isArray(v) && v.length === 0) return false
-      return true
-    })
-    .forEach(([k, v]) => {
-      tag += ` ${k}: ${Array.isArray(v) ? v.join(" ") : v}`
-    })
+	// Add extra attributes, filtering out empty values
+	Object.entries(attrs)
+		.filter(([, v]) => {
+			if (v === "" || v === false || v == null) return false;
+			if (Array.isArray(v) && v.length === 0) return false;
+			return true;
+		})
+		.forEach(([k, v]) => {
+			tag += ` ${k}: ${Array.isArray(v) ? v.join(" ") : v}`;
+		});
 
-  // Close the tag
-  tag += ")"
+	// Close the tag
+	tag += ")";
 
-  return tag
-}
+	return tag;
+};
 
 /**
  * Traverses up the DOM tree to find an element with the specified class
@@ -86,10 +86,10 @@ export const generateKirbyTag = (type, mainValue, attrs = {}) => {
  * @returns {Element|null} Found element or null
  */
 export const findParentWithClass = (node, className) => {
-  let cur = node.nodeType === 3 ? node.parentNode : node
-  while (cur) {
-    if (cur.classList?.contains(className)) return cur
-    cur = cur.parentNode
-  }
-  return null
-}
+	let cur = node.nodeType === 3 ? node.parentNode : node;
+	while (cur) {
+		if (cur.classList?.contains(className)) return cur;
+		cur = cur.parentNode;
+	}
+	return null;
+};

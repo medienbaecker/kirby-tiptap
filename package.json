@@ -1,15 +1,15 @@
 {
-  "scripts": {
-    "dev": "kirbyup serve src/index.js",
-    "build": "kirbyup src/index.js"
-  },
-  "devDependencies": {
-    "kirbyup": "^3.2.0"
-  },
-  "dependencies": {
-    "@tiptap-pro/extension-invisible-characters": "^2.17.2",
-    "@tiptap/extension-placeholder": "^2.11.3",
-    "@tiptap/starter-kit": "^2.10.3",
-    "@tiptap/vue-2": "^2.10.3"
-  }
+	"scripts": {
+		"dev": "kirbyup serve src/index.js",
+		"build": "kirbyup src/index.js"
+	},
+	"devDependencies": {
+		"kirbyup": "^3.2.0"
+	},
+	"dependencies": {
+		"@tiptap-pro/extension-invisible-characters": "^2.17.2",
+		"@tiptap/extension-placeholder": "^2.11.3",
+		"@tiptap/starter-kit": "^2.10.3",
+		"@tiptap/vue-2": "^2.10.3"
+	}
 }
