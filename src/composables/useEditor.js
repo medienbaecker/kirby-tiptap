@@ -32,6 +32,7 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 
 		const blockElements = [
 			"codeBlock",
+			"blockquote",
 			"bulletList",
 			"orderedList",
 			"image",
@@ -75,6 +76,7 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 			strike: "strike",
 			code: "code",
 			codeBlock: "codeBlock",
+			blockquote: "blockquote",
 			bulletList: "bulletList",
 			orderedList: "orderedList",
 			horizontalRule: "horizontalRule",

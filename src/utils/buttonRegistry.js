@@ -136,6 +136,12 @@ class ButtonRegistry {
 			meta: { icon: "code-block", group: "blocks" },
 		});
 
+		this.registerButton("blockquote", {
+			component: () =>
+				import("../components/toolbarButtons/BlockquoteButton.vue"),
+			meta: { icon: "quote", group: "blocks" },
+		});
+
 		this.registerButton("link", {
 			component: () => import("../components/toolbarButtons/LinkButton.vue"),
 			meta: { icon: "url", group: "text" },

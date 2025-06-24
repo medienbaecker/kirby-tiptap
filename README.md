@@ -1,4 +1,4 @@
-# Kirby Tiptap
+# Kirby Tiptap (WIP)
 
 A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https://getkirby.com).
 
@@ -56,6 +56,7 @@ tiptap:
     - strike
     - code
     - codeBlock
+	- blockquote
     - horizontalRule
     - removeFormatting
     # Divider: (as many as you want)
@@ -187,7 +188,6 @@ Add corresponding CSS to your frontend and `panel.css` for styling:
 
 ## Ideas for future improvements
 
-- [ ] Blockquote button + styling
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
 - [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)?
