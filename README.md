@@ -56,7 +56,7 @@ tiptap:
     - strike
     - code
     - codeBlock
-	- blockquote
+    - blockquote
     - horizontalRule
     - removeFormatting
     # Divider: (as many as you want)
