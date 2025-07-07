@@ -4,7 +4,7 @@
 		"Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
 		"This file is @generated automatically"
 	],
-	"content-hash": "3bd292c1cc47680b864ee600df6b0cbd",
+	"content-hash": "bfc0bccaad4b2d25717ea5da31d366c7",
 	"packages": [
 		{
 			"name": "getkirby/composer-installer",
@@ -36,7 +36,9 @@
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",
-			"license": ["MIT"],
+			"license": [
+				"MIT"
+			],
 			"description": "Kirby's custom Composer installer for the Kirby CMS and for Kirby plugins",
 			"homepage": "https://getkirby.com",
 			"support": {
@@ -80,14 +82,18 @@
 			},
 			"type": "library",
 			"autoload": {
-				"files": ["HighlightUtilities/functions.php"],
+				"files": [
+					"HighlightUtilities/functions.php"
+				],
 				"psr-0": {
 					"Highlight\\": "",
 					"HighlightUtilities\\": ""
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",
-			"license": ["BSD-3-Clause"],
+			"license": [
+				"BSD-3-Clause"
+			],
 			"authors": [
 				{
 					"name": "Geert Bergman",
@@ -158,7 +164,9 @@
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",
-			"license": ["MIT"],
+			"license": [
+				"MIT"
+			],
 			"authors": [
 				{
 					"name": "Rias Van der Veken",
@@ -173,7 +181,10 @@
 			],
 			"description": "Highlight code using Shiki in PHP",
 			"homepage": "https://github.com/spatie/shiki-php",
-			"keywords": ["shiki", "spatie"],
+			"keywords": [
+				"shiki",
+				"spatie"
+			],
 			"support": {
 				"source": "https://github.com/spatie/shiki-php/tree/2.3.2"
 			},
@@ -207,10 +218,14 @@
 				"psr-4": {
 					"Symfony\\Component\\Process\\": ""
 				},
-				"exclude-from-classmap": ["/Tests/"]
+				"exclude-from-classmap": [
+					"/Tests/"
+				]
 			},
 			"notification-url": "https://packagist.org/downloads/",
-			"license": ["MIT"],
+			"license": [
+				"MIT"
+			],
 			"authors": [
 				{
 					"name": "Fabien Potencier",
@@ -244,20 +259,20 @@
 		},
 		{
 			"name": "ueberdosis/tiptap-php",
-			"version": "1.4.0",
+			"version": "2.0.0",
 			"source": {
 				"type": "git",
 				"url": "https://github.com/ueberdosis/tiptap-php.git",
-				"reference": "640667176da4cdfaa84c32093171e0674c3c807f"
+				"reference": "458194ad0f8b0cf616fecdf451a84f9a6c1f3056"
 			},
 			"dist": {
 				"type": "zip",
-				"url": "https://api.github.com/repos/ueberdosis/tiptap-php/zipball/640667176da4cdfaa84c32093171e0674c3c807f",
-				"reference": "640667176da4cdfaa84c32093171e0674c3c807f",
+				"url": "https://api.github.com/repos/ueberdosis/tiptap-php/zipball/458194ad0f8b0cf616fecdf451a84f9a6c1f3056",
+				"reference": "458194ad0f8b0cf616fecdf451a84f9a6c1f3056",
 				"shasum": ""
 			},
 			"require": {
-				"php": "^7.4|^8.0",
+				"php": "^8.0",
 				"scrivo/highlight.php": "^9.18",
 				"spatie/shiki-php": "^2.0"
 			},
@@ -274,7 +289,9 @@
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",
-			"license": ["MIT"],
+			"license": [
+				"MIT"
+			],
 			"authors": [
 				{
 					"name": "Hans Pagel",
@@ -284,10 +301,14 @@
 			],
 			"description": "A PHP package to work with Tiptap output",
 			"homepage": "https://github.com/ueberdosis/tiptap-php",
-			"keywords": ["prosemirror", "tiptap", "ueberdosis"],
+			"keywords": [
+				"prosemirror",
+				"tiptap",
+				"ueberdosis"
+			],
 			"support": {
 				"issues": "https://github.com/ueberdosis/tiptap-php/issues",
-				"source": "https://github.com/ueberdosis/tiptap-php/tree/1.4.0"
+				"source": "https://github.com/ueberdosis/tiptap-php/tree/2.0.0"
 			},
 			"funding": [
 				{
@@ -303,7 +324,7 @@
 					"type": "open_collective"
 				}
 			],
-			"time": "2024-08-12T08:25:45+00:00"
+			"time": "2025-06-26T14:11:46+00:00"
 		}
 	],
 	"packages-dev": [],

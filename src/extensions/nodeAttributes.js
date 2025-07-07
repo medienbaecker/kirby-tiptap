@@ -40,13 +40,18 @@ export const NodeAttributes = Extension.create({
 						if (!attributes[attr]) {
 							return {};
 						}
+						// Ensure we have a valid string value
+						const value = attributes[attr];
+						if (typeof value !== 'string') {
+							return {};
+						}
 						return {
-							[attr]: attributes[attr],
+							[attr]: value,
 						};
 					},
 					parseHTML: (element) => {
 						const value = element.getAttribute(attr);
-						return value ? { [attr]: value } : {};
+						return value || null;
 					},
 				};
 			});
@@ -96,7 +101,7 @@ export const NodeAttributes = Extension.create({
 								([key, value]) => {
 									if (key === "class") {
 										const classes = parseClasses(node);
-										return classes.has(value);
+										return typeof value === 'string' && classes.has(value);
 									}
 									return node.attrs[key] === value;
 								}
@@ -121,7 +126,10 @@ export const NodeAttributes = Extension.create({
 									Object.keys(attributes).forEach((key) => {
 										if (key === "class" && newAttrs.class) {
 											const classes = parseClasses(node);
-											classes.delete(attributes[key]);
+											const valueToRemove = attributes[key];
+											if (typeof valueToRemove === 'string') {
+												classes.delete(valueToRemove);
+											}
 											newAttrs.class =
 												classes.size > 0 ? Array.from(classes).join(" ") : null;
 										} else {
@@ -133,10 +141,14 @@ export const NodeAttributes = Extension.create({
 									Object.entries(attributes).forEach(([key, value]) => {
 										if (key === "class") {
 											const classes = parseClasses(node);
-											classes.add(value);
+											// Ensure value is a string
+											if (typeof value === 'string') {
+												classes.add(value);
+											}
 											newAttrs.class = Array.from(classes).join(" ");
 										} else {
-											newAttrs[key] = value;
+											// Ensure value is a string or null
+											newAttrs[key] = (typeof value === 'string') ? value : null;
 										}
 									});
 								}
@@ -150,14 +162,6 @@ export const NodeAttributes = Extension.create({
 					});
 				},
 
-			// Legacy command for backwards compatibility
-			toggleParagraphClass:
-				(className) =>
-				({ commands }) => {
-					return commands.toggleNodeAttributes(["paragraph"], {
-						class: className,
-					});
-				},
 		};
 	},
 });

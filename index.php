@@ -38,6 +38,11 @@ Kirby::plugin('medienbaecker/tiptap', [
 	],
 	'fieldMethods' => [
 		'tiptapText' => function ($field, array $options = []) {
+			// Add custom buttons from plugin configuration
+			if (!isset($options['customButtons'])) {
+				$options['customButtons'] = option('medienbaecker.tiptap.buttons', []);
+			}
+			
 			return convertTiptapToHtml(
 				$field->value,
 				$field->parent(),

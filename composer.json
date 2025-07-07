@@ -11,6 +11,11 @@
 	],
 	"require": {
 		"getkirby/composer-installer": "^1.1",
-		"ueberdosis/tiptap-php": "^1.4"
+		"ueberdosis/tiptap-php": "^2.0"
+	},
+	"config": {
+		"allow-plugins": {
+			"getkirby/composer-installer": true
+		}
 	}
 }

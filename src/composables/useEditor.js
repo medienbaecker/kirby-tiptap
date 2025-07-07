@@ -43,8 +43,7 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 			.filter((btn) => {
 				// Handle object buttons (headings, paragraphClass, etc.)
 				if (typeof btn === "object") {
-					// Filter out headings and paragraphClass (block-level features)
-					if ("headings" in btn || btn.type === "paragraphClass") {
+					if ("headings" in btn) {
 						return false;
 					}
 				}

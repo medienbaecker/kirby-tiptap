@@ -5,7 +5,7 @@ namespace Medienbaecker\Tiptap;
 use Tiptap\Editor;
 use Medienbaecker\Tiptap\Nodes\KirbyTagNode;
 use Medienbaecker\Tiptap\Nodes\ConditionalTextNode;
-use Medienbaecker\Tiptap\Nodes\ParagraphWithClass;
+use Medienbaecker\Tiptap\Extensions\CustomAttributes;
 
 /**
  * Converts Tiptap JSON content to HTML
@@ -25,7 +25,8 @@ class HtmlConverter
 		// Set default options
 		$options = array_merge([
 			'offsetHeadings' => 0,
-			'allowHtml' => false
+			'allowHtml' => false,
+			'customButtons' => []
 		], $options);
 
 		// Handle invalid input
@@ -75,16 +76,20 @@ class HtmlConverter
 
 		// Convert to HTML
 		try {
+			$extensions = [
+				new \Tiptap\Extensions\StarterKit([
+					'text' => false, // Disable default text node
+				]),
+				new ConditionalTextNode($options['allowHtml']), // Use our custom text handler
+				new KirbyTagNode()
+			];
+
+			$extensions[] = new CustomAttributes([
+				'customButtons' => $options['customButtons']
+			]);
+
 			$html = (new Editor([
-				'extensions' => [
-					new \Tiptap\Extensions\StarterKit([
-						'text' => false, // Disable default text node
-						'paragraph' => false, // Disable default paragraph node
-					]),
-					new ConditionalTextNode($options['allowHtml']), // Use our custom text handler
-					new KirbyTagNode(),
-					new ParagraphWithClass()
-				]
+				'extensions' => $extensions
 			]))->setContent($json)->getHTML();
 
 			// Handle Smartypants

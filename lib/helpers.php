@@ -21,7 +21,7 @@ spl_autoload_register(function ($class) {
 });
 
 /**
- * Legacy function wrapper for Tiptap to HTML conversion
+ * Convert Tiptap JSON to HTML
  * @param mixed $json Tiptap JSON content
  * @param object $parent Parent page/model for KirbyTag context
  * @param array $options Conversion options

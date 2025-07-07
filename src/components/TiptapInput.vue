@@ -256,7 +256,7 @@ p.is-editor-empty:first-child::before {
 }
 
 .Tiptap-invisible-character--non-breaking-space::before {
-	content: ' ';
+	content: ' ';
 	position: absolute;
 	height: 1px;
 	background-color: currentColor;

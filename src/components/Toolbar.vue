@@ -82,9 +82,7 @@ export default {
 					return { type: '|' }
 				}
 
-				// Handle object-style buttons (headings, paragraphClass, etc.)
 				if (typeof button === 'object') {
-					// Legacy headings format
 					if (button.headings) {
 						return {
 							type: 'headings',
