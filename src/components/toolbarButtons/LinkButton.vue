@@ -5,7 +5,8 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
-import { parseKirbyTag, generateKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
+import { parseKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
+import { validateInput, generateLinkTag } from '../../utils/inputValidation';
 
 /**
  * Normalizes options objects to arrays for the link dialog
@@ -37,58 +38,7 @@ export default {
 	},
 
 	methods: {
-		/**
-		 * Validates input and determines its type (email, URL, phone, or plain text)
-		 * @param {string} text - Text to validate
-		 * @returns {Object} Object with type and href/text properties
-		 */
-		validateInput(text) {
-			// Email validation
-			if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
-				return { type: 'email', href: `mailto:${text}` };
-			}
 
-			// Phone validation
-			const phoneRegex = /^[\d\+\-\s\(\)]+$/;
-			if (phoneRegex.test(text) && text.replace(/[^\d]/g, '').length >= 5) {
-				return { type: 'tel', href: `tel:${text.trim()}` };
-			}
-
-			// URL validation
-			try {
-				new URL(text);
-				if (text.startsWith('http://') || text.startsWith('https://')) {
-					return { type: 'url', href: text };
-				}
-			} catch { }
-
-			// Plain text (not recognized as any special type)
-			return { type: 'text', text };
-		},
-
-		/**
-		 * Converts field values into a formatted Kirby tag string
-		 * @param {Object} values - Values from the link dialog
-		 * @returns {string} Formatted Kirbytag
-		 */
-		generateTag(values) {
-			const { href, text, _type, ...attrs } = values; // Exclude _type from attributes
-
-			// Determine tag type based on href
-			let type = 'link';
-			let mainValue = href;
-
-			if (href.startsWith('mailto:')) {
-				type = 'email';
-				mainValue = href.replace('mailto:', '');
-			} else if (href.startsWith('tel:')) {
-				type = 'tel';
-				mainValue = href.replace('tel:', '');
-			}
-
-			// Use the shared utility
-			return generateKirbyTag(type, mainValue, { text, ...attrs });
-		},
 
 		/**
 		 * Handles the link button click - opens dialog for creating or editing links
@@ -194,7 +144,8 @@ export default {
 			// If not editing, handle selection as new link
 			if (!isEditing) {
 				const selText = !empty ? state.doc.textBetween(from, to) : '';
-				const { type, href, text } = this.validateInput(selText);
+				const allowedTypes = this.links.options || [];
+				const { type, href, text } = validateInput(selText, allowedTypes);
 				initial = type === 'text' ? { href: '', text: selText } : { href, text: '' };
 			}
 
@@ -248,7 +199,7 @@ export default {
 							.replace("/@/file/", "file://")
 							.replace("/@/page/", "page://");
 
-						const kirbyTag = this.generateTag(values);
+						const kirbyTag = generateLinkTag(values);
 						const chain = editor.chain().focus();
 
 						// Insert or update the tag

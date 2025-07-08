@@ -3,13 +3,16 @@
  * Handles paste, drop, and other user interactions
  */
 
+import { validateInput, generateLinkTag } from "./inputValidation";
+
 /**
  * Handles paste events in the editor
  * Automatically creates KirbyTags when pasting URLs over selected text
  * @param {Ref} editorRef - The Tiptap editor ref
+ * @param {Array} allowedTypes - Array of allowed link types from field config
  * @returns {Function} The paste handler function
  */
-export function createPasteHandler(editorRef) {
+export function createPasteHandler(editorRef, allowedTypes = []) {
 	return (view, event, slice) => {
 		const selection = view.state.selection;
 		const selectedText = !selection.empty
@@ -18,10 +21,13 @@ export function createPasteHandler(editorRef) {
 
 		if (selectedText) {
 			const pastedText = event.clipboardData.getData("text/plain").trim();
-			const urlPattern = /^(https?:\/\/|mailto:|tel:)/i;
+			const validation = validateInput(pastedText, allowedTypes);
 
-			if (urlPattern.test(pastedText)) {
-				const kirbyTag = `(link: ${pastedText} text: ${selectedText})`;
+			if (validation.type !== "text") {
+				const kirbyTag = generateLinkTag({
+					href: validation.href,
+					text: selectedText,
+				});
 
 				editorRef.value
 					.chain()

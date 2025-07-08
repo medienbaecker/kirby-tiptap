@@ -39,7 +39,7 @@ export default {
 		)
 
 		const eventHandlers = {
-			handlePaste: createPasteHandler(editor),
+			handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url']),
 			handleDrop: createDropHandler(editor, instance.proxy.$panel, instance.proxy.$helper, props.endpoints, props.uploads)
 		}
 
