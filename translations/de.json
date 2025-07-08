@@ -1,0 +1,14 @@
+{
+	"toolbar.button.horizontalRule": "Trennlinie",
+	"toolbar.button.codeBlock": "Codeblock",
+	"toolbar.button.twoColumn": "Zwei Spalten",
+	"toolbar.button.blockquote": "Zitat",
+	"upload.error.disabled": "Datei-Uploads sind für dieses Feld nicht aktiviert",
+	"upload.error.endpoint": "Upload-Endpunkt nicht konfiguriert",
+	"upload.error.noFiles": "Es wurden keine Dateien hochgeladen",
+	"upload.error.noData": "Keine Dateien vom Upload erhalten",
+	"upload.error.insert": "Fehler beim Einfügen der hochgeladenen Datei",
+	"upload.error.dialog": "Fehler beim Öffnen des Upload-Dialogs",
+	"upload.error.failed": "Upload fehlgeschlagen",
+	"upload.success": "Datei erfolgreich hochgeladen und eingefügt"
+}

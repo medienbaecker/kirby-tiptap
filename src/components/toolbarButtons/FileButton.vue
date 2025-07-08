@@ -61,80 +61,167 @@ export default {
 		 * Handles selecting existing files
 		 */
 		handleSelect() {
+			const editingContext = this.getFileEditingContext();
+			const restoreSelection = this.restoreSelectionCallback();
+			this.processFileSelection(editingContext, restoreSelection);
+		},
+
+		/**
+		 * Determines if we're editing an existing file tag and extracts context
+		 * @returns {Object} Context object with editing state and tag information
+		 */
+		getFileEditingContext() {
 			const { state, view } = this.editor;
 			const { from, to, empty } = state.selection;
 
-			// Check if we're editing an existing file tag
-			let isEditing = false;
-			let tagEl = null;
-			let replaceRange = null;
-			let initial = {};
-
-			// Case 1: Cursor inside a tag
 			if (empty) {
-				const { node } = view.domAtPos(from);
-				tagEl = findParentWithClass(node, 'kirbytag');
-				isEditing = Boolean(tagEl) && this.isFileTag(tagEl.textContent);
+				return this.checkCursorInFileTag(view, from);
+			} else {
+				return this.checkSelectionForFileTag(state, view, from, to);
 			}
-			// Case 2: Selection
-			else {
-				// First check if the selection is a complete tag
-				const selectedText = state.doc.textBetween(from, to).trim();
-				if (this.isFileTag(selectedText) && selectedText.endsWith(')')) {
-					isEditing = true;
-					replaceRange = { from, to };
-					try {
-						initial = parseKirbyTag(selectedText);
-					} catch (e) {
-						console.error("Error parsing tag:", e);
-						isEditing = false;
-					}
+		},
+
+		/**
+		 * Checks if cursor is positioned inside a file tag
+		 * @param {Object} view - Editor view
+		 * @param {number} from - Cursor position
+		 * @returns {Object} Context object
+		 */
+		checkCursorInFileTag(view, from) {
+			const { node } = view.domAtPos(from);
+			const tagEl = findParentWithClass(node, 'kirbytag');
+
+			if (tagEl && this.isFileTag(tagEl.textContent)) {
+				return {
+					isEditing: true,
+					tagEl,
+					replaceRange: this.getFileTagRange(view, tagEl),
+					tagText: tagEl.textContent
+				};
+			}
+
+			return { isEditing: false };
+		},
+
+		/**
+		 * Checks if selection contains or intersects with a file tag
+		 * @param {Object} state - Editor state
+		 * @param {Object} view - Editor view
+		 * @param {number} from - Selection start
+		 * @param {number} to - Selection end
+		 * @returns {Object} Context object
+		 */
+		checkSelectionForFileTag(state, view, from, to) {
+			const selectedText = state.doc.textBetween(from, to).trim();
+
+			// Check if selection is a complete file tag
+			if (this.isCompleteFileTag(selectedText)) {
+				return {
+					isEditing: true,
+					replaceRange: { from, to },
+					tagText: selectedText
+				};
+			}
+
+			// Check if selection intersects with a file tag
+			const tagEl = this.findIntersectingFileTag(view, from, to);
+			if (tagEl) {
+				return {
+					isEditing: true,
+					tagEl,
+					replaceRange: this.getFileTagRange(view, tagEl),
+					tagText: tagEl.textContent
+				};
+			}
+
+			return { isEditing: false };
+		},
+
+		/**
+		 * Checks if text is a complete file tag
+		 * @param {string} text - Text to check
+		 * @returns {boolean}
+		 */
+		isCompleteFileTag(text) {
+			return this.isFileTag(text) && text.endsWith(')');
+		},
+
+		/**
+		 * Finds a file tag element that intersects with the selection
+		 * @param {Object} view - Editor view
+		 * @param {number} from - Selection start
+		 * @param {number} to - Selection end
+		 * @returns {Element|null} Tag element or null
+		 */
+		findIntersectingFileTag(view, from, to) {
+			// Check start of selection
+			const { node: startNode } = view.domAtPos(from);
+			const startTagEl = findParentWithClass(startNode, 'kirbytag');
+			if (startTagEl && this.isFileTag(startTagEl.textContent)) {
+				return startTagEl;
+			}
+
+			// Check end of selection
+			const { node: endNode } = view.domAtPos(to);
+			const endTagEl = findParentWithClass(endNode, 'kirbytag');
+			if (endTagEl && this.isFileTag(endTagEl.textContent)) {
+				return endTagEl;
+			}
+
+			return null;
+		},
+
+		/**
+		 * Gets the range (from/to positions) of a file tag element
+		 * @param {Object} view - Editor view
+		 * @param {Element} tagEl - Tag element
+		 * @returns {Object} Range object with from and to positions
+		 */
+		getFileTagRange(view, tagEl) {
+			const start = view.posAtDOM(tagEl, 0);
+			const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
+			return { from: start, to: end };
+		},
+
+		/**
+		 * Processes file selection based on editing context
+		 * @param {Object} context - Editing context
+		 * @param {Function} restoreSelection - Selection restore callback
+		 */
+		processFileSelection(context, restoreSelection) {
+			if (context.isEditing && context.tagText) {
+				this.handleExistingFileTag(context, restoreSelection);
+			} else {
+				this.openFileDialog(restoreSelection, {}, [], false, null);
+			}
+		},
+
+		/**
+		 * Handles editing of an existing file tag
+		 * @param {Object} context - Editing context
+		 * @param {Function} restoreSelection - Selection restore callback
+		 */
+		handleExistingFileTag(context, restoreSelection) {
+			try {
+				const initial = parseKirbyTag(context.tagText);
+
+				// For UUID-based tags, look up the file ID first
+				if (initial.uuid) {
+					this.findFileByUuid(initial.uuid)
+						.then(fileId => {
+							const value = fileId ? [fileId] : [];
+							this.openFileDialog(restoreSelection, initial, value, true, context.replaceRange);
+						})
+						.catch(() => {
+							this.openFileDialog(restoreSelection, initial, [], true, context.replaceRange);
+						});
+				} else {
+					this.openFileDialog(restoreSelection, initial, [], true, context.replaceRange);
 				}
-				// If not a complete tag, check if selection intersects with a tag
-				else {
-					// Check if selection starts inside a tag
-					const { node: startNode } = view.domAtPos(from);
-					const startTagEl = findParentWithClass(startNode, 'kirbytag');
-					if (startTagEl && this.isFileTag(startTagEl.textContent)) {
-						isEditing = true;
-						tagEl = startTagEl;
-					}
-
-					// If not starting in a tag, check if it ends in one
-					if (!isEditing) {
-						const { node: endNode } = view.domAtPos(to);
-						const endTagEl = findParentWithClass(endNode, 'kirbytag');
-						if (endTagEl && this.isFileTag(endTagEl.textContent)) {
-							isEditing = true;
-							tagEl = endTagEl;
-						}
-					}
-				}
+			} catch (error) {
+				console.error('Error parsing existing file tag:', error);
+				this.openFileDialog(restoreSelection, {}, [], false, null);
 			}
-
-			// If editing via cursor position or partial tag selection, get the tag range
-			if (isEditing && tagEl && !replaceRange) {
-				const start = view.posAtDOM(tagEl, 0);
-				const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
-				replaceRange = { from: start, to: end };
-				initial = parseKirbyTag(tagEl.textContent);
-			}
-
-			const restoreSelection = this.restoreSelectionCallback();
-
-			// For UUID-based tags, we need to look up the file ID first
-			if (initial.uuid) {
-				this.findFileByUuid(initial.uuid).then(fileId => {
-					const value = fileId ? [fileId] : [];
-					this.openFileDialog(restoreSelection, initial, value, isEditing, replaceRange);
-				}).catch(() => {
-					this.openFileDialog(restoreSelection, initial, [], isEditing, replaceRange);
-				});
-				return;
-			}
-
-			// For new insertions, open dialog directly
-			this.openFileDialog(restoreSelection, initial, [], isEditing, replaceRange);
 		},
 
 		openFileDialog(restoreSelection, initial, value, isEditing, replaceRange) {
@@ -230,41 +317,76 @@ export default {
 			}
 		},
 
+		/**
+		 * Handles file upload functionality
+		 */
 		handleUpload() {
-			if (!this.uploads) {
-				this.$panel.notification.error('Uploads are not enabled for this field');
+			if (!this.validateUploadPreconditions()) {
 				return;
+			}
+
+			const uploadContext = this.getUploadContext();
+			const uploadOptions = this.buildUploadOptions(uploadContext);
+			this.initiateUpload(uploadOptions, uploadContext.restoreSelection);
+		},
+
+		/**
+		 * Validates that upload functionality can be used
+		 * @returns {boolean} Whether upload is possible
+		 */
+		validateUploadPreconditions() {
+			if (!this.uploads) {
+				this.$panel.notification.error(this.$t('tiptap.upload.error.disabled'));
+				return false;
 			}
 
 			if (!this.endpoints?.field) {
-				this.$panel.notification.error('Upload endpoint not configured');
-				return;
+				this.$panel.notification.error(this.$t('tiptap.upload.error.endpoint'));
+				return false;
 			}
 
-			// Detect if we're editing an existing file tag
+			return true;
+		},
+
+		/**
+		 * Gets the context for file upload (editing state, selection restore)
+		 * @returns {Object} Upload context
+		 */
+		getUploadContext() {
 			const { state, view } = this.editor;
 			const { from, empty } = state.selection;
+			const restoreSelection = this.restoreSelectionCallback();
 
 			let isEditing = false;
 			let replaceRange = null;
 
+			// Only check for editing if cursor is positioned (no selection)
 			if (empty) {
 				const { node } = view.domAtPos(from);
 				const tagEl = findParentWithClass(node, 'kirbytag');
 				isEditing = Boolean(tagEl) && this.isFileTag(tagEl.textContent);
 
 				if (isEditing) {
-					const start = view.posAtDOM(tagEl, 0);
-					const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
-					replaceRange = { from: start, to: end };
+					replaceRange = this.getFileTagRange(view, tagEl);
 				}
 			}
 
-			const restoreSelection = this.restoreSelectionCallback();
+			// Store editing context for later use
 			this.editingContext = isEditing ? { replaceRange, restoreSelection } : null;
 
+			return { isEditing, replaceRange, restoreSelection };
+		},
+
+		/**
+		 * Builds upload options configuration
+		 * @param {Object} context - Upload context
+		 * @returns {Object} Upload options
+		 */
+		buildUploadOptions(context) {
+			const { restoreSelection } = context;
+
 			const uploadOptions = {
-				url: this.endpoints.field.includes('/api/') ? `${this.endpoints.field}/upload` : `/api${this.endpoints.field}/upload`,
+				url: this.getUploadUrl(),
 				accept: this.uploads.accept || '*/*',
 				multiple: false,
 				on: {
@@ -276,11 +398,32 @@ export default {
 					},
 					error: (error) => {
 						restoreSelection();
-						this.$panel.notification.error(`Upload failed: ${error.message || 'Unknown error'}`);
+						this.$panel.notification.error(`${this.$t('tiptap.upload.error.failed')}: ${error.message || 'Unknown error'}`);
 					}
 				}
 			};
 
+			// Add upload attributes if specified
+			this.addUploadAttributes(uploadOptions);
+
+			return uploadOptions;
+		},
+
+		/**
+		 * Gets the correct upload URL
+		 * @returns {string} Upload URL
+		 */
+		getUploadUrl() {
+			return this.endpoints.field.includes('/api/')
+				? `${this.endpoints.field}/upload`
+				: `/api${this.endpoints.field}/upload`;
+		},
+
+		/**
+		 * Adds upload attributes (template, parent) to upload options
+		 * @param {Object} uploadOptions - Upload options to modify
+		 */
+		addUploadAttributes(uploadOptions) {
 			if (this.uploads.template) {
 				uploadOptions.attributes = { template: this.uploads.template };
 			}
@@ -291,31 +434,38 @@ export default {
 					parent: this.uploads.parent
 				};
 			}
+		},
 
+		/**
+		 * Initiates the upload process
+		 * @param {Object} uploadOptions - Upload configuration
+		 * @param {Function} restoreSelection - Selection restore callback
+		 */
+		initiateUpload(uploadOptions, restoreSelection) {
 			try {
 				this.$panel.upload.pick(uploadOptions);
 			} catch (error) {
-				this.$panel.notification.error(`Failed to open upload dialog: ${error.message}`);
+				this.$panel.notification.error(`${this.$t('tiptap.upload.error.dialog')}: ${error.message}`);
 				restoreSelection();
 			}
 		},
 
 		handleUploadComplete(files) {
 			if (!files?.length) {
-				this.$panel.notification.error('No files were uploaded');
+				this.$panel.notification.error(this.$t('tiptap.upload.error.noFiles'));
 				return;
 			}
 
 			try {
 				const file = files[0][0];
 				if (!file) {
-					this.$panel.notification.error('No file data received from upload');
+					this.$panel.notification.error(this.$t('tiptap.upload.error.noData'));
 					return;
 				}
 
 				const content = file.dragText;
 				if (!content || !this.editor?.commands) {
-					this.$panel.notification.error('Failed to insert uploaded file');
+					this.$panel.notification.error(this.$t('tiptap.upload.error.insert'));
 					return;
 				}
 
@@ -335,9 +485,9 @@ export default {
 					this.editingContext = null;
 				}
 
-				this.$panel.notification.success('File uploaded and inserted successfully');
+				this.$panel.notification.success(this.$t('tiptap.upload.success'));
 			} catch (error) {
-				this.$panel.notification.error(`Failed to insert uploaded file: ${error.message}`);
+				this.$panel.notification.error(`${this.$t('tiptap.upload.error.insert')}: ${error.message}`);
 			}
 		}
 

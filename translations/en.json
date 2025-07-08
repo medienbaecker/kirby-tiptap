@@ -1,0 +1,14 @@
+{
+	"toolbar.button.horizontalRule": "Horizontal Rule",
+	"toolbar.button.codeBlock": "Code Block",
+	"toolbar.button.twoColumn": "Two Columns",
+	"toolbar.button.blockquote": "Blockquote",
+	"upload.error.disabled": "Uploads are not enabled for this field",
+	"upload.error.endpoint": "Upload endpoint not configured",
+	"upload.error.noFiles": "No files were uploaded",
+	"upload.error.noData": "No file data received from upload",
+	"upload.error.insert": "Failed to insert uploaded file",
+	"upload.error.dialog": "Failed to open upload dialog",
+	"upload.error.failed": "Upload failed",
+	"upload.success": "File uploaded and inserted successfully"
+}

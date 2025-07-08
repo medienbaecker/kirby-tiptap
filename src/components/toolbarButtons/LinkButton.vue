@@ -45,114 +45,201 @@ export default {
 		 * @param {Object} editor - The Tiptap editor instance
 		 */
 		handleLink(editor) {
+			const editingContext = this.getEditingContext(editor);
+			const initialValues = this.prepareInitialValues(editingContext);
+			this.openLinkDialog(editor, editingContext, initialValues);
+		},
+
+		/**
+		 * Determines if we're editing an existing tag and extracts context
+		 * @param {Object} editor - The Tiptap editor instance
+		 * @returns {Object} Context object with editing state and tag information
+		 */
+		getEditingContext(editor) {
 			const { state, view } = editor;
 			const { from, to, empty } = state.selection;
 
-			// Check if we're editing an existing tag
-			let isEditing = false;
-			let tagEl = null;
-			let replaceRange = null;
+			if (empty) {
+				return this.checkCursorInTag(view, from);
+			} else {
+				return this.checkSelectionForTag(state, view, from, to);
+			}
+		},
+
+		/**
+		 * Checks if cursor is positioned inside a link tag
+		 * @param {Object} view - Editor view
+		 * @param {number} from - Cursor position
+		 * @returns {Object} Context object
+		 */
+		checkCursorInTag(view, from) {
+			const { node } = view.domAtPos(from);
+			const tagEl = findParentWithClass(node, 'kirbytag');
+
+			if (tagEl && this.isLinkTag(tagEl.textContent)) {
+				return {
+					isEditing: true,
+					tagEl,
+					replaceRange: this.getTagRange(view, tagEl),
+					tagText: tagEl.textContent
+				};
+			}
+
+			return { isEditing: false };
+		},
+
+		/**
+		 * Checks if selection contains or intersects with a link tag
+		 * @param {Object} state - Editor state
+		 * @param {Object} view - Editor view
+		 * @param {number} from - Selection start
+		 * @param {number} to - Selection end
+		 * @returns {Object} Context object
+		 */
+		checkSelectionForTag(state, view, from, to) {
+			const selectedText = state.doc.textBetween(from, to).trim();
+
+			// Check if selection is a complete tag
+			if (this.isCompleteTag(selectedText)) {
+				return {
+					isEditing: true,
+					replaceRange: { from, to },
+					tagText: selectedText
+				};
+			}
+
+			// Check if selection intersects with a tag
+			const tagEl = this.findIntersectingTag(view, from, to);
+			if (tagEl) {
+				return {
+					isEditing: true,
+					tagEl,
+					replaceRange: this.getTagRange(view, tagEl),
+					tagText: tagEl.textContent
+				};
+			}
+
+			return { isEditing: false, selectedText };
+		},
+
+		/**
+		 * Checks if text is a link-related tag
+		 * @param {string} text - Text to check
+		 * @returns {boolean}
+		 */
+		isLinkTag(text) {
+			return text.startsWith('(link:') ||
+				text.startsWith('(email:') ||
+				text.startsWith('(tel:');
+		},
+
+		/**
+		 * Checks if text is a complete KirbyTag
+		 * @param {string} text - Text to check
+		 * @returns {boolean}
+		 */
+		isCompleteTag(text) {
+			return this.isLinkTag(text) && text.endsWith(')');
+		},
+
+		/**
+		 * Finds a tag element that intersects with the selection
+		 * @param {Object} view - Editor view
+		 * @param {number} from - Selection start
+		 * @param {number} to - Selection end
+		 * @returns {Element|null} Tag element or null
+		 */
+		findIntersectingTag(view, from, to) {
+			// Check start of selection
+			const { node: startNode } = view.domAtPos(from);
+			const startTagEl = findParentWithClass(startNode, 'kirbytag');
+			if (startTagEl && this.isLinkTag(startTagEl.textContent)) {
+				return startTagEl;
+			}
+
+			// Check end of selection
+			const { node: endNode } = view.domAtPos(to);
+			const endTagEl = findParentWithClass(endNode, 'kirbytag');
+			if (endTagEl && this.isLinkTag(endTagEl.textContent)) {
+				return endTagEl;
+			}
+
+			return null;
+		},
+
+		/**
+		 * Gets the range (from/to positions) of a tag element
+		 * @param {Object} view - Editor view
+		 * @param {Element} tagEl - Tag element
+		 * @returns {Object} Range object with from and to positions
+		 */
+		getTagRange(view, tagEl) {
+			const start = view.posAtDOM(tagEl, 0);
+			const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
+			return { from: start, to: end };
+		},
+
+		/**
+		 * Prepares initial values for the link dialog
+		 * @param {Object} context - Editing context
+		 * @returns {Object} Initial values for dialog fields
+		 */
+		prepareInitialValues(context) {
 			let initial = {};
 
-			// Case 1: Cursor inside a tag
-			if (empty) {
-				const { node } = view.domAtPos(from);
-				tagEl = findParentWithClass(node, 'kirbytag');
-				isEditing = Boolean(tagEl) && (
-					tagEl.textContent.startsWith('(link:') ||
-					tagEl.textContent.startsWith('(email:') ||
-					tagEl.textContent.startsWith('(tel:')
-				);
+			if (context.isEditing && context.tagText) {
+				initial = this.parseExistingTag(context.tagText);
+			} else {
+				initial = this.createNewLinkValues(context.selectedText || '');
 			}
-			// Case 2: Selection
-			else {
-				// First check if the selection is a complete tag
-				const selectedText = state.doc.textBetween(from, to).trim();
 
-				// Check for complete tags of different types
-				if (
-					(selectedText.startsWith('(link:') && selectedText.endsWith(')')) ||
-					(selectedText.startsWith('(email:') && selectedText.endsWith(')')) ||
-					(selectedText.startsWith('(tel:') && selectedText.endsWith(')'))
-				) {
-					isEditing = true;
-					replaceRange = { from, to };
+			return this.processFieldValues(initial);
+		},
 
-					try {
-						initial = parseKirbyTag(selectedText);
+		/**
+		 * Parses an existing KirbyTag and returns its values
+		 * @param {string} tagText - The KirbyTag text
+		 * @returns {Object} Parsed tag values
+		 */
+		parseExistingTag(tagText) {
+			try {
+				const parsed = parseKirbyTag(tagText);
 
-						// Set href properly based on tag type
-						if (initial._type === 'email') {
-							initial.href = 'mailto:' + initial.href;
-						} else if (initial._type === 'tel') {
-							initial.href = 'tel:' + initial.href;
-						}
-					} catch (e) {
-						console.error("Error parsing tag:", e);
-						isEditing = false;
-					}
+				// Normalize href based on tag type
+				if (parsed._type === 'email') {
+					parsed.href = 'mailto:' + parsed.href;
+				} else if (parsed._type === 'tel') {
+					parsed.href = 'tel:' + parsed.href;
 				}
-				// Check if selection intersects with a tag
-				else {
-					// Check if selection starts inside a tag
-					const { node: startNode } = view.domAtPos(from);
-					const startTagEl = findParentWithClass(startNode, 'kirbytag');
-					if (startTagEl) {
-						const txt = startTagEl.textContent;
-						if (txt.startsWith('(link:') || txt.startsWith('(email:') || txt.startsWith('(tel:')) {
-							isEditing = true;
-							tagEl = startTagEl;
-						}
-					}
 
-					// If not starting in a tag, check if it ends in one
-					if (!isEditing) {
-						const { node: endNode } = view.domAtPos(to);
-						const endTagEl = findParentWithClass(endNode, 'kirbytag');
-						if (endTagEl) {
-							const txt = endTagEl.textContent;
-							if (txt.startsWith('(link:') || txt.startsWith('(email:') || txt.startsWith('(tel:')) {
-								isEditing = true;
-								tagEl = endTagEl;
-							}
-						}
-					}
-				}
+				return parsed;
+			} catch (error) {
+				console.error('Error parsing existing tag:', error);
+				return {};
 			}
+		},
 
-			// If editing via cursor position or partial tag selection, get the tag range
-			if (isEditing && tagEl && !replaceRange) {
-				const start = view.posAtDOM(tagEl, 0);
-				const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
-				replaceRange = { from: start, to: end };
+		/**
+		 * Creates initial values for a new link from selected text
+		 * @param {string} selectedText - The selected text
+		 * @returns {Object} Initial values
+		 */
+		createNewLinkValues(selectedText) {
+			const allowedTypes = this.links.options || [];
+			const { type, href, text } = validateInput(selectedText, allowedTypes);
+			return type === 'text'
+				? { href: '', text: selectedText }
+				: { href, text: '' };
+		},
 
-				try {
-					initial = parseKirbyTag(tagEl.textContent);
-
-					// Set href properly based on tag type
-					if (initial._type === 'email') {
-						initial.href = 'mailto:' + initial.href;
-					} else if (initial._type === 'tel') {
-						initial.href = 'tel:' + initial.href;
-					}
-				} catch (e) {
-					console.error("Error parsing tag:", e);
-					isEditing = false;
-				}
-			}
-
-			// If not editing, handle selection as new link
-			if (!isEditing) {
-				const selText = !empty ? state.doc.textBetween(from, to) : '';
-				const allowedTypes = this.links.options || [];
-				const { type, href, text } = validateInput(selText, allowedTypes);
-				initial = type === 'text' ? { href: '', text: selText } : { href, text: '' };
-			}
-
-			// Add a null check before using Object.entries with this.linkFields
+		/**
+		 * Processes field values based on their types (arrays, booleans, etc.)
+		 * @param {Object} initial - Initial values
+		 * @returns {Object} Processed values
+		 */
+		processFieldValues(initial) {
 			const fields = this.linkFields || {};
 
-			// Process field values based on field types
 			Object.entries(fields).forEach(([name, field]) => {
 				if (!initial[name]) return;
 
@@ -171,46 +258,69 @@ export default {
 				}
 			});
 
-			// Open the dialog
+			return initial;
+		},
+
+		/**
+		 * Opens the link dialog with appropriate handlers
+		 * @param {Object} editor - Editor instance
+		 * @param {Object} context - Editing context
+		 * @param {Object} initialValues - Initial dialog values
+		 */
+		openLinkDialog(editor, context, initialValues) {
 			this.$panel.dialog.open({
 				component: 'k-link-dialog',
 				props: {
 					fields: this.linkFields,
-					value: initial,
+					value: initialValues,
 					submitButton: window.panel.$t('insert')
 				},
 				on: {
-					cancel: () => {
-						this.$panel.dialog.close();
-						editor.chain().focus().run();
-					},
-					submit: (values) => {
-						if (!values.href) {
-							this.$panel.notification.error(
-								window.panel.$t('error.validation.required')
-							);
-							return;
-						}
-
-						this.$panel.dialog.close();
-
-						// Convert permalinks to UUIDs
-						values.href = values.href
-							.replace("/@/file/", "file://")
-							.replace("/@/page/", "page://");
-
-						const kirbyTag = generateLinkTag(values);
-						const chain = editor.chain().focus();
-
-						// Insert or update the tag
-						if (isEditing && replaceRange) {
-							chain.deleteRange(replaceRange).insertContent(kirbyTag).run();
-						} else {
-							chain.insertContent(kirbyTag).run();
-						}
-					}
+					cancel: () => this.handleDialogCancel(editor),
+					submit: (values) => this.handleDialogSubmit(editor, context, values)
 				}
 			});
+		},
+
+		/**
+		 * Handles dialog cancellation
+		 * @param {Object} editor - Editor instance
+		 */
+		handleDialogCancel(editor) {
+			this.$panel.dialog.close();
+			editor.chain().focus().run();
+		},
+
+		/**
+		 * Handles dialog form submission
+		 * @param {Object} editor - Editor instance
+		 * @param {Object} context - Editing context
+		 * @param {Object} values - Form values
+		 */
+		handleDialogSubmit(editor, context, values) {
+			if (!values.href) {
+				this.$panel.notification.error(
+					window.panel.$t('error.validation.required')
+				);
+				return;
+			}
+
+			this.$panel.dialog.close();
+
+			// Convert permalinks to UUIDs
+			values.href = values.href
+				.replace("/@/file/", "file://")
+				.replace("/@/page/", "page://");
+
+			const kirbyTag = generateLinkTag(values);
+			const chain = editor.chain().focus();
+
+			// Insert or update the tag
+			if (context.isEditing && context.replaceRange) {
+				chain.deleteRange(context.replaceRange).insertContent(kirbyTag).run();
+			} else {
+				chain.insertContent(kirbyTag).run();
+			}
 		},
 
 		/**

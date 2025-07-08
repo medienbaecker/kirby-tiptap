@@ -5,13 +5,15 @@ require_once __DIR__ . '/lib/helpers.php';
 require_once __DIR__ . '/lib/Field.php';
 require_once __DIR__ . '/lib/Validations.php';
 require_once __DIR__ . '/lib/Api.php';
-require_once __DIR__ . '/lib/Translations.php';
 
 use Kirby\Cms\App as Kirby;
+use Kirby\Toolkit\A;
+use Kirby\Filesystem\Dir;
+use Kirby\Filesystem\F;
+use Kirby\Data\Json;
 use Medienbaecker\Tiptap\Field;
 use Medienbaecker\Tiptap\Validations;
 use Medienbaecker\Tiptap\Api;
-use Medienbaecker\Tiptap\Translations;
 
 Kirby::plugin('medienbaecker/tiptap', [
 	'options' => [
@@ -42,7 +44,7 @@ Kirby::plugin('medienbaecker/tiptap', [
 			if (!isset($options['customButtons'])) {
 				$options['customButtons'] = option('medienbaecker.tiptap.buttons', []);
 			}
-			
+
 			return convertTiptapToHtml(
 				$field->value,
 				$field->parent(),
@@ -50,5 +52,21 @@ Kirby::plugin('medienbaecker/tiptap', [
 			);
 		}
 	],
-	'translations' => Translations::definitions()
+	'translations' => A::keyBy(
+		A::map(
+			Dir::files(__DIR__ . '/translations'),
+			function ($file) {
+				$translations = [];
+				foreach (Json::read(__DIR__ . '/translations/' . $file) as $key => $value) {
+					$translations["tiptap.{$key}"] = $value;
+				}
+
+				return A::merge(
+					['lang' => F::name($file)],
+					$translations
+				);
+			}
+		),
+		'lang'
+	)
 ]);
