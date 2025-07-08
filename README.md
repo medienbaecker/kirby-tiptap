@@ -147,6 +147,27 @@ return [
 ];
 ```
 
+### Keyboard shortcuts
+
+- **Bold**: `Cmd+B` (Mac) / `Ctrl+B` (Windows/Linux)
+- **Italic**: `Cmd+I` (Mac) / `Ctrl+I` (Windows/Linux)
+- **Strike**: `Cmd+Shift+S` (Mac) / `Ctrl+Shift+S` (Windows/Linux)
+- **Code**: `Cmd+E` (Mac) / `Ctrl+E` (Windows/Linux)
+- **Heading 1**: `Cmd+Alt+1` (Mac) / `Ctrl+Alt+1` (Windows/Linux)
+- **Heading 2**: `Cmd+Alt+2` (Mac) / `Ctrl+Alt+2` (Windows/Linux)
+- **Heading 3**: `Cmd+Alt+3` (Mac) / `Ctrl+Alt+3` (Windows/Linux)
+- **Heading 4**: `Cmd+Alt+4` (Mac) / `Ctrl+Alt+4` (Windows/Linux)
+- **Heading 5**: `Cmd+Alt+5` (Mac) / `Ctrl+Alt+5` (Windows/Linux)
+- **Heading 6**: `Cmd+Alt+6` (Mac) / `Ctrl+Alt+6` (Windows/Linux)
+- **Blockquote**: `Cmd+Shift+B` (Mac) / `Ctrl+Shift+B` (Windows/Linux)
+- **Code block**: `Cmd+Alt+C` (Mac) / `Ctrl+Alt+C` (Windows/Linux)
+- **Bullet list**: `Cmd+Shift+8` (Mac) / `Ctrl+Shift+8` (Windows/Linux)
+- **Ordered list**: `Cmd+Shift+7` (Mac) / `Ctrl+Shift+7` (Windows/Linux)
+
+While the above shortcuts all come from [Tiptap's defaults](https://tiptap.dev/docs/editor/core-concepts/keyboard-shortcuts), the following shortcut is also available:
+
+- **Link dialog**: `Cmd+K` (Mac) / `Ctrl+K` (Windows/Linux)
+
 ### Custom buttons
 
 The plugin supports custom buttons that can add any attributes to nodes. This allows you to create semantic markup or add styling classes. Configure them in your `config.php`:
