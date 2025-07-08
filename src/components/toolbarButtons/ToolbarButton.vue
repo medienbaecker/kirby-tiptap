@@ -19,7 +19,8 @@ export default {
 		editor: Object,
 		command: [String, Function],
 		activeCheck: [String, Function],
-		dropdown: Array
+		dropdown: Array,
+		shortcut: String
 	},
 	data() {
 		return {
@@ -81,6 +82,8 @@ export default {
 						this.updateTimer = setTimeout(updateActiveState, 50)
 					}
 				})
+
+				this.registerShortcut()
 			}
 		}
 	},
@@ -88,6 +91,7 @@ export default {
 		if (this.updateTimer) {
 			clearTimeout(this.updateTimer)
 		}
+		this.unregisterShortcut()
 	},
 	methods: {
 		runCommand() {
@@ -119,6 +123,31 @@ export default {
 				if (item && typeof item.click === 'function') {
 					item.click();
 				}
+			}
+		},
+
+		registerShortcut() {
+			if (!this.shortcut || !this.editor) return;
+
+			this.keyboardHandler = (event) => {
+				const isMod = event.metaKey || event.ctrlKey;
+				const shortcutKey = this.shortcut.replace('Mod-', '').toLowerCase();
+
+				if (isMod && event.key.toLowerCase() === shortcutKey && !event.shiftKey && !event.altKey) {
+					event.preventDefault();
+					this.runCommand();
+				}
+			};
+
+			if (this.editor.view?.dom) {
+				this.editor.view.dom.addEventListener('keydown', this.keyboardHandler);
+			}
+		},
+
+		unregisterShortcut() {
+			if (this.keyboardHandler && this.editor?.view?.dom) {
+				this.editor.view.dom.removeEventListener('keydown', this.keyboardHandler);
+				this.keyboardHandler = null;
 			}
 		}
 	}

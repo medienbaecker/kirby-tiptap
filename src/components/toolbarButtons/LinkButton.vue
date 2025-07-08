@@ -1,6 +1,6 @@
 <template>
 	<ToolbarButton icon="url" :title="$t('toolbar.button.link')" :editor="editor" :command="handleLink"
-		:active-check="isLinkActive" />
+		:active-check="isLinkActive" shortcut="Mod-k" />
 </template>
 
 <script>
@@ -379,8 +379,10 @@ export default {
 
 				return false;
 			}
-		}
+		},
+
 	},
+
 
 	computed: {
 		/**
