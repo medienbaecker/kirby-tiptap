@@ -45,6 +45,9 @@ export function generateLinkTag(values) {
 	if (href.startsWith("mailto:")) {
 		type = "email";
 		mainValue = href.replace("mailto:", "");
+	} else if (href.startsWith("tel:")) {
+		type = "tel";
+		mainValue = href.replace("tel:", "");
 	}
 
 	return generateKirbyTag(type, mainValue, { text, ...attrs });
