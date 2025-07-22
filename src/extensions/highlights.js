@@ -14,9 +14,11 @@ export const Highlights = Extension.create({
 	addProseMirrorPlugins() {
 		const { highlights } = this.options;
 
-		// Matches Kirbytags with format: (tagname: content)
-		// Where tagname consists of lowercase letters only
-		const kirbytagRegex = /\([a-z]+:\s[^)]*\)/g;
+		// Matches KirbyTag components for balanced parentheses parsing
+		// Group 1: tag starts like "(image:" or "(tel:"
+		// Group 2: opening parentheses "("
+		// Group 3: closing parentheses ")"
+		const kirbytagRegex = /(\([a-z0-9_-]+:)|(\()|(\))/gi;
 
 		return [
 			new Plugin({
@@ -28,25 +30,48 @@ export const Highlights = Extension.create({
 						state.doc.descendants((node, pos) => {
 							if (!node.isText) return;
 
-							// First pass: Find and highlight Kirbytags
-							let kirbytagMatch;
+							// First pass: Find and highlight Kirbytags with balanced parentheses
 							const text = node.text;
-							kirbytagRegex.lastIndex = 0;
-
-							// Store Kirbytag positions to check for overlaps later
 							const kirbytagPositions = [];
+							
+							// Track nesting level to handle parentheses in tag content
+							kirbytagRegex.lastIndex = 0;
+							
+							let level = 0;
+							let inTag = false;
+							let tagStart = -1;
+							let kirbytagMatch;
 
 							while ((kirbytagMatch = kirbytagRegex.exec(text))) {
-								const start = kirbytagMatch.index;
-								const end = start + kirbytagMatch[0].length;
+								if (!inTag && kirbytagMatch[1]) {
+									// Tag start: begin tracking this KirbyTag
+									inTag = true;
+									level = 1;
+									tagStart = kirbytagMatch.index;
+								} else if (inTag && (kirbytagMatch[1] || kirbytagMatch[2])) {
+									// Opening parenthesis: increase nesting level
+									level += 1;
+								} else if (inTag && kirbytagMatch[3]) {
+									// Closing parenthesis: decrease nesting level
+									level -= 1;
 
-								kirbytagPositions.push([start, end]);
+									if (level === 0) {
+										// All parentheses balanced: complete the KirbyTag
+										const start = tagStart;
+										const end = kirbytagMatch.index + kirbytagMatch[0].length;
 
-								decorations.push(
-									Decoration.inline(pos + start, pos + end, {
-										class: "kirbytag",
-									})
-								);
+										kirbytagPositions.push([start, end]);
+
+										decorations.push(
+											Decoration.inline(pos + start, pos + end, {
+												class: "kirbytag",
+											})
+										);
+
+										inTag = false;
+										tagStart = -1;
+									}
+								}
 							}
 
 							// Second pass: Apply other highlight patterns
