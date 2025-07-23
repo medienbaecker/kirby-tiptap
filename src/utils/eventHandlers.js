@@ -4,25 +4,31 @@
  */
 
 import { validateInput, generateLinkTag } from "./inputValidation";
+import { processPlainTextParagraphs } from "./contentProcessing";
 
 /**
  * Handles paste events in the editor
- * Automatically creates KirbyTags when pasting URLs over selected text
  * @param {Ref} editorRef - The Tiptap editor ref
  * @param {Array} allowedTypes - Array of allowed link types from field config
  * @returns {Function} The paste handler function
  */
 export function createPasteHandler(editorRef, allowedTypes = []) {
 	return (view, event, slice) => {
+		// HTML content
+		const htmlContent = event.clipboardData.getData("text/html");
+		if (htmlContent.trim()) {
+			return false;
+		}
+
+		const plainText = event.clipboardData.getData("text/plain").trim();
 		const selection = view.state.selection;
 		const selectedText = !selection.empty
 			? view.state.doc.textBetween(selection.from, selection.to)
 			: "";
 
+		// Selected text with link Kirbytag generation
 		if (selectedText) {
-			const pastedText = event.clipboardData.getData("text/plain").trim();
-			const validation = validateInput(pastedText, allowedTypes);
-
+			const validation = validateInput(plainText, allowedTypes);
 			if (validation.type !== "text") {
 				const kirbyTag = generateLinkTag({
 					href: validation.href,
@@ -39,6 +45,15 @@ export function createPasteHandler(editorRef, allowedTypes = []) {
 				return true;
 			}
 		}
+
+		// Plain text with double line breaks? Create paragraphs
+		const content = processPlainTextParagraphs(plainText);
+		if (content) {
+			editorRef.value.commands.insertContent(content);
+			event.preventDefault();
+			return true;
+		}
+
 		return false;
 	};
 }

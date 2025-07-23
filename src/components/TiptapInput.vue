@@ -24,6 +24,13 @@ export default {
 		const instance = getCurrentInstance()
 		const sanitizer = new ContentSanitizer(props.buttons)
 
+		const { parseContent, emitContent, watchValue } = useContent(
+			null, // editor will be available in onMounted
+			sanitizer,
+			props,
+			emit
+		)
+
 		const { editor, allowedButtons, createEditor } = useEditor(
 			props,
 			sanitizer,
@@ -31,19 +38,12 @@ export default {
 			(editor) => emit('editor', editor)
 		)
 
-		const { parseContent, emitContent, watchValue } = useContent(
-			editor,
-			sanitizer,
-			props,
-			emit
-		)
-
-		const eventHandlers = {
-			handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url']),
-			handleDrop: createDropHandler(editor, instance.proxy.$panel, instance.proxy.$helper, props.endpoints, props.uploads)
-		}
-
 		onMounted(() => {
+			const eventHandlers = {
+				handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url']),
+				handleDrop: createDropHandler(editor, instance.proxy.$panel, instance.proxy.$helper, props.endpoints, props.uploads)
+			}
+
 			const content = parseContent(props.value)
 			createEditor(content, eventHandlers)
 			watchValue()

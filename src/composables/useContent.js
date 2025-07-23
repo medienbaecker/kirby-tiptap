@@ -1,4 +1,5 @@
 import { watch } from "vue";
+import { processPlainTextParagraphs } from "../utils/contentProcessing";
 
 /**
  * Composable for managing Tiptap content parsing, sanitization, and emission
@@ -10,15 +11,27 @@ import { watch } from "vue";
  */
 export function useContent(editor, sanitizer, props, emit) {
 	/**
-	 * Parses content value and sanitizes it
 	 * @param {string|Object} value - Raw content value
-	 * @returns {Object} Parsed and sanitized content
+	 * @returns {Object|string} Parsed and sanitized content
 	 */
 	const parseContent = (value) => {
+		// Handle non-string values
+		if (typeof value !== "string") {
+			return sanitizer.sanitizeContent(value);
+		}
+
+		// Try to parse as JSON first
 		try {
-			const content = typeof value === "string" ? JSON.parse(value) : value;
+			const content = JSON.parse(value);
 			return sanitizer.sanitizeContent(content);
 		} catch {
+			// Not JSON - handle plain text with double line breaks
+			const processedContent = processPlainTextParagraphs(value);
+			if (processedContent) {
+				return sanitizer.sanitizeContent(processedContent);
+			}
+			
+			// Return raw value for single line text or HTML
 			return value;
 		}
 	};
