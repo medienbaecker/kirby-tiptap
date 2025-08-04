@@ -97,9 +97,29 @@ class HtmlConverter
 				$html = smartypants($html);
 			}
 
+			// Unwrap block elements from paragraphs
+			$html = static::unwrapBlockElements($html);
+
 			return $html;
 		} catch (\Exception) {
 			return '';
 		}
+	}
+
+	/**
+	 * Unwrap block elements from paragraphs
+	 * Fixes invalid nesting when KirbyTags create block elements inside paragraphs
+	 * @param string $html HTML content to process
+	 * @return string Processed HTML with unwrapped block elements
+	 */
+	private static function unwrapBlockElements($html)
+	{
+		// Match <p> tags containing only block elements (figure, video, audio)
+		// The pattern captures the block element and its content
+		return preg_replace(
+			'/<p>\s*(<(?:figure|video|audio)\b[^>]*>.*?<\/(?:figure|video|audio)>)\s*<\/p>/s',
+			'$1',
+			$html
+		);
 	}
 }
