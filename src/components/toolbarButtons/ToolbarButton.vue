@@ -52,7 +52,7 @@ export default {
 
 				// Set up throttled update handler
 				const updateActiveState = () => {
-					if (!this.editor) return
+					if (!this.editor || !this.editor.isActive) return
 
 					this.active = typeof this.activeCheck === 'function'
 						? this.activeCheck(this.editor)

@@ -1,4 +1,3 @@
-import { watch } from "vue";
 import { processPlainTextParagraphs } from "../utils/contentProcessing";
 
 /**
@@ -30,7 +29,7 @@ export function useContent(editor, sanitizer, props, emit) {
 			if (processedContent) {
 				return sanitizer.sanitizeContent(processedContent);
 			}
-			
+
 			// Return raw value for single line text or HTML
 			return value;
 		}
@@ -112,32 +111,9 @@ export function useContent(editor, sanitizer, props, emit) {
 		emit("input", { json });
 	};
 
-	/**
-	 * Watches for value changes and updates editor content
-	 */
-	const watchValue = () => {
-		watch(
-			() => props.value,
-			(newValue) => {
-				if (editor.value) {
-					const newContent = parseContent(newValue);
-					const currentContent = editor.value.getJSON();
-
-					if (JSON.stringify(newContent) !== JSON.stringify(currentContent)) {
-						const { from, to } = editor.value.state.selection;
-						editor.value.commands.setContent(newContent, false);
-						editor.value.commands.setTextSelection({ from, to });
-					}
-				}
-			},
-			{ deep: true }
-		);
-	};
-
 	return {
 		parseContent,
 		isContentEmpty,
 		emitContent,
-		watchValue,
 	};
 }

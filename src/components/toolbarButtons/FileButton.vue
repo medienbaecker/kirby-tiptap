@@ -5,7 +5,8 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
-import { parseKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
+import { parseKirbyTag, generateKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
+import { buildDialogFields } from '../../utils/dialogFields';
 
 export default {
 	components: {
@@ -24,6 +25,10 @@ export default {
 		uploads: {
 			type: [Object, Boolean],
 			default: false
+		},
+		files: {
+			type: Object,
+			default: () => ({})
 		}
 	},
 
@@ -53,6 +58,17 @@ export default {
 			});
 
 			return items;
+		},
+
+		fileFields() {
+			const defaultFields = {
+				caption: {
+					label: window.panel.$t('field.blocks.image.caption'),
+					type: 'text',
+				}
+			};
+
+			return buildDialogFields(defaultFields, this.files.fields);
 		}
 	},
 
@@ -114,7 +130,6 @@ export default {
 		checkSelectionForFileTag(state, view, from, to) {
 			const selectedText = state.doc.textBetween(from, to).trim();
 
-			// Check if selection is a complete file tag
 			if (this.isCompleteFileTag(selectedText)) {
 				return {
 					isEditing: true,
@@ -123,7 +138,6 @@ export default {
 				};
 			}
 
-			// Check if selection intersects with a file tag
 			const tagEl = this.findIntersectingFileTag(view, from, to);
 			if (tagEl) {
 				return {
@@ -154,14 +168,12 @@ export default {
 		 * @returns {Element|null} Tag element or null
 		 */
 		findIntersectingFileTag(view, from, to) {
-			// Check start of selection
 			const { node: startNode } = view.domAtPos(from);
 			const startTagEl = findParentWithClass(startNode, 'kirbytag');
 			if (startTagEl && this.isFileTag(startTagEl.textContent)) {
 				return startTagEl;
 			}
 
-			// Check end of selection
 			const { node: endNode } = view.domAtPos(to);
 			const endTagEl = findParentWithClass(endNode, 'kirbytag');
 			if (endTagEl && this.isFileTag(endTagEl.textContent)) {
@@ -205,9 +217,8 @@ export default {
 			try {
 				const initial = parseKirbyTag(context.tagText);
 
-				// For UUID-based tags, look up the file ID first
 				if (initial.uuid) {
-					this.findFileByUuid(initial.uuid)
+					this.findFileByReference(initial.uuid)
 						.then(fileId => {
 							const value = fileId ? [fileId] : [];
 							this.openFileDialog(restoreSelection, initial, value, true, context.replaceRange);
@@ -225,19 +236,23 @@ export default {
 		},
 
 		openFileDialog(restoreSelection, initial, value, isEditing, replaceRange) {
-			// Store editing context for upload handler
 			this.editingContext = isEditing ? { replaceRange, restoreSelection } : null;
 
+			const { _type, uuid, href, value: tagValue, ...fieldValues } = initial || {};
+
 			this.$panel.dialog.open({
-				component: 'k-files-dialog',
+				component: 'tiptap-file-dialog',
 				props: {
 					multiple: false,
 					endpoint: `${this.endpoints.field}/files`,
-					value: value
+					value: value,
+					fields: this.fileFields,
+					initialFieldValues: fieldValues,
+					submitButton: window.panel.$t('insert')
 				},
 				on: {
 					cancel: restoreSelection,
-					submit: (files) => {
+					submit: (files, fieldValues) => {
 						if (!files?.length) {
 							this.$panel.notification.error(
 								window.panel.$t('error.validation.required')
@@ -249,7 +264,24 @@ export default {
 
 						restoreSelection(() => {
 							const file = files[0];
-							const content = file.dragText;
+							let content = file.dragText;
+
+							if (fieldValues && Object.keys(fieldValues).length > 0) {
+								try {
+									const parsed = parseKirbyTag(file.dragText);
+									const { _type, uuid, href, value, ...existingAttributes } = parsed;
+									const plainFieldValues = JSON.parse(JSON.stringify(fieldValues));
+									const filteredFieldValues = Object.fromEntries(
+										Object.entries(plainFieldValues).filter(([, value]) =>
+											value !== null && value !== undefined && value !== ''
+										)
+									);
+									const enhanced = { ...existingAttributes, ...filteredFieldValues };
+									content = generateKirbyTag(_type, uuid || href || value, enhanced);
+								} catch (error) {
+									console.warn('Could not enhance file tag with field values:', error);
+								}
+							}
 
 							if (isEditing && replaceRange) {
 								this.editor.chain().focus()
@@ -275,12 +307,18 @@ export default {
 			};
 		},
 
-		async findFileByUuid(uuid) {
+		async findFileByReference(reference) {
 			try {
 				const response = await this.$panel.api.get(`${this.endpoints.field}/files`);
 				const files = response.data || [];
-				const file = files.find(f => f.uuid === uuid);
-				return file ? file.id : null;
+
+				let file = files.find(f => f.uuid === reference);
+				if (file) return file.id;
+
+				file = files.find(f => f.filename === reference);
+				if (file) return file.id;
+
+				return null;
 			} catch (error) {
 				return null;
 			}
@@ -360,7 +398,6 @@ export default {
 			let isEditing = false;
 			let replaceRange = null;
 
-			// Only check for editing if cursor is positioned (no selection)
 			if (empty) {
 				const { node } = view.domAtPos(from);
 				const tagEl = findParentWithClass(node, 'kirbytag');
@@ -371,7 +408,6 @@ export default {
 				}
 			}
 
-			// Store editing context for later use
 			this.editingContext = isEditing ? { replaceRange, restoreSelection } : null;
 
 			return { isEditing, replaceRange, restoreSelection };
@@ -403,7 +439,6 @@ export default {
 				}
 			};
 
-			// Add upload attributes if specified
 			this.addUploadAttributes(uploadOptions);
 
 			return uploadOptions;

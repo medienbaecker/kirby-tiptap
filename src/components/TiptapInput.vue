@@ -8,7 +8,7 @@
 
 <script>
 import { EditorContent } from '@tiptap/vue-2'
-import { onMounted, getCurrentInstance } from 'vue'
+import { onMounted, onBeforeUnmount, getCurrentInstance, nextTick } from 'vue'
 import Toolbar from './Toolbar.vue'
 import { ContentSanitizer } from '../utils/contentSanitizer'
 import { props } from './props.js'
@@ -24,7 +24,7 @@ export default {
 		const instance = getCurrentInstance()
 		const sanitizer = new ContentSanitizer(props.buttons)
 
-		const { parseContent, emitContent, watchValue } = useContent(
+		const { parseContent, emitContent } = useContent(
 			null, // editor will be available in onMounted
 			sanitizer,
 			props,
@@ -38,6 +38,19 @@ export default {
 			(editor) => emit('editor', editor)
 		)
 
+		const onContentDiscard = () => {
+			nextTick(() => {
+				if (editor.value) {
+					const newContent = parseContent(props.value)
+					const currentContent = editor.value.getJSON()
+
+					if (JSON.stringify(newContent) !== JSON.stringify(currentContent)) {
+						editor.value.commands.setContent(newContent, false)
+					}
+				}
+			})
+		}
+
 		onMounted(() => {
 			const eventHandlers = {
 				handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url']),
@@ -46,7 +59,14 @@ export default {
 
 			const content = parseContent(props.value)
 			createEditor(content, eventHandlers)
-			watchValue()
+
+			// Listen for content discard/revert events
+			instance.proxy.$panel.events.on('content.discard', onContentDiscard)
+		})
+
+		onBeforeUnmount(() => {
+			// Clean up event listener
+			instance.proxy.$panel.events.off('content.discard', onContentDiscard)
 		})
 
 		const focus = () => {

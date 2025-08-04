@@ -1,0 +1,190 @@
+<template>
+	<k-dialog v-bind="$props" class="tiptap-file-dialog" @cancel="$emit('cancel')" @submit="submit">
+		<k-dialog-search v-if="hasSearch" :value="query" @search="query = $event" />
+
+		<k-collection :empty="{
+			icon: 'image',
+			text: $panel.dialog.isLoading ? $t('loading') : (empty?.text || $t('dialog.files.empty')),
+			...empty
+		}" :items="items" :link="false" :pagination="{
+			details: true,
+			dropdown: false,
+			align: 'center',
+			...pagination
+		}" :sortable="false" layout="list" @item="toggle" @paginate="paginate">
+			<template #options="{ item: row }">
+				<k-choice-input :checked="isSelected(row)" :type="multiple && max !== 1 ? 'checkbox' : 'radio'"
+					:title="isSelected(row) ? $t('remove') : $t('select')" @click.stop="toggle(row)" />
+			</template>
+		</k-collection>
+
+		<!-- Form fields section -->
+		<k-dialog-fields v-if="hasFields" :fields="fields" :value="fieldValues" @input="fieldValues = $event" />
+	</k-dialog>
+</template>
+
+<script>
+import Dialog from "@/mixins/dialog.js";
+import Search from "@/mixins/search.js";
+import { set, del } from "vue";
+
+export default {
+	mixins: [Dialog, Search],
+	props: {
+		endpoint: String,
+		empty: {
+			type: Object,
+			default: () => ({
+				icon: "image",
+				text: window.panel.t("dialog.files.empty")
+			})
+		},
+		fetchParams: {
+			type: Object,
+			default: () => ({})
+		},
+		fields: {
+			type: Object,
+			default: () => ({})
+		},
+		initialFieldValues: {
+			type: Object,
+			default: () => ({})
+		},
+		item: {
+			type: Function,
+			default: (item) => item
+		},
+		max: Number,
+		multiple: {
+			type: Boolean,
+			default: false
+		},
+		size: {
+			type: String,
+			default: "medium"
+		},
+		value: {
+			type: Array,
+			default: () => []
+		}
+	},
+	emits: ["cancel", "fetched", "submit"],
+	data() {
+		return {
+			models: [],
+			selected: this.value.reduce((a, id) => ({ ...a, [id]: { id } }), {}),
+			fieldValues: { ...this.initialFieldValues },
+			pagination: {
+				limit: 20,
+				page: 1,
+				total: 0
+			}
+		};
+	},
+	computed: {
+		hasFields() {
+			return this.$helper.object.length(this.fields) > 0;
+		},
+		items() {
+			return this.models.map(this.item);
+		}
+	},
+	watch: {
+		fetchParams(newParams, oldParams) {
+			if (this.$helper.object.same(newParams, oldParams) === false) {
+				this.pagination.page = 1;
+				this.fetch();
+			}
+		}
+	},
+	mounted() {
+		this.fetch();
+	},
+	methods: {
+		async fetch() {
+			const params = {
+				page: this.pagination.page,
+				search: this.query,
+				...this.fetchParams
+			};
+
+			try {
+				this.$panel.dialog.isLoading = true;
+				const response = await this.$api.get(this.endpoint, params);
+				this.models = response.data;
+				this.pagination = response.pagination;
+				this.$emit("fetched", response);
+			} catch (e) {
+				this.$panel.error(e);
+				this.models = [];
+			} finally {
+				this.$panel.dialog.isLoading = false;
+			}
+		},
+		isSelected(item) {
+			return this.selected[item.id] !== undefined;
+		},
+		paginate(pagination) {
+			this.pagination.page = pagination.page;
+			this.pagination.limit = pagination.limit;
+			this.fetch();
+		},
+		submit() {
+			const selectedFiles = Object.keys(this.selected).map(id => {
+				return this.models.find(file => file.id === id);
+			}).filter(Boolean);
+
+			this.$emit("submit", selectedFiles, this.fieldValues);
+		},
+		async search() {
+			this.pagination.page = 0;
+			await this.fetch();
+		},
+		toggle(item) {
+			if (this.multiple === false || this.max === 1) {
+				this.selected = {};
+			}
+
+			if (this.isSelected(item)) {
+				return del(this.selected, item.id);
+			}
+
+			if (this.max && this.max <= this.$helper.object.length(this.selected)) {
+				return;
+			}
+
+			set(this.selected, item.id, item);
+		}
+	}
+};
+</script>
+
+<style>
+.tiptap-file-dialog .k-list-item {
+	cursor: pointer;
+}
+
+.tiptap-file-dialog .k-choice-input {
+	--choice-color-checked: var(--color-focus);
+
+	display: flex;
+	align-items: center;
+	height: var(--item-button-height);
+	margin-inline-end: var(--spacing-3);
+}
+
+.tiptap-file-dialog .k-choice-input input {
+	top: 0;
+}
+
+.tiptap-file-dialog .k-collection-footer .k-pagination {
+	margin-bottom: 0;
+}
+
+.tiptap-file-dialog .k-dialog-fields {
+	margin-top: var(--spacing-6);
+	padding-top: var(--spacing-6);
+	border-top: 1px solid var(--color-border);
+}
+</style>

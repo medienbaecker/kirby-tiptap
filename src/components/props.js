@@ -17,6 +17,7 @@ export const props = {
 	customButtons: Object,
 	kirbytags: Array,
 	links: Object,
+	files: Object,
 	endpoints: Object,
 	uploads: [Object, Boolean],
 };

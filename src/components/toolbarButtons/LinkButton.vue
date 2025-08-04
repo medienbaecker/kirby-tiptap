@@ -7,19 +7,7 @@
 import ToolbarButton from './ToolbarButton.vue';
 import { parseKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
 import { validateInput, generateLinkTag } from '../../utils/inputValidation';
-
-/**
- * Normalizes options objects to arrays for the link dialog
- * @param {Object|Array} options - Field options to normalize
- * @returns {Array} Normalized array of {value, text} objects
- */
-const normalizeOptions = options => {
-	if (Array.isArray(options)) return options;
-	if (options && typeof options === 'object') {
-		return Object.entries(options).map(([value, text]) => ({ value, text }));
-	}
-	return [];
-};
+import { buildDialogFields } from '../../utils/dialogFields';
 
 export default {
 	components: {
@@ -402,23 +390,12 @@ export default {
 			}
 
 			// Default fields (href and text)
-			const defaults = {
+			const defaultFields = {
 				href: hrefField,
 				text: { label: window.panel.$t('link.text'), type: 'text' }
 			};
 
-			// Process custom fields, normalizing their options
-			const custom = Object.fromEntries(
-				Object.entries(this.links.fields || {}).map(([name, field]) => {
-					const f = { ...field };
-					if (field.options) {
-						f.options = normalizeOptions(field.options);
-					}
-					return [name, f];
-				})
-			);
-
-			return { ...defaults, ...custom };
+			return buildDialogFields(defaultFields, this.links.fields);
 		}
 	}
 };

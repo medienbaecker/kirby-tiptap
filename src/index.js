@@ -1,6 +1,7 @@
 import Tiptap from "./components/Tiptap.vue";
 import TiptapBlock from "./components/TiptapBlock.vue";
 import TiptapFieldPreview from "./components/TiptapFieldPreview.vue";
+import FileDialog from "./components/dialogs/FileDialog.vue";
 
 panel.plugin("medienbaecker/tiptap", {
 	fields: {
@@ -11,6 +12,7 @@ panel.plugin("medienbaecker/tiptap", {
 	},
 	components: {
 		"k-tiptap-field-preview": TiptapFieldPreview,
+		"tiptap-file-dialog": FileDialog,
 	},
 	icons: {
 		"code-block":
