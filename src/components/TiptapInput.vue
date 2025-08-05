@@ -198,11 +198,14 @@ p.is-editor-empty:first-child::before {
 	padding: var(--spacing-1);
 	font-size: var(--code-inline-font-size);
 	font-family: var(--code-font-family);
-	color: var(--code-inline-color-text);
-	background: var(--code-inline-color-back);
+	background: var(--color-blue-300);
+	color: var(--color-blue-900);
 	border-radius: var(--rounded);
-	outline: 1px solid var(--code-inline-color-border);
-	outline-offset: -1px;
+
+	[data-theme="dark"] & {
+		background: var(--color-blue-800);
+		color: inherit;
+	}
 }
 
 .tiptap pre code {
@@ -255,6 +258,11 @@ p.is-editor-empty:first-child::before {
 	border-radius: var(--rounded);
 	color: var(--color-yellow-900);
 	background: var(--color-yellow-200);
+
+	[data-theme=dark] & {
+		background: var(--color-yellow-800);
+		color: inherit;
+	}
 }
 
 /* Invisible characters */
