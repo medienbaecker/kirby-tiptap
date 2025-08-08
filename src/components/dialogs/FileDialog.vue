@@ -184,7 +184,5 @@ export default {
 
 .tiptap-file-dialog .k-dialog-fields {
 	margin-top: var(--spacing-6);
-	padding-top: var(--spacing-6);
-	border-top: 1px solid var(--color-border);
 }
 </style>
