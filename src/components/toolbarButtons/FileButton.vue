@@ -66,14 +66,7 @@ export default {
 		},
 
 		fileFields() {
-			const defaultFields = {
-				caption: {
-					label: window.panel.$t('field.blocks.image.caption'),
-					type: 'text',
-				}
-			};
-
-			return buildDialogFields(defaultFields, this.files.fields);
+			return buildDialogFields({}, this.files.fields);
 		}
 	},
 
