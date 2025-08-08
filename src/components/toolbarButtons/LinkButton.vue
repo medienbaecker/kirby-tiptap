@@ -8,6 +8,7 @@ import ToolbarButton from './ToolbarButton.vue';
 import { parseKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
 import { validateInput, generateLinkTag } from '../../utils/inputValidation';
 import { buildDialogFields } from '../../utils/dialogFields';
+import { processKirbyTagApi } from '../../utils/eventHandlers';
 
 export default {
 	components: {
@@ -19,9 +20,17 @@ export default {
 			type: Object,
 			required: true
 		},
+		endpoints: {
+			type: Object,
+			default: () => ({})
+		},
 		links: {
 			type: Object,
 			default: () => ({})
+		},
+		uuid: {
+			type: Object,
+			default: () => ({ pages: true, files: true })
 		}
 	},
 
@@ -285,7 +294,7 @@ export default {
 		 * @param {Object} context - Editing context
 		 * @param {Object} values - Form values
 		 */
-		handleDialogSubmit(editor, context, values) {
+		async handleDialogSubmit(editor, context, values) {
 			if (!values.href) {
 				this.$panel.notification.error(
 					window.panel.$t('error.validation.required')
@@ -295,12 +304,15 @@ export default {
 
 			this.$panel.dialog.close();
 
-			// Convert permalinks to UUIDs
-			values.href = values.href
-				.replace("/@/file/", "file://")
-				.replace("/@/page/", "page://");
+			// Convert permalinks to page:// or file:// format
+			values.href = values.href.replace("/@/page/", "page://");
+			values.href = values.href.replace("/@/file/", "file://");
 
-			const kirbyTag = generateLinkTag(values);
+			let kirbyTag = generateLinkTag(values);
+			
+			// Process the KirbyTag through API for UUID conversion
+			kirbyTag = await processKirbyTagApi(kirbyTag, this.endpoints, this.$panel);
+
 			const chain = editor.chain().focus();
 
 			// Insert or update the tag

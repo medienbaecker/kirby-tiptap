@@ -7,6 +7,33 @@ import { validateInput, generateLinkTag } from "./inputValidation";
 import { processPlainTextParagraphs } from "./contentProcessing";
 
 /**
+ * Helper to process KirbyTag through API for UUID conversion
+ * @param {string} kirbyTag - The KirbyTag to process
+ * @param {Object} endpoints - API endpoints configuration
+ * @param {Object} panel - Kirby panel object
+ * @returns {Promise<string>} Processed KirbyTag
+ */
+export async function processKirbyTagApi(kirbyTag, endpoints, panel) {
+	if (!endpoints || !panel || !kirbyTag) {
+		return kirbyTag;
+	}
+
+	try {
+		// Remove /api prefix if present, since panel.api.post() adds it automatically
+		const fieldPath = endpoints.field.startsWith("/api/")
+			? endpoints.field.substring(4)
+			: endpoints.field;
+		const apiUrl = `${fieldPath}/process-kirbytag`;
+
+		const response = await panel.api.post(apiUrl, { kirbyTag });
+		return response.text || kirbyTag;
+	} catch (error) {
+		console.error("Failed to process KirbyTag:", error);
+		return kirbyTag;
+	}
+}
+
+/**
  * Handles paste events in the editor
  * @param {Ref} editorRef - The Tiptap editor ref
  * @param {Array} allowedTypes - Array of allowed link types from field config
@@ -59,17 +86,31 @@ export function createPasteHandler(editorRef, allowedTypes = []) {
 }
 
 /**
- * Handles text drop operations
+ * Handles text drop operations (pages, files) with API-based UUID conversion
  * @param {Ref} editorRef - The Tiptap editor ref
  * @param {Object} coordinates - Drop coordinates
- * @param {string} dragData - The dragged text data
+ * @param {string} dragText - The drag text containing KirbyTag
+ * @param {Object} uuid - UUID configuration
+ * @param {Object} endpoints - API endpoints configuration
+ * @param {Object} panel - Kirby panel object
  */
-export function handleTextDrop(editorRef, coordinates, dragData) {
+export async function handleTextDrop(
+	editorRef,
+	coordinates,
+	dragText,
+	uuid = { pages: true, files: true },
+	endpoints = null,
+	panel = null
+) {
 	const pos = coordinates.pos;
 	const prevChar =
 		pos > 0 ? editorRef.value.state.doc.textBetween(pos - 1, pos) : "";
 	const needsSpace = prevChar && prevChar !== " ";
-	const content = needsSpace ? " " + dragData : dragData;
+
+	// Process dragText through API for UUID conversion
+	let content = await processKirbyTagApi(dragText, endpoints, panel);
+
+	content = needsSpace ? " " + content : content;
 
 	editorRef.value
 		.chain()
@@ -89,6 +130,7 @@ export function handleTextDrop(editorRef, coordinates, dragData) {
  * @param {Object} helper - Kirby helper instance
  * @param {Object} endpoints - API endpoints for uploads
  * @param {Object} uploads - Upload configuration
+ * @param {Object} uuid - UUID configuration
  * @returns {Function} The drop handler function
  */
 export function createDropHandler(
@@ -96,7 +138,8 @@ export function createDropHandler(
 	panel,
 	helper,
 	endpoints,
-	uploads
+	uploads,
+	uuid = { pages: true, files: true }
 ) {
 	return (view, event, slice, moved) => {
 		if (!moved && panel.drag.data) {
@@ -106,7 +149,16 @@ export function createDropHandler(
 			});
 
 			if (panel.drag.type === "text") {
-				handleTextDrop(editorRef, coordinates, panel.drag.data);
+				// Process the dragText according to UUID configuration
+				const dragText = panel.drag.data;
+				handleTextDrop(
+					editorRef,
+					coordinates,
+					dragText,
+					uuid,
+					endpoints,
+					panel
+				);
 			} else if (helper?.isUploadEvent && helper.isUploadEvent(event)) {
 				handleFileUpload(
 					editorRef,
@@ -114,7 +166,8 @@ export function createDropHandler(
 					event,
 					endpoints,
 					uploads,
-					panel
+					panel,
+					uuid
 				);
 			}
 
@@ -132,6 +185,7 @@ export function createDropHandler(
  * @param {Object} endpoints - API endpoints
  * @param {Object} uploads - Upload configuration
  * @param {Object} panel - Kirby panel instance
+ * @param {Object} uuid - UUID configuration
  */
 function handleFileUpload(
 	editorRef,
@@ -176,7 +230,9 @@ function handleFileUpload(
 								.map((fileArray) => {
 									// Each upload is nested: uploadedFiles[0][0] contains the actual file
 									const file = fileArray[0];
-									return file?.dragText;
+									let dragText = file?.dragText;
+
+									return dragText;
 								})
 								.filter(Boolean);
 

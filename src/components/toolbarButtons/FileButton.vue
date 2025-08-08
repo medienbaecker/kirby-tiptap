@@ -7,6 +7,7 @@
 import ToolbarButton from './ToolbarButton.vue';
 import { parseKirbyTag, generateKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
 import { buildDialogFields } from '../../utils/dialogFields';
+import { processKirbyTagApi } from '../../utils/eventHandlers';
 
 export default {
 	components: {
@@ -29,6 +30,10 @@ export default {
 		files: {
 			type: Object,
 			default: () => ({})
+		},
+		uuid: {
+			type: Object,
+			default: () => ({ pages: true, files: true })
 		}
 	},
 
@@ -262,13 +267,16 @@ export default {
 
 						this.$panel.dialog.close();
 
-						restoreSelection(() => {
+						restoreSelection(async () => {
 							const file = files[0];
 							let content = file.dragText;
 
+							// Process UUID configuration via API
+							content = await processKirbyTagApi(content, this.endpoints, this.$panel);
+
 							if (fieldValues && Object.keys(fieldValues).length > 0) {
 								try {
-									const parsed = parseKirbyTag(file.dragText);
+									const parsed = parseKirbyTag(content);
 									const { _type, uuid, href, value, ...existingAttributes } = parsed;
 									const plainFieldValues = JSON.parse(JSON.stringify(fieldValues));
 									const filteredFieldValues = Object.fromEntries(
@@ -277,7 +285,11 @@ export default {
 										)
 									);
 									const enhanced = { ...existingAttributes, ...filteredFieldValues };
-									content = generateKirbyTag(_type, uuid || href || value, enhanced);
+									const reference = uuid || href || value;
+									content = generateKirbyTag(_type, reference, enhanced);
+									
+									// Process the enhanced tag through API for UUID conversion
+									content = await processKirbyTagApi(content, this.endpoints, this.$panel);
 								} catch (error) {
 									console.warn('Could not enhance file tag with field values:', error);
 								}
@@ -485,7 +497,7 @@ export default {
 			}
 		},
 
-		handleUploadComplete(files) {
+		async handleUploadComplete(files) {
 			if (!files?.length) {
 				this.$panel.notification.error(this.$t('tiptap.upload.error.noFiles'));
 				return;
@@ -498,7 +510,11 @@ export default {
 					return;
 				}
 
-				const content = file.dragText;
+				let content = file.dragText;
+
+				// Process UUID configuration via API
+				content = await processKirbyTagApi(content, this.endpoints, this.$panel);
+
 				if (!content || !this.editor?.commands) {
 					this.$panel.notification.error(this.$t('tiptap.upload.error.insert'));
 					return;
@@ -524,7 +540,7 @@ export default {
 			} catch (error) {
 				this.$panel.notification.error(`${this.$t('tiptap.upload.error.insert')}: ${error.message}`);
 			}
-		}
+		},
 
 	}
 }

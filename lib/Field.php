@@ -8,6 +8,38 @@ namespace Medienbaecker\Tiptap;
 class Field
 {
 	/**
+	 * Get UUID configuration from plugin options
+	 * @return array UUID configuration with 'pages' and 'files' keys
+	 */
+	public static function getUuidConfig(): array
+	{
+		$globalUuid = option('content.uuid', true); // Kirby's global UUID setting
+		$pluginConfig = option('medienbaecker.tiptap.uuid');
+		
+		// If no plugin config, use global setting for both
+		if ($pluginConfig === null) {
+			return [
+				'pages' => $globalUuid !== false,
+				'files' => $globalUuid !== false
+			];
+		}
+		
+		// If simple boolean, apply to both
+		if (is_bool($pluginConfig)) {
+			return [
+				'pages' => $pluginConfig,
+				'files' => $pluginConfig
+			];
+		}
+		
+		// If array, use individual settings with global fallback
+		return [
+			'pages' => $pluginConfig['pages'] ?? ($globalUuid !== false),
+			'files' => $pluginConfig['files'] ?? ($globalUuid !== false)
+		];
+	}
+
+	/**
 	 * Get field props configuration
 	 */
 	public static function props(): array
@@ -65,6 +97,9 @@ class Field
 				}
 
 				return ['accept' => '*'];
+			},
+			'uuid' => function () {
+				return static::getUuidConfig();
 			},
 		];
 	}

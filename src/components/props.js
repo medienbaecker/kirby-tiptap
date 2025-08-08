@@ -20,4 +20,5 @@ export const props = {
 	files: Object,
 	endpoints: Object,
 	uploads: [Object, Boolean],
+	uuid: Object,
 };

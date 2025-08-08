@@ -45,6 +45,11 @@ Kirby::plugin('medienbaecker/tiptap', [
 				$options['customButtons'] = option('medienbaecker.tiptap.buttons', []);
 			}
 
+			// UUID configuration
+			if (!isset($options['uuid'])) {
+				$options['uuid'] = Field::getUuidConfig();
+			}
+
 			return convertTiptapToHtml(
 				$field->value,
 				$field->parent(),

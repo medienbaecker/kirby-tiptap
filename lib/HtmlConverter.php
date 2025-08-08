@@ -71,7 +71,7 @@ class HtmlConverter
 				continue;
 			}
 
-			KirbyTagProcessor::processContent($node, $parent, $options['allowHtml']);
+			KirbyTagProcessor::processContent($node, $parent, $options['allowHtml'], false);
 		}
 
 		// Convert to HTML

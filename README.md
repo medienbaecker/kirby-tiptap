@@ -142,7 +142,16 @@ return [
       'class' => 'long-word',
       'title' => 'Long word (20+ characters)'
     ]
+  ],
+
+  // UUID usage for KirbyTags when dragging pages/files
+  'medienbaecker.tiptap.uuid' => [
+    'pages' => false,  // Use page IDs instead of page://uuid
+    'files' => true    // Keep using file://uuid
   ]
+
+  // Or disable UUIDs entirely:
+  // 'medienbaecker.tiptap.uuid' => false
 
 ];
 ```
