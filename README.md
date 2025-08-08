@@ -88,6 +88,18 @@ fields:
             border: Border
             shadow: Shadow
             rounded: Rounded
+    files:
+      # Add custom fields to the file dialog
+      fields:
+        caption:
+          label: Caption
+          type: textarea
+    uploads: true # Enable file uploads (default: false)
+    # Or with options:
+    # uploads:
+    #   accept: 'image/*' # Restrict file types
+    #   template: 'image' # Template for uploaded files
+    #   parent: 'media'   # Upload destination
     required: true
     placeholder: My placeholder
     default: My default content
