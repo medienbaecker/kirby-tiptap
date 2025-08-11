@@ -13,5 +13,8 @@ export default defineConfig({
 		server: {
 			cors: true,
 		},
+		build: {
+			target: ["chrome107", "edge107", "firefox104", "safari16"],
+		},
 	},
 });

@@ -2,12 +2,17 @@
  * Content sanitizer for Tiptap content based on enabled buttons
  * Ensures only permitted formatting is retained in the editor
  */
+
 export class ContentSanitizer {
 	constructor(buttons) {
-		this.buttons = buttons;
-		this.headingLevels =
-			buttons.find((btn) => typeof btn === "object" && btn.headings)
-				?.headings || [];
+		this.buttons = Array.isArray(buttons) ? buttons : [];
+		
+		// Extract heading levels from validated buttons
+		const headingButton = this.buttons.find(
+			(btn) => typeof btn === "object" && btn.headings
+		);
+		this.headingLevels = headingButton?.headings || [];
+		
 	}
 
 	sanitizeContent(content) {
@@ -16,7 +21,7 @@ export class ContentSanitizer {
 		if (typeof content === "string") {
 			try {
 				content = JSON.parse(content);
-			} catch {
+			} catch (error) {
 				return content;
 			}
 		}

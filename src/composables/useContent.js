@@ -10,8 +10,10 @@ import { processPlainTextParagraphs } from "../utils/contentProcessing";
  */
 export function useContent(editor, sanitizer, props, emit) {
 	/**
-	 * @param {string|Object} value - Raw content value
-	 * @returns {Object|string} Parsed and sanitized content
+	 * Parse and sanitize content from various input formats
+	 * Handles JSON strings, plain text with line breaks, and raw HTML
+	 * @param {string|Object} value - Raw content value from field
+	 * @returns {Object|string} Parsed and sanitized content ready for editor
 	 */
 	const parseContent = (value) => {
 		// Handle non-string values
@@ -23,7 +25,9 @@ export function useContent(editor, sanitizer, props, emit) {
 		try {
 			const content = JSON.parse(value);
 			return sanitizer.sanitizeContent(content);
-		} catch {
+		} catch (error) {
+			// Not JSON - handle as plain text
+
 			// Not JSON - handle plain text with double line breaks
 			const processedContent = processPlainTextParagraphs(value);
 			if (processedContent) {
@@ -36,9 +40,11 @@ export function useContent(editor, sanitizer, props, emit) {
 	};
 
 	/**
-	 * Checks if sanitized content is empty
-	 * @param {Object} sanitizedContent - Sanitized content object
-	 * @returns {boolean} Whether content is empty
+	 * Checks if sanitized content is effectively empty
+	 * Considers content empty if it has no nodes or only empty paragraphs
+	 * Special case: headings are never considered empty
+	 * @param {Object} sanitizedContent - Sanitized Tiptap document object
+	 * @returns {boolean} True if content is empty, false otherwise
 	 */
 	const isContentEmpty = (sanitizedContent) => {
 		// Check if content array exists and has items
@@ -72,7 +78,10 @@ export function useContent(editor, sanitizer, props, emit) {
 
 	/**
 	 * Emits content changes to parent component
+	 * Processes editor content through sanitization and formats as JSON
+	 * Handles empty content by emitting empty string
 	 * @param {Object} editorInstance - Tiptap editor instance
+	 * @emits {Object} input - Emits { json: string } to parent component
 	 */
 	const emitContent = (editorInstance) => {
 		if (!editorInstance) {

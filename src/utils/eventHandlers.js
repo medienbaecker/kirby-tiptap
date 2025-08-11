@@ -5,6 +5,13 @@
 
 import { validateInput, generateLinkTag } from "./inputValidation";
 import { processPlainTextParagraphs } from "./contentProcessing";
+import {
+	validateUploadConfig,
+	buildUploadOptions,
+	createUploadSuccessHandler,
+	createUploadErrorHandler,
+	createUploadCancelHandler
+} from "./fileUploadHelpers";
 
 /**
  * Helper to process KirbyTag through API for UUID conversion
@@ -28,7 +35,7 @@ export async function processKirbyTagApi(kirbyTag, endpoints, panel) {
 		const response = await panel.api.post(apiUrl, { kirbyTag });
 		return response.text || kirbyTag;
 	} catch (error) {
-		console.error("Failed to process KirbyTag:", error);
+		console.error('Failed to process KirbyTag:', error);
 		return kirbyTag;
 	}
 }
@@ -185,7 +192,7 @@ export function createDropHandler(
  * @param {Object} endpoints - API endpoints
  * @param {Object} uploads - Upload configuration
  * @param {Object} panel - Kirby panel instance
- * @param {Object} uuid - UUID configuration
+ * @param {Object} uuid - UUID configuration (currently unused, kept for compatibility)
  */
 function handleFileUpload(
 	editorRef,
@@ -195,13 +202,8 @@ function handleFileUpload(
 	uploads,
 	panel
 ) {
-	if (!uploads || uploads === false) {
-		panel.notification.error("Uploads are not enabled for this field");
-		return;
-	}
-
-	if (!endpoints?.field) {
-		panel.notification.error("Upload endpoint not configured");
+	// Validate upload configuration
+	if (!validateUploadConfig(uploads, endpoints, panel)) {
 		return;
 	}
 
@@ -212,95 +214,24 @@ function handleFileUpload(
 		}
 
 		// Store current selection for restoration after upload
-		const { from, to } = editorRef.value.state.selection;
-		const pos = coordinates.pos;
+		const { from: originalFrom, to: originalTo } = editorRef.value.state.selection;
+		const dropPosition = coordinates.pos;
 
-		const uploadOptions = {
-			url: panel.urls.api + "/" + endpoints.field + "/upload",
-			multiple: false,
-			on: {
-				done: (uploadedFiles) => {
-					try {
-						// Restore selection to drop position
-						editorRef.value.commands.setTextSelection({ from: pos, to: pos });
-
-						// Insert uploaded files
-						if (uploadedFiles?.length > 0) {
-							const contents = uploadedFiles
-								.map((fileArray) => {
-									// Each upload is nested: uploadedFiles[0][0] contains the actual file
-									const file = fileArray[0];
-									let dragText = file?.dragText;
-
-									return dragText;
-								})
-								.filter(Boolean);
-
-							if (contents.length > 0) {
-								const prevChar =
-									pos > 0
-										? editorRef.value.state.doc.textBetween(pos - 1, pos)
-										: "";
-								const needsSpace = prevChar && prevChar !== " ";
-								const finalContent = needsSpace
-									? " " + contents.join("\n\n")
-									: contents.join("\n\n");
-
-								editorRef.value
-									.chain()
-									.focus()
-									.insertContentAt(pos, finalContent, {
-										parseOptions: { preserveWhitespace: true },
-									})
-									.unsetAllMarks()
-									.run();
-
-								panel.notification.success(
-									"File uploaded and inserted successfully"
-								);
-							} else {
-								panel.notification.error(
-									"No content could be generated from uploaded files"
-								);
-							}
-						}
-					} catch (error) {
-						console.error("File upload processing error:", error);
-						panel.notification.error(
-							`Failed to process uploaded file: ${error.message}`
-						);
-					}
-				},
-				cancel: () => {
-					// Restore selection to original position
-					editorRef.value.commands.setTextSelection({ from, to });
-				},
-				error: (error) => {
-					console.error("File upload error:", error);
-					panel.notification.error(
-						`Upload failed: ${error.message || "Unknown error"}`
-					);
-					// Restore selection to original position
-					editorRef.value.commands.setTextSelection({ from, to });
-				},
-			},
+		// Build upload options
+		const uploadOptions = buildUploadOptions(endpoints, uploads, panel);
+		
+		// Add event handlers
+		uploadOptions.on = {
+			done: createUploadSuccessHandler(editorRef, dropPosition, panel),
+			cancel: createUploadCancelHandler(editorRef, originalFrom, originalTo),
+			error: createUploadErrorHandler(editorRef, originalFrom, originalTo, panel)
 		};
 
-		// Add upload attributes if specified
-		if (uploads.template || uploads.parent) {
-			uploadOptions.attributes = {};
-			if (uploads.template) {
-				uploadOptions.attributes.template = uploads.template;
-			}
-			if (uploads.parent) {
-				uploadOptions.attributes.parent = uploads.parent;
-			}
-		}
 
 		// Use Kirby's upload dialog (same as textarea field)
 		panel.upload.open(files, uploadOptions);
 	} catch (error) {
-		console.error("File upload setup error:", error);
-		panel.notification.error(`Upload setup failed: ${error.message}`);
+		console.error('File upload setup error:', error);
+		panel.notification.error('File upload setup failed');
 	}
 }

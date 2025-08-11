@@ -96,6 +96,8 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 
 	/**
 	 * Creates the Tiptap editor with all extensions and configurations
+	 * @param {Object} initialContent - Initial content for the editor
+	 * @param {Object} eventHandlers - Event handler functions
 	 */
 	const createEditor = (initialContent, eventHandlers) => {
 		try {
@@ -144,6 +146,7 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 		} catch (error) {
 			console.error("Failed to create Tiptap editor:", error);
 			editor.value = null;
+			throw error;
 		}
 	};
 
