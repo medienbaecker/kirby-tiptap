@@ -193,6 +193,37 @@ p.is-editor-empty:first-child::before {
 	list-style-type: decimal;
 }
 
+/* Task Lists */
+.tiptap ul[data-type="taskList"] {
+	list-style: none;
+	padding-inline-start: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.tiptap ul[data-type="taskList"] ul[data-type="taskList"] {
+	margin-block-start: .25rem;
+}
+
+.tiptap ul[data-type="taskList"] li {
+	display: flex;
+	align-items: baseline;
+	gap: .5rem;
+}
+
+/* Checkbox, aligned with first line */
+.tiptap ul[data-type="taskList"] input {
+	display: block;
+	position: relative;
+	top: .2em;
+}
+
+/* Label */
+.tiptap ul[data-type="taskList"] li>div {
+	width: 100%;
+}
+
 /* Code */
 .tiptap code {
 	padding: var(--spacing-1);

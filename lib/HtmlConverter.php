@@ -81,7 +81,9 @@ class HtmlConverter
 					'text' => false, // Disable default text node
 				]),
 				new ConditionalTextNode($options['allowHtml']), // Use our custom text handler
-				new KirbyTagNode()
+				new KirbyTagNode(),
+				new \Tiptap\Nodes\TaskList(),
+				new \Tiptap\Nodes\TaskItem()
 			];
 
 			$extensions[] = new CustomAttributes([

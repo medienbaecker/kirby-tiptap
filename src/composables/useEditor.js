@@ -2,6 +2,8 @@ import { ref, computed, onBeforeUnmount } from "vue";
 import { Editor } from "@tiptap/vue-2";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
 import { InvisibleCharacters } from "@tiptap-pro/extension-invisible-characters";
 import { Highlights } from "../extensions/highlights";
 import {
@@ -35,6 +37,7 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 			"blockquote",
 			"bulletList",
 			"orderedList",
+			"taskList",
 			"image",
 			"horizontalRule",
 		];
@@ -78,6 +81,7 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 			blockquote: "blockquote",
 			bulletList: "bulletList",
 			orderedList: "orderedList",
+			taskList: "taskList",
 			horizontalRule: "horizontalRule",
 		};
 
@@ -119,6 +123,16 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 				}),
 				Replacements,
 			];
+
+			// Add TaskList extensions if taskList button is enabled
+			if (allowedButtons.value.includes("taskList")) {
+				extensions.push(
+					TaskList,
+					TaskItem.configure({
+						nested: true,
+					})
+				);
+			}
 
 			// Only add NodeAttributes extension if custom buttons are configured
 			if (props.customButtons && Object.keys(props.customButtons).length > 0) {

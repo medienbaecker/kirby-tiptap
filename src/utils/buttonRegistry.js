@@ -170,6 +170,12 @@ class ButtonRegistry {
 			meta: { icon: "list-numbers", group: "lists" },
 		});
 
+		this.registerButton("taskList", {
+			component: () =>
+				import("../components/toolbarButtons/TaskListButton.vue"),
+			meta: { icon: "checklist", group: "lists" },
+		});
+
 		this.registerButton("horizontalRule", {
 			component: () =>
 				import("../components/toolbarButtons/HorizontalRuleButton.vue"),

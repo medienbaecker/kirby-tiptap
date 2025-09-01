@@ -3,6 +3,7 @@
 	"toolbar.button.codeBlock": "Codeblock",
 	"toolbar.button.twoColumn": "Zwei Spalten",
 	"toolbar.button.blockquote": "Zitat",
+	"toolbar.button.taskList": "Aufgabenliste",
 	"upload.error.disabled": "Datei-Uploads sind für dieses Feld nicht aktiviert",
 	"upload.error.endpoint": "Upload-Endpunkt nicht konfiguriert",
 	"upload.error.noFiles": "Es wurden keine Dateien hochgeladen",

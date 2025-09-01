@@ -52,6 +52,7 @@ tiptap:
     - file
     - bulletList
     - orderedList
+    - taskList
     # Additional buttons:
     - strike
     - code
