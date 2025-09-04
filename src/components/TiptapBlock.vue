@@ -38,8 +38,8 @@ export default {
 	border-radius: 0;
 }
 
-.k-block-container-type-tiptap :where(.k-tiptap-input):focus-within .tiptap-toolbar {
-	position: static;
-	box-shadow: none;
+/* Put block toolbar above sticky tiptap toolbar */
+.k-block-container-type-tiptap .k-block-options {
+	z-index: 1;
 }
 </style>
