@@ -6,9 +6,10 @@ import { processPlainTextParagraphs } from "../utils/contentProcessing";
  * @param {Object} sanitizer - Content sanitizer instance
  * @param {Object} props - Component props
  * @param {Function} emit - Vue emit function
+ * @param {Object} lastEmittedJson - Ref to track last emitted JSON for value sync
  * @returns {Object} Content management functions
  */
-export function useContent(editor, sanitizer, props, emit) {
+export function useContent(editor, sanitizer, props, emit, lastEmittedJson) {
 	/**
 	 * Parse and sanitize content from various input formats
 	 * Handles JSON strings, plain text with line breaks, and raw HTML
@@ -86,6 +87,9 @@ export function useContent(editor, sanitizer, props, emit) {
 	const emitContent = (editorInstance) => {
 		if (!editorInstance) {
 			emit("input", { json: "" });
+			if (lastEmittedJson) {
+				lastEmittedJson.value = "";
+			}
 			return;
 		}
 
@@ -93,6 +97,9 @@ export function useContent(editor, sanitizer, props, emit) {
 
 		if (!content) {
 			emit("input", { json: "" });
+			if (lastEmittedJson) {
+				lastEmittedJson.value = "";
+			}
 			return;
 		}
 
@@ -100,6 +107,9 @@ export function useContent(editor, sanitizer, props, emit) {
 
 		if (!sanitizedContent || !sanitizedContent.content) {
 			emit("input", { json: "" });
+			if (lastEmittedJson) {
+				lastEmittedJson.value = "";
+			}
 			return;
 		}
 
@@ -118,6 +128,11 @@ export function useContent(editor, sanitizer, props, emit) {
 			  );
 
 		emit("input", { json });
+
+		// Track the emitted JSON to differentiate from external value changes
+		if (lastEmittedJson) {
+			lastEmittedJson.value = json;
+		}
 	};
 
 	return {

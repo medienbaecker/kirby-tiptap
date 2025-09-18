@@ -8,7 +8,7 @@
 
 <script>
 import { EditorContent } from '@tiptap/vue-2'
-import { onMounted, onBeforeUnmount, getCurrentInstance, nextTick } from 'vue'
+import { onMounted, onBeforeUnmount, getCurrentInstance, nextTick, watch, ref } from 'vue'
 import Toolbar from './Toolbar.vue'
 import { ContentSanitizer } from '../utils/contentSanitizer'
 import { props } from './props.js'
@@ -23,12 +23,14 @@ export default {
 	setup(props, { emit }) {
 		const instance = getCurrentInstance()
 		const sanitizer = new ContentSanitizer(props.buttons)
+		const lastEmittedJson = ref('')
 
 		const { parseContent, emitContent } = useContent(
 			null, // editor will be available in onMounted
 			sanitizer,
 			props,
-			emit
+			emit,
+			lastEmittedJson
 		)
 
 		const { editor, allowedButtons, createEditor } = useEditor(
@@ -38,18 +40,15 @@ export default {
 			(editor) => emit('editor', editor)
 		)
 
-		const onContentDiscard = () => {
-			nextTick(() => {
+		// Watch for external value changes
+		watch(() => props.value, (newValue, oldValue) => {
+			if (newValue !== oldValue && newValue !== lastEmittedJson.value) {
+				const newContent = parseContent(newValue)
 				if (editor.value) {
-					const newContent = parseContent(props.value)
-					const currentContent = editor.value.getJSON()
-
-					if (JSON.stringify(newContent) !== JSON.stringify(currentContent)) {
-						editor.value.commands.setContent(newContent, false)
-					}
+					editor.value.commands.setContent(newContent, false)
 				}
-			})
-		}
+			}
+		})
 
 		onMounted(() => {
 			const eventHandlers = {
@@ -59,14 +58,6 @@ export default {
 
 			const content = parseContent(props.value)
 			createEditor(content, eventHandlers)
-
-			// Listen for content discard/revert events
-			instance.proxy.$panel.events.on('content.discard', onContentDiscard)
-		})
-
-		onBeforeUnmount(() => {
-			// Clean up event listener
-			instance.proxy.$panel.events.off('content.discard', onContentDiscard)
 		})
 
 		const focus = () => {
