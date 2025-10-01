@@ -4,6 +4,20 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 
 ![Kirby Tiptap editor with formatting toolbar and example content demonstrating KirbyTags, special character visibility, and the tiptapText() method functionality.](https://github.com/user-attachments/assets/9588f26b-1304-49b2-89f5-cc45e4442935)
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Blueprints](#blueprints)
+  - [Blocks field](#blocks-field)
+  - [Frontend/templates](#frontendtemplates)
+  - [Configuration](#configuration)
+  - [Keyboard shortcuts](#keyboard-shortcuts)
+  - [Custom buttons](#custom-buttons)
+  - [Converting existing fields](#converting-existing-fields)
+- [Ideas for future improvements](#ideas-for-future-improvements)
+
 ## Features
 
 - 🌏 **Best of both worlds:** Uses (and highlights) [KirbyTags](https://getkirby.com/docs/reference/plugins/extensions/kirbytags) for images/links while providing WYSIWYG formatting
