@@ -11,9 +11,11 @@ use Kirby\Toolkit\A;
 use Kirby\Filesystem\Dir;
 use Kirby\Filesystem\F;
 use Kirby\Data\Json;
+use Kirby\CLI\CLI;
 use Medienbaecker\Tiptap\Field;
 use Medienbaecker\Tiptap\Validations;
 use Medienbaecker\Tiptap\Api;
+use Medienbaecker\Tiptap\TextareaConverter;
 
 Kirby::plugin('medienbaecker/tiptap', [
 	'options' => [
@@ -73,5 +75,27 @@ Kirby::plugin('medienbaecker/tiptap', [
 			}
 		),
 		'lang'
-	)
+	),
+	'commands' => [
+		'tiptap:convert' => [
+			'description' => 'Convert textarea fields to Tiptap JSON format',
+			'args' => [
+				'page' => [
+					'longPrefix' => 'page',
+					'description' => 'Convert only this page and its children (e.g., "blog" or "projects/project-a")',
+					'defaultValue' => null,
+				],
+				'dry-run' => [
+					'longPrefix' => 'dry-run',
+					'description' => 'Preview changes without updating files',
+					'defaultValue' => false,
+					'noValue' => true,
+				],
+			],
+			'command' => static function (CLI $cli): void {
+				$converter = new TextareaConverter($cli);
+				$converter->run();
+			}
+		]
+	]
 ]);
