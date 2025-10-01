@@ -110,7 +110,7 @@ class TextareaConverter
 		$fields = $blueprint->fields();
 
 		foreach ($fields as $fieldName => $field) {
-			if ($field['type'] === 'textarea') {
+			if ($field['type'] === 'textarea' || $field['type'] === 'markdown') {
 				$textareaFields[] = $fieldName;
 			}
 		}
