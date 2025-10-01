@@ -229,6 +229,24 @@ Add corresponding CSS to your frontend and `panel.css` for styling:
 }
 ```
 
+### Converting existing fields
+
+To convert existing `textarea` or `markdown` fields to the JSON this field expects, you can use the built-in `tiptap:convert` CLI command:
+
+```bash
+kirby tiptap:convert
+```
+
+```bash
+kirby tiptap:convert --dry-run
+```
+
+```bash
+kirby tiptap:convert --page blog
+```
+
+The command looks at the blueprint to collect the fields and converts their values to HTML using Kirby's `markdown()` method before transforming it to Tiptap's JSON format using the same logic as the field itself. After running the command you can change the field type in your blueprints to `tiptap`.
+
 ## Ideas for future improvements
 
 - [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
