@@ -52,11 +52,13 @@ Kirby::plugin('medienbaecker/tiptap', [
 				$options['uuid'] = Field::getUuidConfig();
 			}
 
-			return convertTiptapToHtml(
+			$field->value = convertTiptapToHtml(
 				$field->value,
 				$field->parent(),
 				$options
 			);
+
+			return $field;
 		}
 	],
 	'translations' => A::keyBy(
