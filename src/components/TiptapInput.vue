@@ -2,7 +2,8 @@
 	<div class="k-tiptap-input-wrapper">
 		<toolbar v-if="editor && !disabled && allowedButtons.length" v-bind="$props" :editor="editor"
 			:buttons="allowedButtons" />
-		<editor-content :editor="editor" />
+		<editor-content :editor="editor" class="k-tiptap-editor-container" :data-empty="!editor || editor.isEmpty"
+			:data-placeholder="placeholder" />
 	</div>
 </template>
 
@@ -79,8 +80,15 @@ export default {
 	width: 100%;
 }
 
+/* Grid container for editor and placeholder */
+.k-tiptap-editor-container {
+	display: grid;
+	grid-template-areas: "content";
+}
+
 /* Base styles for the editor */
 .tiptap {
+	grid-area: content;
 	padding: .5rem;
 	outline: none;
 	width: 100%;
@@ -106,12 +114,15 @@ export default {
 }
 
 /* Placeholder */
-p.is-editor-empty:first-child::before {
-	color: var(--input-color-placeholder);
+.k-tiptap-editor-container[data-placeholder][data-empty="true"]::before {
+	grid-area: content;
 	content: attr(data-placeholder);
-	float: left;
-	height: 0;
+	color: var(--input-color-placeholder);
 	pointer-events: none;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	line-height: var(--leading-normal);
+	padding: .5rem;
 }
 
 /* Poor man's margin-trim  */

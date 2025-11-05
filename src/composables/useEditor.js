@@ -1,7 +1,6 @@
 import { ref, computed, onBeforeUnmount } from "vue";
 import { Editor } from "@tiptap/vue-2";
 import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import { InvisibleCharacters } from "@tiptap-pro/extension-invisible-characters";
@@ -107,9 +106,6 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 		try {
 			const extensions = [
 				StarterKit.configure(starterKitConfig.value),
-				Placeholder.configure({
-					placeholder: props.placeholder,
-				}),
 				Highlights.configure({
 					kirbytags: props.kirbytags,
 					highlights: props.highlights,
