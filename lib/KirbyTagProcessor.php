@@ -3,17 +3,15 @@
 namespace Medienbaecker\Tiptap;
 
 use Kirby\Text\KirbyTags;
-use Kirby\Uuid\Uuid;
-use InvalidArgumentException;
 
 /**
- * Processes KirbyTags and UUIDs in Tiptap content
- * Handles the transformation of KirbyTag text and UUID resolution
+ * Processes KirbyTags in Tiptap content
+ * Handles the transformation of KirbyTag text
  */
 class KirbyTagProcessor
 {
 	/**
-	 * Process content node for KirbyTags and UUIDs
+	 * Process content node for KirbyTags
 	 * @param array $node Node to process (passed by reference)
 	 * @param object $parent Parent page/model for KirbyTag context
 	 * @param bool $allowHtml Whether to allow HTML in text nodes
@@ -32,11 +30,6 @@ class KirbyTagProcessor
 
 			// Mark text nodes that are inside code blocks
 			$node['_inCodeBlock'] = $inCodeBlock;
-
-			// Process UUIDs
-			if (str_contains($text, '://')) {
-				$text = static::processUuids($text);
-			}
 
 			// Process KirbyTags
 			$parsed = KirbyTags::parse($text, ['parent' => $parent]);
@@ -57,24 +50,5 @@ class KirbyTagProcessor
 				static::processContent($contentNode, $parent, $allowHtml, $inCodeBlock);
 			}
 		}
-	}
-
-	/**
-	 * Process UUIDs in text content
-	 * @param string $text Text content to process
-	 * @return string Processed text with resolved UUIDs
-	 */
-	private static function processUuids($text)
-	{
-		return preg_replace_callback('/(page|file):\/\/[a-zA-Z0-9-]+/', function ($matches) {
-			try {
-				if ($url = Uuid::for($matches[0])?->model()?->url()) {
-					return $url;
-				}
-			} catch (InvalidArgumentException) {
-				// Ignore invalid UUIDs
-			}
-			return $matches[0];
-		}, $text);
 	}
 }
