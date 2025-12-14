@@ -3,6 +3,7 @@
 namespace Medienbaecker\Tiptap;
 
 use Kirby\Exception\Exception;
+use Kirby\Text\KirbyTag;
 use Kirby\Uuid\Uuid;
 
 /**
@@ -94,9 +95,7 @@ class Api
 
 	/**
 	 * Process KirbyTag, converting UUIDs based on configuration
-	 * @param string $kirbyTag The original KirbyTag text
-	 * @param array $uuid UUID configuration array
-	 * @return string Processed KirbyTag text
+	 * Uses Kirby's KirbyTag::parse() for proper attribute handling
 	 */
 	public static function processKirbyTag($kirbyTag, $uuid)
 	{
@@ -104,48 +103,60 @@ class Api
 			return $kirbyTag;
 		}
 
-		// Parse KirbyTag - extract type and parameters
-		if (!preg_match('/^\(([^:]+):\s*([^)]+)\)$/', $kirbyTag, $matches)) {
-			return $kirbyTag; // Not a KirbyTag, return as-is
+		try {
+			$tag = KirbyTag::parse($kirbyTag);
+		} catch (\Throwable $e) {
+			return $kirbyTag; // Not a valid KirbyTag
 		}
 
-		$tagType = trim($matches[1]);
-		$content = trim($matches[2]);
-
-		// Handle link tags
-		if ($tagType === 'link') {
-			if (strpos($content, ' text:') !== false) {
-				$parts = explode(' text:', $content, 2);
-				$href = trim($parts[0]);
-				$text = trim($parts[1]);
-			} else {
-				$href = $content;
-				$text = null;
-			}
-
-			// Convert UUIDs if needed
-			if (strpos($href, 'page://') === 0 && !$uuid['pages']) {
-				$href = static::convertPageUuidToId($href);
-			}
-			
-			if (strpos($href, 'file://') === 0 && !$uuid['files']) {
-				$href = static::convertFileUuidToFilename($href);
-			}
-
-			return $text !== null ? "({$tagType}: {$href} text: {$text})" : "({$tagType}: {$href})";
+		// Only process link, image, file, video tags
+		if (!in_array($tag->type, ['link', 'image', 'file', 'video'])) {
+			return $kirbyTag;
 		}
 
-		// For file tags (image, file, video), check for file UUIDs
-		if (in_array($tagType, ['image', 'file', 'video']) && strpos($content, 'file://') === 0) {
-			if (!$uuid['files']) {
-				$content = static::convertFileUuidToFilename($content);
-			}
+		$modified = false;
 
-			return "({$tagType}: {$content})";
+		// Convert main value if it's a UUID
+		if (Uuid::is($tag->value, 'page') && !$uuid['pages']) {
+			$tag->value = static::convertPageUuidToId($tag->value);
+			$modified = true;
+		}
+		if (Uuid::is($tag->value, 'file') && !$uuid['files']) {
+			$tag->value = static::convertFileUuidToFilename($tag->value);
+			$modified = true;
 		}
 
-		// Return unchanged if no UUID conversion needed
-		return $kirbyTag;
+		// Check attributes for UUIDs too (e.g., 'link' attr in image tags)
+		foreach ($tag->attrs as $key => $value) {
+			if (Uuid::is($value, 'page') && !$uuid['pages']) {
+				$tag->attrs[$key] = static::convertPageUuidToId($value);
+				$modified = true;
+			}
+			if (Uuid::is($value, 'file') && !$uuid['files']) {
+				$tag->attrs[$key] = static::convertFileUuidToFilename($value);
+				$modified = true;
+			}
+		}
+
+		if (!$modified) {
+			return $kirbyTag;
+		}
+
+		return static::rebuildKirbyTag($tag);
+	}
+
+	/**
+	 * Rebuild a KirbyTag string from parsed components
+	 */
+	private static function rebuildKirbyTag(KirbyTag $tag): string
+	{
+		$parts = [$tag->type . ': ' . $tag->value];
+		foreach ($tag->attrs as $key => $value) {
+			if ($value !== null && $value !== '') {
+				$parts[] = $key . ': ' . $value;
+			}
+		}
+		return '(' . implode(' ', $parts) . ')';
 	}
 
 	/**

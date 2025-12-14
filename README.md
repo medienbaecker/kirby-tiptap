@@ -15,6 +15,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
   - [Configuration](#configuration)
   - [Keyboard shortcuts](#keyboard-shortcuts)
   - [Custom buttons](#custom-buttons)
+  - [Customizing HTML output](#customizing-html-output)
   - [Converting existing fields](#converting-existing-fields)
 - [Ideas for future improvements](#ideas-for-future-improvements)
 
@@ -241,6 +242,43 @@ Add corresponding CSS to your frontend and `panel.css` for styling:
 	column-count: 2;
 	column-gap: 2rem;
 }
+```
+
+### Customizing HTML output
+
+Override any HTML snippet by creating files in `site/snippets/tiptap/`:
+
+```
+site/snippets/tiptap/
+├── heading.php      # Customize headings
+├── paragraph.php    # Customize paragraphs
+├── bold.php         # Customize bold text
+├── ...
+```
+
+**Available snippets:** `doc`, `paragraph`, `heading`, `bold`, `italic`, `strike`, `code`, `bulletList`, `orderedList`, `listItem`, `blockquote`, `codeBlock`, `horizontalRule`, `taskList`, `taskItem`, `hardBreak`, `text`, `kirbyTag`
+
+**Snippet variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `$content` | Pre-rendered children HTML |
+| `$attrs` | Node attributes (e.g., `['level' => 2, 'class' => 'intro']`) |
+| `$text` | Text content (text nodes only) |
+| `$type` | Node type |
+| `$next` | Next sibling node |
+| `$previous` | Previous sibling node |
+| `$parent` | Parent node |
+
+**Example: Headings with anchor links**
+
+```php
+<?php // site/snippets/tiptap/heading.php
+$level = $attrs['level'] ?? 1;
+$id = Str::slug(strip_tags($content));
+$htmlAttrs = attr(array_filter(array_diff_key($attrs ?? [], ['level' => true])));
+?>
+<h<?= $level ?> id="<?= $id ?>"<?= $htmlAttrs ? ' ' . $htmlAttrs : '' ?>><?= $content ?><a href="#<?= $id ?>" class="anchor">#</a></h<?= $level ?>>
 ```
 
 ### Converting existing fields

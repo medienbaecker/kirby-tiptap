@@ -15,12 +15,11 @@ import { NodeAttributes } from "../extensions/nodeAttributes";
 /**
  * Composable for Tiptap editor configuration and management
  * @param {Object} props - Component props
- * @param {Object} sanitizer - Content sanitizer instance
  * @param {Function} onContentUpdate - Callback for content updates
  * @param {Function} onEditorCreate - Callback for editor creation
  * @returns {Object} Editor instance and configuration
  */
-export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
+export function useEditor(props, onContentUpdate, onEditorCreate) {
 	const editor = ref(null);
 
 	/**
@@ -62,39 +61,23 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 	 * Returns StarterKit configuration based on allowed buttons
 	 */
 	const starterKitConfig = computed(() => {
-		const defaultConfig = {
-			dropcursor: {
-				width: 2,
-				color: "var(--color-blue-600)",
-			},
-		};
+		const buttons = allowedButtons.value;
+		const has = (name) => buttons.includes(name);
+		const hasHeadings = buttons.some(btn => typeof btn === "object" && "headings" in btn);
 
-		const buttonConfigs = {
-			heading: (btn) =>
-				typeof btn === "object" ? "headings" in btn : btn === "headings",
-			bold: "bold",
-			italic: "italic",
-			strike: "strike",
-			code: "code",
-			codeBlock: "codeBlock",
-			blockquote: "blockquote",
-			bulletList: "bulletList",
-			orderedList: "orderedList",
-			taskList: "taskList",
-			horizontalRule: "horizontalRule",
+		return {
+			dropcursor: { width: 2, color: "var(--color-blue-600)" },
+			heading: hasHeadings,
+			bold: has("bold"),
+			italic: has("italic"),
+			strike: has("strike"),
+			code: has("code"),
+			codeBlock: has("codeBlock"),
+			blockquote: has("blockquote"),
+			bulletList: has("bulletList"),
+			orderedList: has("orderedList"),
+			horizontalRule: has("horizontalRule"),
 		};
-
-		return Object.entries(buttonConfigs).reduce(
-			(config, [feature, buttonName]) => {
-				if (typeof buttonName === "function") {
-					config[feature] = allowedButtons.value.some(buttonName);
-				} else {
-					config[feature] = allowedButtons.value.includes(buttonName);
-				}
-				return config;
-			},
-			defaultConfig
-		);
 	});
 
 	/**
@@ -143,7 +126,6 @@ export function useEditor(props, sanitizer, onContentUpdate, onEditorCreate) {
 				content: initialContent,
 				extensions,
 				editorProps: {
-					transformPasted: (content) => sanitizer.sanitizeContent(content),
 					handlePaste: eventHandlers.handlePaste,
 					handleDrop: eventHandlers.handleDrop,
 				},

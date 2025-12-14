@@ -9,9 +9,8 @@
 
 <script>
 import { EditorContent } from '@tiptap/vue-2'
-import { onMounted, onBeforeUnmount, getCurrentInstance, nextTick, watch, ref } from 'vue'
+import { onMounted, getCurrentInstance, watch, ref } from 'vue'
 import Toolbar from './Toolbar.vue'
-import { ContentSanitizer } from '../utils/contentSanitizer'
 import { props } from './props.js'
 import { useEditor } from '../composables/useEditor'
 import { useContent } from '../composables/useContent'
@@ -23,12 +22,9 @@ export default {
 
 	setup(props, { emit }) {
 		const instance = getCurrentInstance()
-		const sanitizer = new ContentSanitizer(props.buttons)
 		const lastEmittedJson = ref('')
 
 		const { parseContent, emitContent } = useContent(
-			null, // editor will be available in onMounted
-			sanitizer,
 			props,
 			emit,
 			lastEmittedJson
@@ -36,7 +32,6 @@ export default {
 
 		const { editor, allowedButtons, createEditor } = useEditor(
 			props,
-			sanitizer,
 			(editor) => emitContent(editor),
 			(editor) => emit('editor', editor)
 		)

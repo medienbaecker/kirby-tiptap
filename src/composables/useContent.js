@@ -1,38 +1,33 @@
 import { processPlainTextParagraphs } from "../utils/contentProcessing";
 
 /**
- * Composable for managing Tiptap content parsing, sanitization, and emission
- * @param {Object} editor - Editor ref
- * @param {Object} sanitizer - Content sanitizer instance
+ * Composable for managing Tiptap content parsing and emission
  * @param {Object} props - Component props
  * @param {Function} emit - Vue emit function
  * @param {Object} lastEmittedJson - Ref to track last emitted JSON for value sync
  * @returns {Object} Content management functions
  */
-export function useContent(editor, sanitizer, props, emit, lastEmittedJson) {
+export function useContent(props, emit, lastEmittedJson) {
 	/**
-	 * Parse and sanitize content from various input formats
+	 * Parse content from various input formats
 	 * Handles JSON strings, plain text with line breaks, and raw HTML
 	 * @param {string|Object} value - Raw content value from field
-	 * @returns {Object|string} Parsed and sanitized content ready for editor
+	 * @returns {Object|string} Parsed content ready for editor
 	 */
 	const parseContent = (value) => {
-		// Handle non-string values
+		// Handle non-string values (already parsed)
 		if (typeof value !== "string") {
-			return sanitizer.sanitizeContent(value);
+			return value;
 		}
 
 		// Try to parse as JSON first
 		try {
-			const content = JSON.parse(value);
-			return sanitizer.sanitizeContent(content);
+			return JSON.parse(value);
 		} catch (error) {
-			// Not JSON - handle as plain text
-
 			// Not JSON - handle plain text with double line breaks
 			const processedContent = processPlainTextParagraphs(value);
 			if (processedContent) {
-				return sanitizer.sanitizeContent(processedContent);
+				return processedContent;
 			}
 
 			// Return raw value for single line text or HTML
@@ -41,24 +36,24 @@ export function useContent(editor, sanitizer, props, emit, lastEmittedJson) {
 	};
 
 	/**
-	 * Checks if sanitized content is effectively empty
+	 * Checks if content is effectively empty
 	 * Considers content empty if it has no nodes or only empty paragraphs
 	 * Special case: headings are never considered empty
-	 * @param {Object} sanitizedContent - Sanitized Tiptap document object
+	 * @param {Object} content - Tiptap document object
 	 * @returns {boolean} True if content is empty, false otherwise
 	 */
-	const isContentEmpty = (sanitizedContent) => {
+	const isContentEmpty = (content) => {
 		// Check if content array exists and has items
 		if (
-			!Array.isArray(sanitizedContent.content) ||
-			sanitizedContent.content.length === 0
+			!Array.isArray(content.content) ||
+			content.content.length === 0
 		) {
 			return true;
 		}
 
 		// If there's only one element
-		if (sanitizedContent.content.length === 1) {
-			const firstNode = sanitizedContent.content[0];
+		if (content.content.length === 1) {
+			const firstNode = content.content[0];
 
 			// Special handling for headings - they're not empty even without content
 			if (firstNode.type === "heading") {
@@ -79,8 +74,7 @@ export function useContent(editor, sanitizer, props, emit, lastEmittedJson) {
 
 	/**
 	 * Emits content changes to parent component
-	 * Processes editor content through sanitization and formats as JSON
-	 * Handles empty content by emitting empty string
+	 * Formats editor content as JSON
 	 * @param {Object} editorInstance - Tiptap editor instance
 	 * @emits {Object} input - Emits { json: string } to parent component
 	 */
@@ -95,7 +89,7 @@ export function useContent(editor, sanitizer, props, emit, lastEmittedJson) {
 
 		const content = editorInstance.getJSON();
 
-		if (!content) {
+		if (!content || !content.content) {
 			emit("input", { json: "" });
 			if (lastEmittedJson) {
 				lastEmittedJson.value = "";
@@ -103,24 +97,14 @@ export function useContent(editor, sanitizer, props, emit, lastEmittedJson) {
 			return;
 		}
 
-		const sanitizedContent = sanitizer.sanitizeContent(content);
-
-		if (!sanitizedContent || !sanitizedContent.content) {
-			emit("input", { json: "" });
-			if (lastEmittedJson) {
-				lastEmittedJson.value = "";
-			}
-			return;
-		}
-
-		const isEmpty = isContentEmpty(sanitizedContent);
+		const isEmpty = isContentEmpty(content);
 
 		const json = isEmpty
 			? ""
 			: JSON.stringify(
 					{
 						type: "doc",
-						content: sanitizedContent.content,
+						content: content.content,
 						inline: props.inline,
 					},
 					null,

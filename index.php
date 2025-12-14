@@ -27,6 +27,25 @@ Kirby::plugin('medienbaecker/tiptap', [
 	],
 	'snippets' => [
 		'blocks/tiptap' => __DIR__ . '/snippets/blocks/tiptap.php',
+		// Tiptap HTML rendering snippets
+		'tiptap/doc' => __DIR__ . '/snippets/tiptap/doc.php',
+		'tiptap/text' => __DIR__ . '/snippets/tiptap/text.php',
+		'tiptap/paragraph' => __DIR__ . '/snippets/tiptap/paragraph.php',
+		'tiptap/hardBreak' => __DIR__ . '/snippets/tiptap/hardBreak.php',
+		'tiptap/heading' => __DIR__ . '/snippets/tiptap/heading.php',
+		'tiptap/bold' => __DIR__ . '/snippets/tiptap/bold.php',
+		'tiptap/italic' => __DIR__ . '/snippets/tiptap/italic.php',
+		'tiptap/strike' => __DIR__ . '/snippets/tiptap/strike.php',
+		'tiptap/code' => __DIR__ . '/snippets/tiptap/code.php',
+		'tiptap/bulletList' => __DIR__ . '/snippets/tiptap/bulletList.php',
+		'tiptap/orderedList' => __DIR__ . '/snippets/tiptap/orderedList.php',
+		'tiptap/listItem' => __DIR__ . '/snippets/tiptap/listItem.php',
+		'tiptap/blockquote' => __DIR__ . '/snippets/tiptap/blockquote.php',
+		'tiptap/codeBlock' => __DIR__ . '/snippets/tiptap/codeBlock.php',
+		'tiptap/horizontalRule' => __DIR__ . '/snippets/tiptap/horizontalRule.php',
+		'tiptap/taskList' => __DIR__ . '/snippets/tiptap/taskList.php',
+		'tiptap/taskItem' => __DIR__ . '/snippets/tiptap/taskItem.php',
+		'tiptap/kirbyTag' => __DIR__ . '/snippets/tiptap/kirbyTag.php',
 	],
 	'fields' => [
 		'tiptap' => [

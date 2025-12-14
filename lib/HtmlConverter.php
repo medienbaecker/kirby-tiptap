@@ -2,17 +2,38 @@
 
 namespace Medienbaecker\Tiptap;
 
-use Tiptap\Editor;
-use Medienbaecker\Tiptap\Nodes\KirbyTagNode;
-use Medienbaecker\Tiptap\Nodes\ConditionalTextNode;
-use Medienbaecker\Tiptap\Extensions\CustomAttributes;
-
 /**
- * Converts Tiptap JSON content to HTML
- * Main entry point for Tiptap to HTML conversion with KirbyTag processing
+ * Converts Tiptap JSON content to HTML using Kirby snippets.
+ * Each node type is rendered by a snippet in snippets/tiptap/{type}.php
  */
 class HtmlConverter
 {
+	/**
+	 * Render content recursively using Kirby snippets.
+	 */
+	protected static function renderSnippets(array $content, ?array $parent = null): string
+	{
+		$html = '';
+		$previous = null;
+
+		for ($i = 0, $count = count($content); $i < $count; $i++) {
+			$node = $content[$i];
+			$children = static::renderSnippets($node['content'] ?? [], $node);
+
+			$html .= snippet('tiptap/' . $node['type'], [
+				...$node,
+				'content' => $children,
+				'next' => $content[$i + 1] ?? null,
+				'previous' => $previous,
+				'parent' => $parent,
+			], true);
+
+			$previous = $node;
+		}
+
+		return $html;
+	}
+
 	/**
 	 * Convert Tiptap JSON to HTML
 	 * @param mixed $json Tiptap JSON content
@@ -74,54 +95,19 @@ class HtmlConverter
 			KirbyTagProcessor::processContent($node, $parent, $options['allowHtml'], false);
 		}
 
-		// Convert to HTML
+		// Convert to HTML using snippets
 		try {
-			$extensions = [
-				new \Tiptap\Extensions\StarterKit([
-					'text' => false, // Disable default text node
-				]),
-				new ConditionalTextNode($options['allowHtml']), // Use our custom text handler
-				new KirbyTagNode(),
-				new \Tiptap\Nodes\TaskList(),
-				new \Tiptap\Nodes\TaskItem()
-			];
-
-			$extensions[] = new CustomAttributes([
-				'customButtons' => $options['customButtons']
-			]);
-
-			$html = (new Editor([
-				'extensions' => $extensions
-			]))->setContent($json)->getHTML();
+			$dom = (new MarkProcessor())->processNode($json);
+			$html = static::renderSnippets([$dom]);
 
 			// Handle Smartypants
 			if (option('smartypants', false) !== false) {
 				$html = smartypants($html);
 			}
 
-			// Unwrap block elements from paragraphs
-			$html = static::unwrapBlockElements($html);
-
 			return $html;
 		} catch (\Exception) {
 			return '';
 		}
-	}
-
-	/**
-	 * Unwrap block elements from paragraphs
-	 * Fixes invalid nesting when KirbyTags create block elements inside paragraphs
-	 * @param string $html HTML content to process
-	 * @return string Processed HTML with unwrapped block elements
-	 */
-	private static function unwrapBlockElements($html)
-	{
-		// Match <p> tags containing only block elements (figure, video, audio)
-		// The pattern captures the block element and its content
-		return preg_replace(
-			'/<p>\s*(<(?:figure|video|audio)\b[^>]*>.*?<\/(?:figure|video|audio)>)\s*<\/p>/s',
-			'$1',
-			$html
-		);
 	}
 }
