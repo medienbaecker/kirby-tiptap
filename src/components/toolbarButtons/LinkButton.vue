@@ -7,7 +7,7 @@
 import ToolbarButton from './ToolbarButton.vue';
 import { parseKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
 import { validateInput, generateLinkTag } from '../../utils/inputValidation';
-import { buildDialogFields } from '../../utils/dialogFields';
+import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
 
 export default {
@@ -190,7 +190,7 @@ export default {
 				initial = this.createNewLinkValues(context.selectedText || '');
 			}
 
-			return this.processFieldValues(initial);
+			return processFieldValues(initial, this.linkFields);
 		},
 
 		/**
@@ -227,35 +227,6 @@ export default {
 			return type === 'text'
 				? { href: '', text: selectedText }
 				: { href, text: '' };
-		},
-
-		/**
-		 * Processes field values based on their types (arrays, booleans, etc.)
-		 * @param {Object} initial - Initial values
-		 * @returns {Object} Processed values
-		 */
-		processFieldValues(initial) {
-			const fields = this.linkFields || {};
-
-			Object.entries(fields).forEach(([name, field]) => {
-				if (!initial[name]) return;
-
-				// Handle array field types
-				if (['checkboxes', 'multiselect', 'tags'].includes(field.type)) {
-					if (!Array.isArray(initial[name])) {
-						initial[name] = typeof initial[name] === 'string'
-							? initial[name].split(/\s+/)
-							: [];
-					}
-				}
-
-				// Handle toggle/boolean fields
-				if (field.type === 'toggle' && typeof initial[name] === 'string') {
-					initial[name] = initial[name].toLowerCase() === 'true';
-				}
-			});
-
-			return initial;
 		},
 
 		/**

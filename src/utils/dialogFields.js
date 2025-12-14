@@ -37,3 +37,32 @@ export const buildDialogFields = (defaultFields = {}, customFields = {}) => {
 	// Merge default fields with processed custom fields
 	return { ...defaultFields, ...processedCustomFields };
 };
+
+/**
+ * Processes initial field values to match expected field types
+ * Converts strings to arrays for checkboxes/multiselect/tags, handles toggles
+ * @param {Object} initial - Initial field values from parsed tag
+ * @param {Object} fields - Field definitions with type info
+ * @returns {Object} Processed field values
+ */
+export const processFieldValues = (initial, fields = {}) => {
+	Object.entries(fields).forEach(([name, field]) => {
+		if (!initial[name]) return;
+
+		// Handle array field types
+		if (['checkboxes', 'multiselect', 'tags'].includes(field.type)) {
+			if (!Array.isArray(initial[name])) {
+				initial[name] = typeof initial[name] === 'string'
+					? initial[name].split(/\s+/)
+					: [];
+			}
+		}
+
+		// Handle toggle/boolean fields
+		if (field.type === 'toggle' && typeof initial[name] === 'string') {
+			initial[name] = initial[name].toLowerCase() === 'true';
+		}
+	});
+
+	return initial;
+};

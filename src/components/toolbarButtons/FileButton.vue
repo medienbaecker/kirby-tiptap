@@ -6,7 +6,7 @@
 <script>
 import ToolbarButton from './ToolbarButton.vue';
 import { parseKirbyTag, generateKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
-import { buildDialogFields } from '../../utils/dialogFields';
+import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
 
 export default {
@@ -237,6 +237,7 @@ export default {
 			this.editingContext = isEditing ? { replaceRange, restoreSelection } : null;
 
 			const { _type, uuid, href, value: tagValue, ...fieldValues } = initial || {};
+			const processedFieldValues = processFieldValues(fieldValues, this.fileFields);
 
 			this.$panel.dialog.open({
 				component: 'tiptap-file-dialog',
@@ -245,7 +246,7 @@ export default {
 					endpoint: `${this.endpoints.field}/files`,
 					value: value,
 					fields: this.fileFields,
-					initialFieldValues: fieldValues,
+					initialFieldValues: processedFieldValues,
 					submitButton: window.panel.$t('insert')
 				},
 				on: {
