@@ -4,7 +4,7 @@
 		"build": "kirbyup src/index.js"
 	},
 	"devDependencies": {
-		"kirbyup": "^3.2.0"
+		"kirbyup": "^3.4.1"
 	},
 	"dependencies": {
 		"@tiptap-pro/extension-invisible-characters": "^2.17.2",
