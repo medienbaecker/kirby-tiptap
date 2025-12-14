@@ -1,4 +1,5 @@
 {
+	"name": "kirby-tiptap",
 	"scripts": {
 		"dev": "kirbyup serve src/index.js",
 		"build": "kirbyup src/index.js"
