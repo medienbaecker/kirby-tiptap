@@ -1,5 +1,5 @@
 <template>
-	<ToolbarButton icon="checklist" :title="$t('toolbar.button.taskList')" :editor="editor" command="toggleTaskList"
+	<ToolbarButton icon="checklist" :title="$t('tiptap.toolbar.button.taskList')" :editor="editor" command="toggleTaskList"
 		active-check="taskList" />
 </template>
 

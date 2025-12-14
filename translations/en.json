@@ -3,7 +3,7 @@
 	"toolbar.button.codeBlock": "Code Block",
 	"toolbar.button.twoColumn": "Two Columns",
 	"toolbar.button.blockquote": "Blockquote",
-	"toolbar.button.taskList": "Task List",
+	"toolbar.button.taskList": "Task list",
 	"upload.error.disabled": "Uploads are not enabled for this field",
 	"upload.error.endpoint": "Upload endpoint not configured",
 	"upload.error.noFiles": "No files were uploaded",
