@@ -1,17 +1,19 @@
 <template>
 	<div v-if="dropdown && dropdown.length" class="tiptap-button-wrapper">
 		<!-- Dropdown button when dropdown items exist -->
-		<k-button :icon="icon" :title="title" :ariaLabel="title" :class="['k-toolbar-button', 'tiptap-button']"
-			:current="isActive" @mousedown.prevent @click="toggleDropdown" />
+		<k-button :icon="icon" :title="formattedTitle" :ariaLabel="formattedTitle"
+			:class="['k-toolbar-button', 'tiptap-button']" :current="active" @mousedown.prevent @click="toggleDropdown" />
 		<k-dropdown-content ref="dropdown" :options="dropdownOptions" align-x="start" @action="onDropdownAction" />
 	</div>
 
 	<!-- Regular button when no dropdown -->
-	<k-button v-else :icon="icon" :title="title" :ariaLabel="title" :class="['k-toolbar-button', 'tiptap-button']"
-		:current="isActive" @mousedown.prevent @click="runCommand" />
+	<k-button v-else :icon="icon" :title="formattedTitle" :ariaLabel="formattedTitle"
+		:class="['k-toolbar-button', 'tiptap-button']" :current="active" @mousedown.prevent @click="runCommand" />
 </template>
 
 <script>
+import { getShortcut } from '../../utils/shortcuts.js'
+
 export default {
 	props: {
 		icon: String,
@@ -29,8 +31,34 @@ export default {
 		}
 	},
 	computed: {
-		isActive() {
-			return this.active
+		isMac() {
+			return typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+		},
+		resolvedShortcut() {
+			// Explicit shortcut prop takes priority, otherwise auto-detect from command
+			return this.shortcut || getShortcut(this.command)
+		},
+		formattedTitle() {
+			if (!this.resolvedShortcut) return this.title
+
+			// Parse shortcut parts
+			const parts = this.resolvedShortcut.split('-')
+			const key = parts.pop().toUpperCase()
+
+			let modifiers = ''
+			if (this.isMac) {
+				if (parts.includes('Mod')) modifiers += '⌘'
+				if (parts.includes('Shift')) modifiers += '⇧'
+				if (parts.includes('Alt')) modifiers += '⌥'
+			} else {
+				const mods = []
+				if (parts.includes('Mod')) mods.push('Ctrl')
+				if (parts.includes('Shift')) mods.push('Shift')
+				if (parts.includes('Alt')) mods.push('Alt')
+				modifiers = mods.length ? mods.join('+') + '+' : ''
+			}
+
+			return `${this.title} (${modifiers}${key})`
 		},
 		dropdownOptions() {
 			if (!this.dropdown) return []
@@ -130,12 +158,21 @@ export default {
 			if (!this.shortcut || !this.editor) return;
 
 			this.keyboardHandler = (event) => {
-				const isMod = event.metaKey || event.ctrlKey;
-				const shortcutKey = this.shortcut.replace('Mod-', '').toLowerCase();
+				const parts = this.shortcut.split('-')
+				const key = parts.pop().toLowerCase()
 
-				if (isMod && event.key.toLowerCase() === shortcutKey && !event.shiftKey && !event.altKey) {
-					event.preventDefault();
-					this.runCommand();
+				const needsMod = parts.includes('Mod')
+				const needsShift = parts.includes('Shift')
+				const needsAlt = parts.includes('Alt')
+
+				const modMatch = needsMod === (event.metaKey || event.ctrlKey)
+				const shiftMatch = needsShift === event.shiftKey
+				const altMatch = needsAlt === event.altKey
+				const keyMatch = event.key.toLowerCase() === key
+
+				if (modMatch && shiftMatch && altMatch && keyMatch) {
+					event.preventDefault()
+					this.runCommand()
 				}
 			};
 

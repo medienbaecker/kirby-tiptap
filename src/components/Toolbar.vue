@@ -1,10 +1,11 @@
 <template>
-	<nav class="k-toolbar tiptap-toolbar" v-if="editor">
-		<template v-for="button in normalizedButtons">
-			<component v-if="!isSeperator(button)" :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
-				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads"
-				:uuid="uuid" :buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
-			<hr v-else />
+	<nav class="k-toolbar tiptap-toolbar" role="toolbar" :aria-label="$t('toolbar')" v-if="editor"
+		@keydown="handleKeydown" @focusin="handleFocusIn">
+		<template v-for="(button, index) in normalizedButtons">
+			<component v-if="!isSeparator(button)" :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
+				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads" :uuid="uuid"
+				:buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
+			<hr v-else :key="'sep-' + index" />
 		</template>
 	</nav>
 </template>
@@ -27,6 +28,10 @@ export default {
 		if (this.customButtons) {
 			buttonRegistry.registerCustomButtons(this.customButtons)
 		}
+	},
+
+	mounted() {
+		this.$nextTick(() => this.initRovingTabindex())
 	},
 
 	computed: {
@@ -103,11 +108,12 @@ export default {
 				// Handle string buttons
 				return { type: button }
 			})
-		}
+		},
+
 	},
 
 	methods: {
-		isSeperator(button) {
+		isSeparator(button) {
 			return button.type === '|'
 		},
 
@@ -143,6 +149,65 @@ export default {
 				return this.customButtons[button.type]
 			}
 			return null
+		},
+
+		// Roving tabindex methods
+		getButtons() {
+			return this.$el ? Array.from(this.$el.querySelectorAll('button')) : []
+		},
+
+		initRovingTabindex() {
+			const buttons = this.getButtons()
+			buttons.forEach((btn, i) => {
+				btn.setAttribute('tabindex', i === 0 ? '0' : '-1')
+			})
+		},
+
+		handleKeydown(event) {
+			const { key } = event
+			if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(key)) return
+
+			event.preventDefault()
+			const buttons = this.getButtons()
+			if (!buttons.length) return
+
+			const currentIndex = buttons.indexOf(document.activeElement)
+			let nextIndex
+
+			switch (key) {
+				case 'ArrowRight':
+					nextIndex = currentIndex < buttons.length - 1 ? currentIndex + 1 : 0
+					break
+				case 'ArrowLeft':
+					nextIndex = currentIndex > 0 ? currentIndex - 1 : buttons.length - 1
+					break
+				case 'Home':
+					nextIndex = 0
+					break
+				case 'End':
+					nextIndex = buttons.length - 1
+					break
+			}
+
+			this.focusButton(nextIndex)
+		},
+
+		handleFocusIn(event) {
+			const buttons = this.getButtons()
+			const focusedButton = event.target.closest('button')
+			if (!focusedButton || !buttons.includes(focusedButton)) return
+
+			// Update tabindex: focused gets 0, others get -1
+			buttons.forEach(btn => {
+				btn.setAttribute('tabindex', btn === focusedButton ? '0' : '-1')
+			})
+		},
+
+		focusButton(index) {
+			const buttons = this.getButtons()
+			if (buttons[index]) {
+				buttons[index].focus()
+			}
 		}
 	}
 }

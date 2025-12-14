@@ -2,7 +2,7 @@
 	<div class="tiptap-headings">
 		<ToolbarButton v-for="level in levels" :key="level" :icon="`h${level}`"
 			:title="$t(`toolbar.button.heading.${level}`)" :editor="editor" :command="() => toggleHeading(level)"
-			:active-check="() => editor.isActive('heading', { level })" />
+			:active-check="() => editor.isActive('heading', { level })" :shortcut="`Mod-Alt-${level}`" />
 	</div>
 </template>
 
