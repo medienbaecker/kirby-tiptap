@@ -2,6 +2,9 @@
 
 namespace Medienbaecker\Tiptap;
 
+use Kirby\Cms\Blueprint;
+use Kirby\Toolkit\Str;
+
 /**
  * Tiptap field configuration and props
  */
@@ -37,6 +40,37 @@ class Field
 			'pages' => $pluginConfig['pages'] ?? ($globalUuid !== false),
 			'files' => $pluginConfig['files'] ?? ($globalUuid !== false)
 		];
+	}
+
+	/**
+	 * Process dialog fields - resolves extends and adds auto-labels
+	 * @param array $fields Field definitions from blueprint
+	 * @return array Processed field definitions
+	 */
+	public static function processDialogFields(array $fields): array
+	{
+		$processed = [];
+
+		foreach ($fields as $name => $field) {
+			// Skip if field is null/false
+			if (!$field) {
+				continue;
+			}
+
+			// Resolve extends
+			$field = Blueprint::extend($field);
+
+			// Auto-generate label from field name if not set
+			if (!isset($field['label'])) {
+				$field['label'] = method_exists(Str::class, 'label')
+					? Str::label($name)
+					: ucfirst(str_replace('_', ' ', $name));
+			}
+
+			$processed[$name] = $field;
+		}
+
+		return $processed;
 	}
 
 	/**
@@ -76,7 +110,16 @@ class Field
 				return array_keys($this->kirby()->extensions('tags'));
 			},
 			'links' => function ($links = []) {
+				if (isset($links['fields']) && is_array($links['fields'])) {
+					$links['fields'] = \Medienbaecker\Tiptap\Field::processDialogFields($links['fields']);
+				}
 				return $links;
+			},
+			'files' => function ($files = []) {
+				if (isset($files['fields']) && is_array($files['fields'])) {
+					$files['fields'] = \Medienbaecker\Tiptap\Field::processDialogFields($files['fields']);
+				}
+				return $files;
 			},
 			'uploads' => function ($uploads = false) {
 				// Handle upload configuration similar to textarea field

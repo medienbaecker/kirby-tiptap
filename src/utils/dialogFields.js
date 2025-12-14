@@ -18,6 +18,11 @@ export const normalizeOptions = options => {
  * @returns {Object} Merged field configuration
  */
 export const buildDialogFields = (defaultFields = {}, customFields = {}) => {
+	// Guard against null/undefined
+	if (!customFields) {
+		return { ...defaultFields };
+	}
+
 	// Process custom fields, normalizing their options
 	const processedCustomFields = Object.fromEntries(
 		Object.entries(customFields).map(([name, field]) => {
