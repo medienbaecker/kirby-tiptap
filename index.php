@@ -46,6 +46,7 @@ Kirby::plugin('medienbaecker/tiptap', [
 		'tiptap/taskList' => __DIR__ . '/snippets/tiptap/taskList.php',
 		'tiptap/taskItem' => __DIR__ . '/snippets/tiptap/taskItem.php',
 		'tiptap/kirbyTag' => __DIR__ . '/snippets/tiptap/kirbyTag.php',
+		'tiptap/inline' => __DIR__ . '/snippets/tiptap/inline.php',
 	],
 	'fields' => [
 		'tiptap' => [

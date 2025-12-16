@@ -54,7 +54,7 @@ class ContentProcessor
 		}
 
 		return [
-			'type' => 'paragraph', // Wrap everything in a single paragraph
+			'type' => 'inline',
 			'content' => $newContent
 		];
 	}
