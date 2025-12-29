@@ -95,6 +95,9 @@ class HtmlConverter
 			KirbyTagProcessor::processContent($node, $parent, $options['allowHtml'], false);
 		}
 
+		// Split paragraphs containing block-level kirbyTags
+		$json['content'] = ContentProcessor::splitBlockContent($json['content']);
+
 		// Convert to HTML using snippets
 		try {
 			$dom = (new MarkProcessor())->processNode($json);

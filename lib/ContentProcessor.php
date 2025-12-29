@@ -94,4 +94,87 @@ class ContentProcessor
 	{
 		return is_array($json) && isset($json['content']) && is_array($json['content']);
 	}
+
+	/**
+	 * Restructure content to prevent invalid HTML nesting.
+	 *
+	 * Browsers auto-close <p> tags when encountering block elements,
+	 * creating empty paragraphs with unwanted margins. This splits
+	 * paragraphs around block-level KirbyTag output to produce
+	 * valid, predictable HTML structure.
+	 *
+	 * @param array $nodes Top-level content nodes
+	 * @return array Restructured nodes
+	 */
+	public static function splitBlockContent(array $nodes): array
+	{
+		$blockPattern = '/^<(figure|div|table|video|audio|iframe|section|article|aside|blockquote|pre|ul|ol|dl|details|form|hr|script)[\s>\/]/i';
+		$result = [];
+
+		foreach ($nodes as $node) {
+			if (!isset($node['type']) || $node['type'] !== 'paragraph' || empty($node['content'])) {
+				$result[] = $node;
+				continue;
+			}
+
+			$hasBlockKirbyTag = false;
+			foreach ($node['content'] as $child) {
+				if (static::isBlockKirbyTag($child, $blockPattern)) {
+					$hasBlockKirbyTag = true;
+					break;
+				}
+			}
+
+			if (!$hasBlockKirbyTag) {
+				$result[] = $node;
+				continue;
+			}
+
+			array_push($result, ...static::splitParagraph($node, $blockPattern));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $child Content node to check
+	 * @param string $blockPattern Regex for block elements
+	 * @return bool
+	 */
+	private static function isBlockKirbyTag(array $child, string $blockPattern): bool
+	{
+		return ($child['type'] ?? '') === 'kirbyTag' &&
+			   isset($child['attrs']['content']) &&
+			   preg_match($blockPattern, trim($child['attrs']['content']));
+	}
+
+	/**
+	 * @param array $node Paragraph node to split
+	 * @param string $blockPattern Regex for block elements
+	 * @return array Split nodes
+	 */
+	private static function splitParagraph(array $node, string $blockPattern): array
+	{
+		$result = [];
+		$attrs = $node['attrs'] ?? [];
+		$currentContent = [];
+
+		foreach ($node['content'] as $child) {
+			if (static::isBlockKirbyTag($child, $blockPattern)) {
+				if (!empty($currentContent)) {
+					$result[] = ['type' => 'paragraph', 'attrs' => $attrs, 'content' => $currentContent];
+					$currentContent = [];
+				}
+				$result[] = $child;
+			} else {
+				$currentContent[] = $child;
+			}
+		}
+
+		if (!empty($currentContent)) {
+			$result[] = ['type' => 'paragraph', 'attrs' => $attrs, 'content' => $currentContent];
+		}
+
+		return $result;
+	}
 }
