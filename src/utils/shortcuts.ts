@@ -3,7 +3,7 @@
  * These match Tiptap's built-in extension shortcuts.
  * Keys are command names (e.g., 'toggleBold' -> 'Mod-b')
  */
-export const SHORTCUTS = {
+export const SHORTCUTS: Record<string, string> = {
 	toggleBold: "Mod-b",
 	toggleItalic: "Mod-i",
 	toggleStrike: "Mod-Shift-s",
@@ -17,7 +17,7 @@ export const SHORTCUTS = {
 /**
  * Get shortcut for a command
  */
-export function getShortcut(command) {
+export function getShortcut(command: unknown): string | null {
 	if (typeof command === "string") {
 		return SHORTCUTS[command] || null;
 	}

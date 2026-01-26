@@ -144,8 +144,8 @@ class ContentProcessor
 	private static function isBlockKirbyTag(array $child, string $blockPattern): bool
 	{
 		return ($child['type'] ?? '') === 'kirbyTag' &&
-			   isset($child['attrs']['content']) &&
-			   preg_match($blockPattern, trim($child['attrs']['content']));
+			isset($child['attrs']['content']) &&
+			preg_match($blockPattern, trim($child['attrs']['content']));
 	}
 
 	/**

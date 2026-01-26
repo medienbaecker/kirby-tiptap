@@ -4,9 +4,7 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue'
-
-// Shared cache for parsed classes across all custom button instances
-const classCache = new WeakMap()
+import { parseNodeClasses } from '../../utils/classParser'
 
 export default {
 	components: {
@@ -77,31 +75,10 @@ export default {
 		checkAttributes(node) {
 			return Object.entries(this.attributes).every(([key, value]) => {
 				if (key === 'class' && node.attrs.class) {
-					const classes = this.getParsedClasses(node)
-					return classes.has(value)
+					return parseNodeClasses(node).has(value)
 				}
 				return node.attrs[key] === value
 			})
-		},
-		getParsedClasses(node) {
-			if (!node.attrs.class || typeof node.attrs.class !== 'string') return new Set()
-
-			// Check if we have cached classes for this node
-			if (classCache.has(node)) {
-				const cached = classCache.get(node)
-				if (cached.source === node.attrs.class) {
-					return cached.classes
-				}
-			}
-
-			// Parse and cache the classes
-			const classes = new Set(node.attrs.class.trim().split(/\s+/).filter(Boolean))
-			classCache.set(node, {
-				source: node.attrs.class,
-				classes: classes
-			})
-
-			return classes
 		}
 	}
 }

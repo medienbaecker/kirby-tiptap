@@ -5,7 +5,7 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
-import { parseKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
+import { parseKirbyTag, findParentWithClass, isLinkTag, isCompleteLinkTag } from '../../utils/kirbyTags';
 import { validateInput, generateLinkTag } from '../../utils/inputValidation';
 import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
@@ -73,7 +73,7 @@ export default {
 			const { node } = view.domAtPos(from);
 			const tagEl = findParentWithClass(node, 'kirbytag');
 
-			if (tagEl && this.isLinkTag(tagEl.textContent)) {
+			if (tagEl && isLinkTag(tagEl.textContent)) {
 				return {
 					isEditing: true,
 					tagEl,
@@ -97,7 +97,7 @@ export default {
 			const selectedText = state.doc.textBetween(from, to).trim();
 
 			// Check if selection is a complete tag
-			if (this.isCompleteTag(selectedText)) {
+			if (isCompleteLinkTag(selectedText)) {
 				return {
 					isEditing: true,
 					replaceRange: { from, to },
@@ -120,26 +120,6 @@ export default {
 		},
 
 		/**
-		 * Checks if text is a link-related tag
-		 * @param {string} text - Text to check
-		 * @returns {boolean}
-		 */
-		isLinkTag(text) {
-			return text.startsWith('(link:') ||
-				text.startsWith('(email:') ||
-				text.startsWith('(tel:');
-		},
-
-		/**
-		 * Checks if text is a complete KirbyTag
-		 * @param {string} text - Text to check
-		 * @returns {boolean}
-		 */
-		isCompleteTag(text) {
-			return this.isLinkTag(text) && text.endsWith(')');
-		},
-
-		/**
 		 * Finds a tag element that intersects with the selection
 		 * @param {Object} view - Editor view
 		 * @param {number} from - Selection start
@@ -150,14 +130,14 @@ export default {
 			// Check start of selection
 			const { node: startNode } = view.domAtPos(from);
 			const startTagEl = findParentWithClass(startNode, 'kirbytag');
-			if (startTagEl && this.isLinkTag(startTagEl.textContent)) {
+			if (startTagEl && isLinkTag(startTagEl.textContent)) {
 				return startTagEl;
 			}
 
 			// Check end of selection
 			const { node: endNode } = view.domAtPos(to);
 			const endTagEl = findParentWithClass(endNode, 'kirbytag');
-			if (endTagEl && this.isLinkTag(endTagEl.textContent)) {
+			if (endTagEl && isLinkTag(endTagEl.textContent)) {
 				return endTagEl;
 			}
 
@@ -308,44 +288,27 @@ export default {
 			if (empty) {
 				const { node } = editor.view.domAtPos(from);
 				const tagEl = findParentWithClass(node, 'kirbytag');
-				if (!tagEl) return false;
-
-				const txt = tagEl.textContent;
-				return (
-					txt.startsWith('(link:') ||
-					txt.startsWith('(email:') ||
-					txt.startsWith('(tel:')
-				);
+				return tagEl ? isLinkTag(tagEl.textContent) : false;
 			}
 			// Case 2: Selection
 			else {
 				// First check if the exact selection might be a complete tag
 				const selectedText = editor.state.doc.textBetween(from, to).trim();
-				if (
-					(selectedText.startsWith('(link:') && selectedText.endsWith(')')) ||
-					(selectedText.startsWith('(email:') && selectedText.endsWith(')')) ||
-					(selectedText.startsWith('(tel:') && selectedText.endsWith(')'))
-				) {
+				if (isCompleteLinkTag(selectedText)) {
 					return true;
 				}
 
 				// If not, check if any endpoint of the selection is inside a link tag
 				const { node: startNode } = editor.view.domAtPos(from);
 				const startTagEl = findParentWithClass(startNode, 'kirbytag');
-				if (startTagEl) {
-					const txt = startTagEl.textContent;
-					if (txt.startsWith('(link:') || txt.startsWith('(email:') || txt.startsWith('(tel:')) {
-						return true;
-					}
+				if (startTagEl && isLinkTag(startTagEl.textContent)) {
+					return true;
 				}
 
 				const { node: endNode } = editor.view.domAtPos(to);
 				const endTagEl = findParentWithClass(endNode, 'kirbytag');
-				if (endTagEl) {
-					const txt = endTagEl.textContent;
-					if (txt.startsWith('(link:') || txt.startsWith('(email:') || txt.startsWith('(tel:')) {
-						return true;
-					}
+				if (endTagEl && isLinkTag(endTagEl.textContent)) {
+					return true;
 				}
 
 				return false;

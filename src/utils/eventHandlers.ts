@@ -1,8 +1,8 @@
-/**
- * Event handlers for Tiptap editor
- * Handles paste, drop, and other user interactions
- */
-
+import type { Ref } from "vue";
+import type { Editor } from "@tiptap/vue-2";
+import type { EditorView } from "@tiptap/pm/view";
+import type { Slice } from "@tiptap/pm/model";
+import type { Panel, PanelHelpers } from "kirby-types";
 import { validateInput, generateLinkTag } from "./inputValidation";
 import { processPlainTextParagraphs } from "./contentProcessing";
 import {
@@ -12,15 +12,21 @@ import {
 	createUploadErrorHandler,
 	createUploadCancelHandler
 } from "./fileUploadHelpers";
+import type { UploadsConfig, EndpointsConfig, UuidConfig } from "../types";
+
+interface Coordinates {
+	pos: number;
+	inside?: number;
+}
 
 /**
  * Helper to process KirbyTag through API for UUID conversion
- * @param {string} kirbyTag - The KirbyTag to process
- * @param {Object} endpoints - API endpoints configuration
- * @param {Object} panel - Kirby panel object
- * @returns {Promise<string>} Processed KirbyTag
  */
-export async function processKirbyTagApi(kirbyTag, endpoints, panel) {
+export async function processKirbyTagApi(
+	kirbyTag: string,
+	endpoints: EndpointsConfig | null | undefined,
+	panel: Panel | null
+): Promise<string> {
 	if (!endpoints || !panel || !kirbyTag) {
 		return kirbyTag;
 	}
@@ -32,7 +38,7 @@ export async function processKirbyTagApi(kirbyTag, endpoints, panel) {
 			: endpoints.field;
 		const apiUrl = `${fieldPath}/process-kirbytag`;
 
-		const response = await panel.api.post(apiUrl, { kirbyTag });
+		const response = await panel.api.post<{ text?: string }>(apiUrl, { kirbyTag });
 		return response.text || kirbyTag;
 	} catch (error) {
 		console.error('Failed to process KirbyTag:', error);
@@ -42,19 +48,19 @@ export async function processKirbyTagApi(kirbyTag, endpoints, panel) {
 
 /**
  * Handles paste events in the editor
- * @param {Ref} editorRef - The Tiptap editor ref
- * @param {Array} allowedTypes - Array of allowed link types from field config
- * @returns {Function} The paste handler function
  */
-export function createPasteHandler(editorRef, allowedTypes = []) {
-	return (view, event, slice) => {
+export function createPasteHandler(
+	editorRef: Ref<Editor | null>,
+	allowedTypes: string[] = []
+): (view: EditorView, event: ClipboardEvent, slice: Slice) => boolean | void {
+	return (view, event) => {
 		// HTML content
-		const htmlContent = event.clipboardData.getData("text/html");
+		const htmlContent = event.clipboardData?.getData("text/html") || "";
 		if (htmlContent.trim()) {
 			return false;
 		}
 
-		const plainText = event.clipboardData.getData("text/plain").trim();
+		const plainText = (event.clipboardData?.getData("text/plain") || "").trim();
 		const selection = view.state.selection;
 		const selectedText = !selection.empty
 			? view.state.doc.textBetween(selection.from, selection.to)
@@ -63,14 +69,14 @@ export function createPasteHandler(editorRef, allowedTypes = []) {
 		// Selected text with link Kirbytag generation
 		if (selectedText) {
 			const validation = validateInput(plainText, allowedTypes);
-			if (validation.type !== "text") {
+			if (validation.type !== "unknown") {
 				const kirbyTag = generateLinkTag({
 					href: validation.href,
 					text: selectedText,
 				});
 
 				editorRef.value
-					.chain()
+					?.chain()
 					.focus()
 					.insertContentAt(selection, kirbyTag)
 					.run();
@@ -83,7 +89,7 @@ export function createPasteHandler(editorRef, allowedTypes = []) {
 		// Plain text with double line breaks? Create paragraphs
 		const content = processPlainTextParagraphs(plainText);
 		if (content) {
-			editorRef.value.commands.insertContent(content);
+			editorRef.value?.commands.insertContent(content);
 			event.preventDefault();
 			return true;
 		}
@@ -94,24 +100,18 @@ export function createPasteHandler(editorRef, allowedTypes = []) {
 
 /**
  * Handles text drop operations (pages, files) with API-based UUID conversion
- * @param {Ref} editorRef - The Tiptap editor ref
- * @param {Object} coordinates - Drop coordinates
- * @param {string} dragText - The drag text containing KirbyTag
- * @param {Object} uuid - UUID configuration
- * @param {Object} endpoints - API endpoints configuration
- * @param {Object} panel - Kirby panel object
  */
 export async function handleTextDrop(
-	editorRef,
-	coordinates,
-	dragText,
-	uuid = { pages: true, files: true },
-	endpoints = null,
-	panel = null
-) {
+	editorRef: Ref<Editor | null>,
+	coordinates: Coordinates,
+	dragText: string,
+	uuid: UuidConfig = { pages: true, files: true },
+	endpoints: EndpointsConfig | null = null,
+	panel: Panel | null = null
+): Promise<void> {
 	const pos = coordinates.pos;
 	const prevChar =
-		pos > 0 ? editorRef.value.state.doc.textBetween(pos - 1, pos) : "";
+		pos > 0 ? editorRef.value?.state.doc.textBetween(pos - 1, pos) : "";
 	const needsSpace = prevChar && prevChar !== " ";
 
 	// Process dragText through API for UUID conversion
@@ -120,7 +120,7 @@ export async function handleTextDrop(
 	content = needsSpace ? " " + content : content;
 
 	editorRef.value
-		.chain()
+		?.chain()
 		.focus()
 		.insertContentAt(pos, content, {
 			parseOptions: { preserveWhitespace: true },
@@ -132,22 +132,15 @@ export async function handleTextDrop(
 /**
  * Creates drop handler for the editor
  * Handles drag and drop operations from Kirby panel and file uploads
- * @param {Ref} editorRef - The Tiptap editor ref
- * @param {Object} panel - Kirby panel instance
- * @param {Object} helper - Kirby helper instance
- * @param {Object} endpoints - API endpoints for uploads
- * @param {Object} uploads - Upload configuration
- * @param {Object} uuid - UUID configuration
- * @returns {Function} The drop handler function
  */
 export function createDropHandler(
-	editorRef,
-	panel,
-	helper,
-	endpoints,
-	uploads,
-	uuid = { pages: true, files: true }
-) {
+	editorRef: Ref<Editor | null>,
+	panel: Panel,
+	helper: PanelHelpers | null,
+	endpoints: EndpointsConfig | undefined,
+	uploads: UploadsConfig | false | undefined,
+	uuid: UuidConfig = { pages: true, files: true }
+): (view: EditorView, event: DragEvent, slice: Slice, moved: boolean) => boolean {
 	return (view, event, slice, moved) => {
 		if (!moved && panel.drag.data) {
 			const coordinates = view.posAtCoords({
@@ -155,15 +148,17 @@ export function createDropHandler(
 				top: event.clientY,
 			});
 
+			if (!coordinates) return false;
+
 			if (panel.drag.type === "text") {
 				// Process the dragText according to UUID configuration
-				const dragText = panel.drag.data;
+				const dragText = panel.drag.data as unknown as string;
 				handleTextDrop(
 					editorRef,
 					coordinates,
 					dragText,
 					uuid,
-					endpoints,
+					endpoints || null,
 					panel
 				);
 			} else if (helper?.isUploadEvent && helper.isUploadEvent(event)) {
@@ -173,8 +168,7 @@ export function createDropHandler(
 					event,
 					endpoints,
 					uploads,
-					panel,
-					uuid
+					panel
 				);
 			}
 
@@ -186,47 +180,45 @@ export function createDropHandler(
 
 /**
  * Handles file upload from drag & drop
- * @param {Ref} editorRef - The Tiptap editor ref
- * @param {Object} coordinates - Drop coordinates
- * @param {Event} event - The drop event
- * @param {Object} endpoints - API endpoints
- * @param {Object} uploads - Upload configuration
- * @param {Object} panel - Kirby panel instance
- * @param {Object} uuid - UUID configuration (currently unused, kept for compatibility)
  */
 function handleFileUpload(
-	editorRef,
-	coordinates,
-	event,
-	endpoints,
-	uploads,
-	panel
-) {
+	editorRef: Ref<Editor | null>,
+	coordinates: Coordinates,
+	event: DragEvent,
+	endpoints: EndpointsConfig | undefined,
+	uploads: UploadsConfig | false | undefined,
+	panel: Panel
+): void {
 	// Validate upload configuration
 	if (!validateUploadConfig(uploads, endpoints, panel)) {
 		return;
 	}
 
 	try {
-		const files = event.dataTransfer.files;
+		const files = event.dataTransfer?.files;
 		if (!files || files.length === 0) {
 			return;
 		}
 
 		// Store current selection for restoration after upload
-		const { from: originalFrom, to: originalTo } = editorRef.value.state.selection;
+		const selection = editorRef.value?.state.selection;
+		const originalFrom = selection?.from || 0;
+		const originalTo = selection?.to || 0;
 		const dropPosition = coordinates.pos;
 
 		// Build upload options
-		const uploadOptions = buildUploadOptions(endpoints, uploads, panel);
-		
+		const uploadOptions = buildUploadOptions(
+			endpoints!,
+			uploads as UploadsConfig,
+			panel
+		);
+
 		// Add event handlers
 		uploadOptions.on = {
 			done: createUploadSuccessHandler(editorRef, dropPosition, panel),
 			cancel: createUploadCancelHandler(editorRef, originalFrom, originalTo),
 			error: createUploadErrorHandler(editorRef, originalFrom, originalTo, panel)
 		};
-
 
 		// Use Kirby's upload dialog (same as textarea field)
 		panel.upload.open(files, uploadOptions);

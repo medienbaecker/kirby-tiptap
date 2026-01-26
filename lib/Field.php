@@ -18,7 +18,7 @@ class Field
 	{
 		$globalUuid = option('content.uuid', true); // Kirby's global UUID setting
 		$pluginConfig = option('medienbaecker.tiptap.uuid');
-		
+
 		// If no plugin config, use global setting for both
 		if ($pluginConfig === null) {
 			return [
@@ -26,7 +26,7 @@ class Field
 				'files' => $globalUuid !== false
 			];
 		}
-		
+
 		// If simple boolean, apply to both
 		if (is_bool($pluginConfig)) {
 			return [
@@ -34,7 +34,7 @@ class Field
 				'files' => $pluginConfig
 			];
 		}
-		
+
 		// If array, use individual settings with global fallback
 		return [
 			'pages' => $pluginConfig['pages'] ?? ($globalUuid !== false),
@@ -61,7 +61,7 @@ class Field
 			$field = Blueprint::extend($field);
 
 			// Auto-generate label from field name if not set
-			if (!isset($field['label'])) {
+			if (empty($field['label'])) {
 				$field['label'] = method_exists(Str::class, 'label')
 					? Str::label($name)
 					: ucfirst(str_replace('_', ' ', $name));

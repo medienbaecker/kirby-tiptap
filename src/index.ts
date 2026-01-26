@@ -3,6 +3,10 @@ import TiptapBlock from "./components/TiptapBlock.vue";
 import TiptapFieldPreview from "./components/TiptapFieldPreview.vue";
 import FileDialog from "./components/dialogs/FileDialog.vue";
 
+declare const panel: {
+	plugin(name: string, options: Record<string, unknown>): void;
+};
+
 panel.plugin("medienbaecker/tiptap", {
 	fields: {
 		tiptap: Tiptap,

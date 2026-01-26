@@ -1,20 +1,32 @@
+import type { Ref } from "vue";
+import type { Editor } from "@tiptap/vue-2";
 import { processPlainTextParagraphs } from "../utils/contentProcessing";
+import type { TiptapDocument, TiptapNode } from "../types";
+
+interface ContentProps {
+	inline?: boolean;
+	pretty?: boolean;
+}
+
+interface UseContentReturn {
+	parseContent: (value: string | TiptapDocument) => TiptapDocument | string;
+	isContentEmpty: (content: TiptapDocument) => boolean;
+	emitContent: (editorInstance: Editor | null) => void;
+}
 
 /**
  * Composable for managing Tiptap content parsing and emission
- * @param {Object} props - Component props
- * @param {Function} emit - Vue emit function
- * @param {Object} lastEmittedJson - Ref to track last emitted JSON for value sync
- * @returns {Object} Content management functions
  */
-export function useContent(props, emit, lastEmittedJson) {
+export function useContent(
+	props: ContentProps,
+	emit: (event: string, value: { json: string }) => void,
+	lastEmittedJson?: Ref<string>
+): UseContentReturn {
 	/**
 	 * Parse content from various input formats
 	 * Handles JSON strings, plain text with line breaks, and raw HTML
-	 * @param {string|Object} value - Raw content value from field
-	 * @returns {Object|string} Parsed content ready for editor
 	 */
-	const parseContent = (value) => {
+	const parseContent = (value: string | TiptapDocument): TiptapDocument | string => {
 		// Handle non-string values (already parsed)
 		if (typeof value !== "string") {
 			return value;
@@ -22,8 +34,8 @@ export function useContent(props, emit, lastEmittedJson) {
 
 		// Try to parse as JSON first
 		try {
-			return JSON.parse(value);
-		} catch (error) {
+			return JSON.parse(value) as TiptapDocument;
+		} catch {
 			// Not JSON - handle plain text with double line breaks
 			const processedContent = processPlainTextParagraphs(value);
 			if (processedContent) {
@@ -39,10 +51,8 @@ export function useContent(props, emit, lastEmittedJson) {
 	 * Checks if content is effectively empty
 	 * Considers content empty if it has no nodes or only empty paragraphs
 	 * Special case: headings are never considered empty
-	 * @param {Object} content - Tiptap document object
-	 * @returns {boolean} True if content is empty, false otherwise
 	 */
-	const isContentEmpty = (content) => {
+	const isContentEmpty = (content: TiptapDocument): boolean => {
 		// Check if content array exists and has items
 		if (
 			!Array.isArray(content.content) ||
@@ -53,7 +63,7 @@ export function useContent(props, emit, lastEmittedJson) {
 
 		// If there's only one element
 		if (content.content.length === 1) {
-			const firstNode = content.content[0];
+			const firstNode = content.content[0] as TiptapNode;
 
 			// Special handling for headings - they're not empty even without content
 			if (firstNode.type === "heading") {
@@ -75,10 +85,8 @@ export function useContent(props, emit, lastEmittedJson) {
 	/**
 	 * Emits content changes to parent component
 	 * Formats editor content as JSON
-	 * @param {Object} editorInstance - Tiptap editor instance
-	 * @emits {Object} input - Emits { json: string } to parent component
 	 */
-	const emitContent = (editorInstance) => {
+	const emitContent = (editorInstance: Editor | null): void => {
 		if (!editorInstance) {
 			emit("input", { json: "" });
 			if (lastEmittedJson) {
@@ -87,7 +95,7 @@ export function useContent(props, emit, lastEmittedJson) {
 			return;
 		}
 
-		const content = editorInstance.getJSON();
+		const content = editorInstance.getJSON() as TiptapDocument;
 
 		if (!content || !content.content) {
 			emit("input", { json: "" });

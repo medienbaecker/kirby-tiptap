@@ -1,18 +1,22 @@
 {
 	"name": "kirby-tiptap",
 	"scripts": {
-		"dev": "kirbyup serve src/index.js",
-		"build": "kirbyup src/index.js"
+		"dev": "kirbyup serve src/index.ts",
+		"build": "kirbyup src/index.ts",
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"kirbyup": "^3.4.1"
+		"kirby-types": "^1.4.7",
+		"kirbyup": "^3.4.1",
+		"kirbyuse": "^1.3.0",
+		"typescript": "^5.9.0"
 	},
 	"dependencies": {
-		"@tiptap-pro/extension-invisible-characters": "^2.17.2",
-		"@tiptap/extension-placeholder": "^2.11.3",
-		"@tiptap/extension-task-item": "^2.10.3",
-		"@tiptap/extension-task-list": "^2.10.3",
-		"@tiptap/starter-kit": "^2.10.3",
-		"@tiptap/vue-2": "^2.10.3"
+		"@tiptap/extension-invisible-characters": "^3.17.1",
+		"@tiptap/extension-placeholder": "^3.17.1",
+		"@tiptap/extension-task-item": "^3.17.1",
+		"@tiptap/extension-task-list": "^3.17.1",
+		"@tiptap/starter-kit": "^3.17.1",
+		"@tiptap/vue-2": "^3.17.1"
 	}
 }

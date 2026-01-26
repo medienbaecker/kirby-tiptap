@@ -1,3 +1,5 @@
+import type { TiptapDocument } from "../types";
+
 /**
  * Content processing utilities for Tiptap editor
  * Handles conversion of plain text to Tiptap JSON format
@@ -5,10 +7,8 @@
 
 /**
  * Processes plain text with double line breaks into paragraph structures
- * @param {string} text - Plain text content
- * @returns {Object|null} Tiptap JSON structure or null if not applicable
  */
-export function processPlainTextParagraphs(text) {
+export function processPlainTextParagraphs(text: string): TiptapDocument | null {
 	// Only process plain text strings that contain double line breaks
 	if (typeof text !== "string" || !text.includes("\n\n")) {
 		return null;
@@ -19,8 +19,8 @@ export function processPlainTextParagraphs(text) {
 		.map(text => text.trim())
 		.filter(Boolean) // Remove empty strings
 		.map(text => ({
-			type: "paragraph",
-			content: [{ type: "text", text }]
+			type: "paragraph" as const,
+			content: [{ type: "text" as const, text }]
 		}));
 
 	return {

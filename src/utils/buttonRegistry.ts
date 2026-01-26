@@ -1,8 +1,11 @@
+import type { Component } from "vue";
+import type { ButtonRegistryEntry, ButtonMeta, CustomButtonConfig } from "../types";
+
 /**
  * Button registry for Tiptap toolbar
  */
 
-const coreButtons = {
+const coreButtons: Record<string, ButtonRegistryEntry> = {
 	headings: {
 		component: () => import('../components/toolbarButtons/HeadingsButton.vue'),
 		meta: { icon: 'title', group: 'text' }
@@ -65,22 +68,22 @@ const coreButtons = {
 	}
 };
 
-const customButtons = {};
+const customButtons: Record<string, ButtonRegistryEntry> = {};
 
 export const buttonRegistry = {
-	getButton(name) {
+	getButton(name: string): ButtonRegistryEntry | undefined {
 		return coreButtons[name] || customButtons[name];
 	},
 
-	getAllButtons() {
+	getAllButtons(): Map<string, ButtonRegistryEntry> {
 		return new Map(Object.entries({ ...coreButtons, ...customButtons }));
 	},
 
-	hasButton(name) {
+	hasButton(name: string): boolean {
 		return name in coreButtons || name in customButtons;
 	},
 
-	registerCustomButtons(buttons) {
+	registerCustomButtons(buttons: Record<string, CustomButtonConfig> | undefined): void {
 		if (!buttons) return;
 
 		Object.entries(buttons).forEach(([name, config]) => {

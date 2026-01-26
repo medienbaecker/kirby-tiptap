@@ -1,9 +1,11 @@
+import type { DialogOption, DialogFieldConfig } from "../types";
+
 /**
  * Normalizes options objects to arrays for dialog fields
- * @param {Object|Array} options - Field options to normalize
- * @returns {Array} Normalized array of {value, text} objects
  */
-export const normalizeOptions = options => {
+export const normalizeOptions = (
+	options: Record<string, string> | DialogOption[] | undefined
+): DialogOption[] => {
 	if (Array.isArray(options)) return options;
 	if (options && typeof options === 'object') {
 		return Object.entries(options).map(([value, text]) => ({ value, text }));
@@ -13,11 +15,11 @@ export const normalizeOptions = options => {
 
 /**
  * Builds dialog field configuration by merging default fields with custom fields
- * @param {Object} defaultFields - Default field configuration
- * @param {Object} customFields - Custom field configuration from props
- * @returns {Object} Merged field configuration
  */
-export const buildDialogFields = (defaultFields = {}, customFields = {}) => {
+export const buildDialogFields = (
+	defaultFields: Record<string, DialogFieldConfig> = {},
+	customFields: Record<string, DialogFieldConfig> | null | undefined = {}
+): Record<string, DialogFieldConfig> => {
 	// Guard against null/undefined
 	if (!customFields) {
 		return { ...defaultFields };
@@ -28,7 +30,9 @@ export const buildDialogFields = (defaultFields = {}, customFields = {}) => {
 		Object.entries(customFields).map(([name, field]) => {
 			const processedField = { ...field };
 			if (field.options) {
-				processedField.options = normalizeOptions(field.options);
+				processedField.options = normalizeOptions(
+					field.options as Record<string, string> | DialogOption[]
+				);
 			}
 			return [name, processedField];
 		})
@@ -41,11 +45,11 @@ export const buildDialogFields = (defaultFields = {}, customFields = {}) => {
 /**
  * Processes initial field values to match expected field types
  * Converts strings to arrays for checkboxes/multiselect/tags, handles toggles
- * @param {Object} initial - Initial field values from parsed tag
- * @param {Object} fields - Field definitions with type info
- * @returns {Object} Processed field values
  */
-export const processFieldValues = (initial, fields = {}) => {
+export const processFieldValues = (
+	initial: Record<string, unknown>,
+	fields: Record<string, DialogFieldConfig> = {}
+): Record<string, unknown> => {
 	Object.entries(fields).forEach(([name, field]) => {
 		if (!initial[name]) return;
 
@@ -53,14 +57,14 @@ export const processFieldValues = (initial, fields = {}) => {
 		if (['checkboxes', 'multiselect', 'tags'].includes(field.type)) {
 			if (!Array.isArray(initial[name])) {
 				initial[name] = typeof initial[name] === 'string'
-					? initial[name].split(/\s+/)
+					? (initial[name] as string).split(/\s+/)
 					: [];
 			}
 		}
 
 		// Handle toggle/boolean fields
 		if (field.type === 'toggle' && typeof initial[name] === 'string') {
-			initial[name] = initial[name].toLowerCase() === 'true';
+			initial[name] = (initial[name] as string).toLowerCase() === 'true';
 		}
 	});
 
