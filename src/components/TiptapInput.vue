@@ -41,7 +41,7 @@ export default {
 			if (newValue !== oldValue && newValue !== lastEmittedJson.value) {
 				const newContent = parseContent(newValue)
 				if (editor.value) {
-					editor.value.commands.setContent(newContent, false)
+					editor.value.commands.setContent(newContent, { emitUpdate: false })
 				}
 			}
 		})
