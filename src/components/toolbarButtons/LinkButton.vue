@@ -204,7 +204,7 @@ export default {
 		createNewLinkValues(selectedText) {
 			const allowedTypes = this.links.options || [];
 			const { type, href, text } = validateInput(selectedText, allowedTypes);
-			return type === 'text'
+			return type === 'unknown'
 				? { href: '', text: selectedText }
 				: { href, text: '' };
 		},
