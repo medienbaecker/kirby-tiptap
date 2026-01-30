@@ -1,4 +1,4 @@
-import { ref, computed, onBeforeUnmount, type Ref, type ComputedRef } from "vue";
+import { ref, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
 import { Editor } from "@tiptap/vue-2";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
@@ -177,7 +177,7 @@ export function useEditor(
 		editor.value?.destroy();
 	};
 
-	onBeforeUnmount(() => {
+	onUnmounted(() => {
 		destroyEditor();
 	});
 
