@@ -9,5 +9,6 @@ return array(
     'Tiptap\\' => array($vendorDir . '/ueberdosis/tiptap-php/src'),
     'Symfony\\Component\\Process\\' => array($vendorDir . '/symfony/process'),
     'Spatie\\ShikiPhp\\' => array($vendorDir . '/spatie/shiki-php/src'),
+    'Medienbaecker\\Tiptap\\' => array($baseDir . '/lib'),
     'Kirby\\' => array($vendorDir . '/getkirby/composer-installer/src'),
 );

@@ -13,6 +13,12 @@
 		"getkirby/composer-installer": "^1.1",
 		"ueberdosis/tiptap-php": "^2.0"
 	},
+	"autoload": {
+		"psr-4": {
+			"Medienbaecker\\Tiptap\\": "lib/"
+		},
+		"files": ["lib/helpers.php"]
+	},
 	"config": {
 		"allow-plugins": {
 			"getkirby/composer-installer": true

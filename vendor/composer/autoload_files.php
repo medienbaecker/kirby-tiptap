@@ -7,4 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'b6ec61354e97f32c0ae683041c78392a' => $vendorDir . '/scrivo/highlight.php/HighlightUtilities/functions.php',
+    'c6d07203d7e65d5c4f5a5a15079d2cc1' => $baseDir . '/lib/helpers.php',
 );

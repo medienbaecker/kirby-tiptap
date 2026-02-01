@@ -8,51 +8,60 @@ class ComposerStaticInitabb9c652026590162df86ca21b76e07c
 {
     public static $files = array (
         'b6ec61354e97f32c0ae683041c78392a' => __DIR__ . '/..' . '/scrivo/highlight.php/HighlightUtilities/functions.php',
+        'c6d07203d7e65d5c4f5a5a15079d2cc1' => __DIR__ . '/../..' . '/lib/helpers.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        'T' => 
+        'T' =>
         array (
             'Tiptap\\' => 7,
         ),
-        'S' => 
+        'S' =>
         array (
             'Symfony\\Component\\Process\\' => 26,
             'Spatie\\ShikiPhp\\' => 16,
         ),
-        'K' => 
+        'M' =>
+        array (
+            'Medienbaecker\\Tiptap\\' => 21,
+        ),
+        'K' =>
         array (
             'Kirby\\' => 6,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Tiptap\\' => 
+        'Tiptap\\' =>
         array (
             0 => __DIR__ . '/..' . '/ueberdosis/tiptap-php/src',
         ),
-        'Symfony\\Component\\Process\\' => 
+        'Symfony\\Component\\Process\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/process',
         ),
-        'Spatie\\ShikiPhp\\' => 
+        'Spatie\\ShikiPhp\\' =>
         array (
             0 => __DIR__ . '/..' . '/spatie/shiki-php/src',
         ),
-        'Kirby\\' => 
+        'Medienbaecker\\Tiptap\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/lib',
+        ),
+        'Kirby\\' =>
         array (
             0 => __DIR__ . '/..' . '/getkirby/composer-installer/src',
         ),
     );
 
     public static $prefixesPsr0 = array (
-        'H' => 
+        'H' =>
         array (
-            'Highlight\\' => 
+            'Highlight\\' =>
             array (
                 0 => __DIR__ . '/..' . '/scrivo/highlight.php',
             ),
-            'HighlightUtilities\\' => 
+            'HighlightUtilities\\' =>
             array (
                 0 => __DIR__ . '/..' . '/scrivo/highlight.php',
             ),

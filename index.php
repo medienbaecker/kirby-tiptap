@@ -1,10 +1,6 @@
 <?php
 
 @include_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/lib/helpers.php';
-require_once __DIR__ . '/lib/Field.php';
-require_once __DIR__ . '/lib/Validations.php';
-require_once __DIR__ . '/lib/Api.php';
 
 use Kirby\Cms\App as Kirby;
 use Kirby\Toolkit\A;
