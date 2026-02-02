@@ -5,7 +5,7 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
-import { parseKirbyTag, generateKirbyTag, findParentWithClass } from '../../utils/kirbyTags';
+import { parseKirbyTag, generateKirbyTag, findTagAtPos } from '../../utils/kirbyTags';
 import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
 
@@ -102,8 +102,7 @@ export default {
 		 * @returns {Object} Context object
 		 */
 		checkCursorInFileTag(view, from) {
-			const { node } = view.domAtPos(from);
-			const tagEl = findParentWithClass(node, 'kirbytag');
+			const tagEl = findTagAtPos(view, from, 'kirbytag');
 
 			if (tagEl && this.isFileTag(tagEl.textContent)) {
 				return {
@@ -166,14 +165,12 @@ export default {
 		 * @returns {Element|null} Tag element or null
 		 */
 		findIntersectingFileTag(view, from, to) {
-			const { node: startNode } = view.domAtPos(from);
-			const startTagEl = findParentWithClass(startNode, 'kirbytag');
+			const startTagEl = findTagAtPos(view, from, 'kirbytag');
 			if (startTagEl && this.isFileTag(startTagEl.textContent)) {
 				return startTagEl;
 			}
 
-			const { node: endNode } = view.domAtPos(to);
-			const endTagEl = findParentWithClass(endNode, 'kirbytag');
+			const endTagEl = findTagAtPos(view, to, 'kirbytag');
 			if (endTagEl && this.isFileTag(endTagEl.textContent)) {
 				return endTagEl;
 			}
@@ -339,8 +336,7 @@ export default {
 			const { from, to, empty } = editor.state.selection;
 
 			if (empty) {
-				const { node } = editor.view.domAtPos(from);
-				const tagEl = findParentWithClass(node, 'kirbytag');
+				const tagEl = findTagAtPos(editor.view, from, 'kirbytag');
 				return tagEl ? this.isFileTag(tagEl.textContent) : false;
 			} else {
 				const selectedText = editor.state.doc.textBetween(from, to).trim();
@@ -348,14 +344,12 @@ export default {
 					return true;
 				}
 
-				const { node: startNode } = editor.view.domAtPos(from);
-				const startTagEl = findParentWithClass(startNode, 'kirbytag');
+				const startTagEl = findTagAtPos(editor.view, from, 'kirbytag');
 				if (startTagEl && this.isFileTag(startTagEl.textContent)) {
 					return true;
 				}
 
-				const { node: endNode } = editor.view.domAtPos(to);
-				const endTagEl = findParentWithClass(endNode, 'kirbytag');
+				const endTagEl = findTagAtPos(editor.view, to, 'kirbytag');
 				return endTagEl ? this.isFileTag(endTagEl.textContent) : false;
 			}
 		},
@@ -404,8 +398,7 @@ export default {
 			let replaceRange = null;
 
 			if (empty) {
-				const { node } = view.domAtPos(from);
-				const tagEl = findParentWithClass(node, 'kirbytag');
+				const tagEl = findTagAtPos(view, from, 'kirbytag');
 				isEditing = Boolean(tagEl) && this.isFileTag(tagEl.textContent);
 
 				if (isEditing) {

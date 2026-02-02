@@ -1,3 +1,4 @@
+import type { EditorView } from "@tiptap/pm/view";
 import type { ParsedKirbyTag, NavigationTarget, ResolvedKirbyTag, EndpointsConfig } from "../types";
 import type { Panel } from "kirby-types";
 
@@ -79,6 +80,28 @@ export const generateKirbyTag = (
 	return tag;
 };
 
+/**
+ * Resolves a domAtPos result to the most specific child node.
+ * When the cursor sits at a boundary between two inline decoration spans,
+ * ProseMirror returns the parent element with an offset between children.
+ * This drills into the child at that offset so findParentWithClass can find it.
+ */
+export const resolveNodeAtPos = (node: Node, offset: number): Node => {
+	if (node.nodeType === 1 && node.childNodes.length > 0) {
+		return node.childNodes[Math.min(offset, node.childNodes.length - 1)];
+	}
+	return node;
+};
+
+/**
+ * Finds a KirbyTag group at a given editor position.
+ * Combines domAtPos → resolveNodeAtPos → findParentWithClass into a single call.
+ */
+export const findTagAtPos = (view: EditorView, pos: number, className: string): KirbyTagGroup | null => {
+	const { node, offset } = view.domAtPos(pos);
+	return findParentWithClass(resolveNodeAtPos(node, offset), className);
+};
+
 export interface KirbyTagGroup {
 	textContent: string;
 	firstElement: Element;
@@ -99,12 +122,18 @@ export const findParentWithClass = (node: Node, className: string): KirbyTagGrou
 			const el = cur as Element;
 
 			let first = el;
-			while (first.previousElementSibling?.classList?.contains(className)) {
+			while (
+				first.previousSibling === first.previousElementSibling &&
+				first.previousElementSibling?.classList?.contains(className)
+			) {
 				first = first.previousElementSibling;
 			}
 
 			let last = el;
-			while (last.nextElementSibling?.classList?.contains(className)) {
+			while (
+				last.nextSibling === last.nextElementSibling &&
+				last.nextElementSibling?.classList?.contains(className)
+			) {
 				last = last.nextElementSibling;
 			}
 
@@ -214,6 +243,11 @@ export const getNavigationTarget = (parsed: ParsedKirbyTag): NavigationTarget | 
  * Navigate to a KirbyTag reference.
  * External URLs open in a new tab; internal refs resolve via API then open in Panel.
  */
+export const getFieldApiPath = (endpoints: EndpointsConfig): string =>
+	endpoints.field.startsWith('/api/')
+		? endpoints.field.substring(4)
+		: endpoints.field;
+
 export const navigateToKirbyTag = async (
 	target: NavigationTarget,
 	endpoints: EndpointsConfig | undefined,
@@ -227,10 +261,7 @@ export const navigateToKirbyTag = async (
 	if (!endpoints) return;
 
 	try {
-		const fieldPath = endpoints.field.startsWith('/api/')
-			? endpoints.field.substring(4)
-			: endpoints.field;
-		const apiUrl = `${fieldPath}/resolve-kirbytag`;
+		const apiUrl = `${getFieldApiPath(endpoints)}/resolve-kirbytag`;
 
 		const response = await panel.api.post<ResolvedKirbyTag>(apiUrl, {
 			reference: target.reference,
@@ -294,12 +325,8 @@ export const checkKirbyTagReferences = async (
 	endpoints: EndpointsConfig,
 	panel: Panel
 ): Promise<Record<string, boolean>> => {
-	const fieldPath = endpoints.field.startsWith('/api/')
-		? endpoints.field.substring(4)
-		: endpoints.field;
-
 	const response = await panel.api.post<{ results: Record<string, boolean> }>(
-		`${fieldPath}/check-kirbytags`,
+		`${getFieldApiPath(endpoints)}/check-kirbytags`,
 		{ references }
 	);
 

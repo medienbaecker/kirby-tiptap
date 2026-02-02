@@ -5,7 +5,7 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
-import { parseKirbyTag, findParentWithClass, isLinkTag, isCompleteLinkTag } from '../../utils/kirbyTags';
+import { parseKirbyTag, findTagAtPos, isLinkTag, isCompleteLinkTag } from '../../utils/kirbyTags';
 import { validateInput, generateLinkTag } from '../../utils/inputValidation';
 import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
@@ -68,8 +68,7 @@ export default {
 		 * @returns {Object} Context object
 		 */
 		checkCursorInTag(view, from) {
-			const { node } = view.domAtPos(from);
-			const tagEl = findParentWithClass(node, 'kirbytag');
+			const tagEl = findTagAtPos(view, from, 'kirbytag');
 
 			if (tagEl && isLinkTag(tagEl.textContent)) {
 				return {
@@ -125,16 +124,12 @@ export default {
 		 * @returns {Element|null} Tag element or null
 		 */
 		findIntersectingTag(view, from, to) {
-			// Check start of selection
-			const { node: startNode } = view.domAtPos(from);
-			const startTagEl = findParentWithClass(startNode, 'kirbytag');
+			const startTagEl = findTagAtPos(view, from, 'kirbytag');
 			if (startTagEl && isLinkTag(startTagEl.textContent)) {
 				return startTagEl;
 			}
 
-			// Check end of selection
-			const { node: endNode } = view.domAtPos(to);
-			const endTagEl = findParentWithClass(endNode, 'kirbytag');
+			const endTagEl = findTagAtPos(view, to, 'kirbytag');
 			if (endTagEl && isLinkTag(endTagEl.textContent)) {
 				return endTagEl;
 			}
@@ -281,29 +276,22 @@ export default {
 
 			const { from, to, empty } = editor.state.selection;
 
-			// Case 1: Cursor inside a tag
 			if (empty) {
-				const { node } = editor.view.domAtPos(from);
-				const tagEl = findParentWithClass(node, 'kirbytag');
+				const tagEl = findTagAtPos(editor.view, from, 'kirbytag');
 				return tagEl ? isLinkTag(tagEl.textContent) : false;
 			}
-			// Case 2: Selection
 			else {
-				// First check if the exact selection might be a complete tag
 				const selectedText = editor.state.doc.textBetween(from, to).trim();
 				if (isCompleteLinkTag(selectedText)) {
 					return true;
 				}
 
-				// If not, check if any endpoint of the selection is inside a link tag
-				const { node: startNode } = editor.view.domAtPos(from);
-				const startTagEl = findParentWithClass(startNode, 'kirbytag');
+				const startTagEl = findTagAtPos(editor.view, from, 'kirbytag');
 				if (startTagEl && isLinkTag(startTagEl.textContent)) {
 					return true;
 				}
 
-				const { node: endNode } = editor.view.domAtPos(to);
-				const endTagEl = findParentWithClass(endNode, 'kirbytag');
+				const endTagEl = findTagAtPos(editor.view, to, 'kirbytag');
 				if (endTagEl && isLinkTag(endTagEl.textContent)) {
 					return true;
 				}
