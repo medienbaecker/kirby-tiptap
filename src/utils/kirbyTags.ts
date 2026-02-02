@@ -99,7 +99,16 @@ export const resolveNodeAtPos = (node: Node, offset: number): Node => {
  */
 export const findTagAtPos = (view: EditorView, pos: number, className: string): KirbyTagGroup | null => {
 	const { node, offset } = view.domAtPos(pos);
-	return findParentWithClass(resolveNodeAtPos(node, offset), className);
+	const result = findParentWithClass(resolveNodeAtPos(node, offset), className);
+	if (result) return result;
+
+	// At decoration boundaries, domAtPos returns the parent element with offset
+	// pointing to the next child after the decoration. Check the preceding child
+	// to catch the cursor sitting right after a decorated span.
+	if (node.nodeType === 1 && offset > 0) {
+		return findParentWithClass(node.childNodes[offset - 1], className);
+	}
+	return null;
 };
 
 export interface KirbyTagGroup {
