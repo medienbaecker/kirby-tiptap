@@ -213,7 +213,7 @@ export default {
 				props: {
 					fields: this.linkFields,
 					value: initialValues,
-					submitButton: window.panel.$t('insert')
+					submitButton: window.panel.$t(context.isEditing ? 'change' : 'insert')
 				},
 				on: {
 					cancel: () => this.handleDialogCancel(editor),

@@ -243,7 +243,7 @@ export default {
 					value: value,
 					fields: this.fileFields,
 					initialFieldValues: processedFieldValues,
-					submitButton: window.panel.$t('insert')
+					submitButton: window.panel.$t(isEditing ? 'change' : 'insert')
 				},
 				on: {
 					cancel: restoreSelection,
