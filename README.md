@@ -30,6 +30,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - ✨ **Intuitive drag & drop support** for pages and files with intelligent spacing
 - 👀 **Custom field preview** showing formatted text in structure/object fields
 - 🔗 **Improved link and file handling** with dialogs that allow custom fields, automatically pick the right KirbyTag (`(link: )`, `(email: )`, `(file: )` or `(tel: )`) and allow editing existing links/files by pre-filling dialogs
+- 🔍 **Cmd+Click navigation** on page/file references to jump directly to the linked page or file in the Panel
 - 🌈 **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
 - 🔧 **Optional setting to allow HTML code** so you can paste your ⁠favourite `<script>`, `⁠<marquee>`, or ⁠`<blink>` tag directly
 - 📋 **Abstracted JSON structure** for easy content manipulation with features like `offsetHeadings`
