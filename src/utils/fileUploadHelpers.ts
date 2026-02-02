@@ -173,8 +173,7 @@ export function createUploadSuccessHandler(
 			} else {
 				panel.notification.error('No content could be generated from uploaded files');
 			}
-		} catch (error) {
-			console.error('File upload processing error:', error);
+		} catch {
 			panel.notification.error('Failed to process uploaded file');
 		}
 	};
@@ -189,8 +188,7 @@ export function createUploadErrorHandler(
 	originalTo: number,
 	panel: Panel
 ): (error: Error) => void {
-	return (error) => {
-		console.error('File upload error:', error);
+	return () => {
 		panel.notification.error('Upload failed');
 		// Restore original selection
 		editorRef.value?.commands.setTextSelection({

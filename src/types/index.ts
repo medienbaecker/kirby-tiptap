@@ -136,6 +136,19 @@ export interface TiptapMark {
 	attrs?: Record<string, unknown>
 }
 
+// Resolved KirbyTag navigation target
+export interface ResolvedKirbyTag {
+	panelUrl?: string
+	url?: string
+	type: 'page' | 'file' | 'external' | 'none'
+}
+
+// Navigation target extracted from a parsed KirbyTag
+export interface NavigationTarget {
+	reference: string
+	type: string
+}
+
 // KirbyTag parsing result
 export interface ParsedKirbyTag {
 	_type: string

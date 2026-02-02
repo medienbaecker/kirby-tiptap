@@ -168,15 +168,6 @@ export default {
 	line-height: var(--leading-h6);
 }
 
-/* Links */
-.tiptap a {
-	color: var(--link-color);
-	text-decoration: underline;
-	text-underline-offset: var(--link-underline-offset);
-	border-radius: var(--rounded-xs);
-	outline-offset: 2px;
-}
-
 /* Lists */
 .tiptap :where(ul, ol) {
 	padding-inline-start: 3ch;
@@ -281,8 +272,6 @@ export default {
 
 /* Kirbytags */
 .tiptap .kirbytag {
-	margin: calc(.1em * -1);
-	padding: .1em;
 	border-radius: var(--rounded);
 	color: var(--color-yellow-900);
 	background: var(--color-yellow-200);
@@ -290,6 +279,31 @@ export default {
 	[data-theme=dark] & {
 		background: var(--color-yellow-800);
 		color: inherit;
+	}
+}
+
+.tiptap .kirbytag+.kirbytag {
+	border-start-start-radius: 0;
+	border-end-start-radius: 0;
+}
+
+.tiptap .kirbytag:has(+ .kirbytag) {
+	border-start-end-radius: 0;
+	border-end-end-radius: 0;
+}
+
+.tiptap .kirbytag-ref {
+	text-decoration: underline;
+	text-decoration-color: color-mix(in srgb, currentColor, transparent 60%);
+	text-underline-offset: .15em;
+	text-decoration-thickness: .075em;
+}
+
+.tiptap.cmd-held .kirbytag-ref {
+	cursor: pointer;
+
+	&:hover {
+		text-decoration-color: currentColor;
 	}
 }
 

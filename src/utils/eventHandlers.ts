@@ -40,8 +40,7 @@ export async function processKirbyTagApi(
 
 		const response = await panel.api.post<{ text?: string }>(apiUrl, { kirbyTag });
 		return response.text || kirbyTag;
-	} catch (error) {
-		console.error('Failed to process KirbyTag:', error);
+	} catch {
 		return kirbyTag;
 	}
 }
@@ -222,8 +221,7 @@ function handleFileUpload(
 
 		// Use Kirby's upload dialog (same as textarea field)
 		panel.upload.open(files, uploadOptions);
-	} catch (error) {
-		console.error('File upload setup error:', error);
+	} catch {
 		panel.notification.error('File upload setup failed');
 	}
 }

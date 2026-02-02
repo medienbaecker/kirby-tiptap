@@ -89,7 +89,40 @@ class Api
 
 					return ['text' => $processedText];
 				}
-			]
+			],
+		[
+			'pattern' => 'resolve-kirbytag',
+			'method' => 'POST',
+			'action' => function () {
+				$reference = $this->requestBody('reference');
+				$type = $this->requestBody('type');
+
+				return Api::resolveKirbyTagReference($reference, $type, $this->field()->model());
+			}
+		],
+		[
+			'pattern' => 'check-kirbytags',
+			'method' => 'POST',
+			'action' => function () {
+				$references = $this->requestBody('references') ?? [];
+				$model = $this->field()->model();
+				$results = [];
+
+				foreach ($references as $ref) {
+					$reference = $ref['reference'] ?? '';
+					$type = $ref['type'] ?? '';
+
+					try {
+						Api::resolveKirbyTagReference($reference, $type, $model);
+						$results[$reference] = true;
+					} catch (\Throwable) {
+						$results[$reference] = false;
+					}
+				}
+
+				return ['results' => $results];
+			}
+		]
 		];
 	}
 

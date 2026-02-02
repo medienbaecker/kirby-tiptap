@@ -14,7 +14,7 @@ import {
 } from "../extensions/invisibles";
 import { Replacements } from "../extensions/replacements";
 import { NodeAttributes } from "../extensions/nodeAttributes";
-import type { TiptapFieldProps, TiptapDocument, CustomButtonConfig, ButtonItem } from "../types";
+import type { TiptapFieldProps, TiptapDocument, CustomButtonConfig, ButtonItem, EndpointsConfig } from "../types";
 
 interface EditorProps {
 	buttons: ButtonItem[];
@@ -23,6 +23,7 @@ interface EditorProps {
 	highlights?: TiptapFieldProps['highlights'];
 	customButtons?: Record<string, CustomButtonConfig>;
 	spellcheck?: boolean;
+	endpoints?: EndpointsConfig;
 }
 
 interface EventHandlers {
@@ -105,9 +106,9 @@ export function useEditor(
 			bulletList: has("bulletList") ? {} : false,
 			orderedList: has("orderedList") ? {} : false,
 			horizontalRule: has("horizontalRule") ? {} : false,
-			link: false,
-			underline: false,
-			trailingNode: false,
+			link: false as const,
+			underline: false as const,
+			trailingNode: false as const,
 		};
 	});
 
@@ -121,6 +122,7 @@ export function useEditor(
 				Highlights.configure({
 					kirbytags: props.kirbytags,
 					highlights: props.highlights,
+					endpoints: props.endpoints,
 				}),
 				InvisibleCharacters.configure({
 					injectCSS: false,
@@ -167,7 +169,6 @@ export function useEditor(
 
 			editor.value = newEditor as unknown as Editor;
 		} catch (error) {
-			console.error("Failed to create Tiptap editor:", error);
 			editor.value = null;
 			throw error;
 		}

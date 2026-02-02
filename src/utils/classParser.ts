@@ -34,9 +34,3 @@ export const parseNodeClasses = (node: ProseMirrorNode): Set<string> => {
 	return classes;
 };
 
-/**
- * Checks if a node has a specific class
- */
-export const nodeHasClass = (node: ProseMirrorNode, className: string): boolean => {
-	return parseNodeClasses(node).has(className);
-};

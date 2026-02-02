@@ -111,7 +111,7 @@ export default {
 
 			try {
 				this.$panel.dialog.isLoading = true;
-				const response = await this.$api.get(this.endpoint, params);
+				const response = await this.$panel.api.get(this.endpoint, params);
 				this.models = response.data;
 				this.pagination = response.pagination;
 				this.$emit("fetched", response);

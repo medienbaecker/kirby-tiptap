@@ -1,7 +1,6 @@
 {
 	"toolbar.button.horizontalRule": "Horizontal Rule",
 	"toolbar.button.codeBlock": "Code Block",
-	"toolbar.button.twoColumn": "Two Columns",
 	"toolbar.button.blockquote": "Blockquote",
 	"toolbar.button.taskList": "Task list",
 	"upload.error.disabled": "Uploads are not enabled for this field",
@@ -11,5 +10,6 @@
 	"upload.error.insert": "Failed to insert uploaded file",
 	"upload.error.dialog": "Failed to open upload dialog",
 	"upload.error.failed": "Upload failed",
-	"upload.success": "File uploaded and inserted successfully"
+	"upload.success": "File uploaded and inserted successfully",
+	"navigate.error": "Could not open this reference"
 }

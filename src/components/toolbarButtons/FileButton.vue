@@ -188,8 +188,8 @@ export default {
 		 * @returns {Object} Range object with from and to positions
 		 */
 		getFileTagRange(view, tagEl) {
-			const start = view.posAtDOM(tagEl, 0);
-			const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
+			const start = view.posAtDOM(tagEl.firstElement, 0);
+			const end = view.posAtDOM(tagEl.lastElement, tagEl.childNodes.length);
 			return { from: start, to: end };
 		},
 
@@ -227,8 +227,7 @@ export default {
 				} else {
 					this.openFileDialog(restoreSelection, initial, [], true, context.replaceRange);
 				}
-			} catch (error) {
-				console.error('Error parsing existing file tag:', error);
+			} catch {
 				this.openFileDialog(restoreSelection, {}, [], false, null);
 			}
 		},
@@ -284,8 +283,8 @@ export default {
 									
 									// Process the enhanced tag through API for UUID conversion
 									content = await processKirbyTagApi(content, this.endpoints, this.$panel);
-								} catch (error) {
-									console.warn('Could not enhance file tag with field values:', error);
+								} catch {
+									// Fall back to unenhanced tag
 								}
 							}
 

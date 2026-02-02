@@ -1,4 +1,4 @@
-# Kirby Tiptap (WIP)
+# Kirby Tiptap
 
 A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https://getkirby.com).
 
@@ -260,15 +260,15 @@ site/snippets/tiptap/
 
 **Snippet variables:**
 
-| Variable | Description |
-|----------|-------------|
-| `$content` | Pre-rendered children HTML |
-| `$attrs` | Node attributes (e.g., `['level' => 2, 'class' => 'intro']`) |
-| `$text` | Text content (text nodes only) |
-| `$type` | Node type |
-| `$next` | Next sibling node |
-| `$previous` | Previous sibling node |
-| `$parent` | Parent node |
+| Variable    | Description                                                  |
+| ----------- | ------------------------------------------------------------ |
+| `$content`  | Pre-rendered children HTML                                   |
+| `$attrs`    | Node attributes (e.g., `['level' => 2, 'class' => 'intro']`) |
+| `$text`     | Text content (text nodes only)                               |
+| `$type`     | Node type                                                    |
+| `$next`     | Next sibling node                                            |
+| `$previous` | Previous sibling node                                        |
+| `$parent`   | Parent node                                                  |
 
 **Example: Headings with anchor links**
 

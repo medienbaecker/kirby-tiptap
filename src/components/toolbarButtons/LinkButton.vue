@@ -35,8 +35,6 @@ export default {
 	},
 
 	methods: {
-
-
 		/**
 		 * Handles the link button click - opens dialog for creating or editing links
 		 * @param {Object} editor - The Tiptap editor instance
@@ -151,8 +149,8 @@ export default {
 		 * @returns {Object} Range object with from and to positions
 		 */
 		getTagRange(view, tagEl) {
-			const start = view.posAtDOM(tagEl, 0);
-			const end = view.posAtDOM(tagEl, tagEl.childNodes.length);
+			const start = view.posAtDOM(tagEl.firstElement, 0);
+			const end = view.posAtDOM(tagEl.lastElement, tagEl.childNodes.length);
 			return { from: start, to: end };
 		},
 
@@ -190,8 +188,7 @@ export default {
 				}
 
 				return parsed;
-			} catch (error) {
-				console.error('Error parsing existing tag:', error);
+			} catch {
 				return {};
 			}
 		},
@@ -316,7 +313,6 @@ export default {
 		},
 
 	},
-
 
 	computed: {
 		/**
