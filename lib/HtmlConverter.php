@@ -110,6 +110,7 @@ class HtmlConverter
 
 			return $html;
 		} catch (\Exception) {
+			// Graceful degradation: return empty string on conversion failure
 			return '';
 		}
 	}

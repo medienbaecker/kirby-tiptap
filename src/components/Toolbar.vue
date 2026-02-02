@@ -43,35 +43,23 @@ export default {
 			for (const [name, config] of buttonRegistry.getAllButtons()) {
 				// Use cached component or create new one
 				if (!componentCache.has(name)) {
-					try {
-						// Vue 2 compatible async component definition with error handling
-						componentCache.set(name, () => {
-							return config.component().catch(error => {
-								console.error(`Failed to load button component: ${name}`, error)
-								// Return fallback component
-								return {
-									name: `${name}ButtonError`,
-									render(h) {
-										return h('k-button', {
-											props: {
-												icon: 'alert',
-												title: `Error loading ${name} button`,
-												disabled: true
-											},
-											class: 'tiptap-button-error'
-										})
-									}
+					componentCache.set(name, () => {
+						return config.component().catch(() => {
+							return {
+								name: `${name}ButtonError`,
+								render(h) {
+									return h('k-button', {
+										props: {
+											icon: 'alert',
+											title: `Error loading ${name} button`,
+											disabled: true
+										},
+										class: 'tiptap-button-error'
+									})
 								}
-							})
+							}
 						})
-					} catch (error) {
-						console.warn(`Failed to setup button component: ${name}`, error)
-						// Immediate fallback for synchronous errors
-						componentCache.set(name, {
-							name: `${name}ButtonFallback`,
-							render: h => h('div', { class: 'tiptap-button-fallback' }, 'Button Error')
-						})
-					}
+					})
 				}
 				components[name] = componentCache.get(name)
 			}

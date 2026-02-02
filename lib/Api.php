@@ -105,8 +105,9 @@ class Api
 
 		try {
 			$tag = KirbyTag::parse($kirbyTag);
-		} catch (\Throwable $e) {
-			return $kirbyTag; // Not a valid KirbyTag
+		} catch (\Throwable) {
+			// Not a valid KirbyTag — return as-is
+			return $kirbyTag;
 		}
 
 		// Only process link, image, file, video tags
@@ -169,7 +170,8 @@ class Api
 		try {
 			$page = Uuid::for($pageUuid)?->model();
 			return $page ? $page->id() : $pageUuid;
-		} catch (Exception $e) {
+		} catch (Exception) {
+			// UUID not resolvable — return original reference
 			return $pageUuid;
 		}
 	}
@@ -184,8 +186,70 @@ class Api
 		try {
 			$file = Uuid::for($fileUuid)?->model();
 			return $file ? $file->filename() : $fileUuid;
-		} catch (Exception $e) {
+		} catch (Exception) {
+			// UUID not resolvable — return original reference
 			return $fileUuid;
 		}
+	}
+
+	/**
+	 * Resolve a KirbyTag reference to a Panel URL
+	 *
+	 * @param string $reference The reference value (UUID, slug, filename, URL)
+	 * @param string $type The KirbyTag type (link, image, file, video)
+	 * @param mixed $model The parent model for context (resolving filenames)
+	 * @return array{panelUrl?: string, url?: string, type: string}
+	 */
+	public static function resolveKirbyTagReference(string $reference, string $type, $model): array
+	{
+		// External URLs
+		if (str_starts_with($reference, 'http://') || str_starts_with($reference, 'https://')) {
+			return ['url' => $reference, 'type' => 'external'];
+		}
+
+		// Page UUID (page://xxx)
+		if (Uuid::is($reference, 'page')) {
+			try {
+				$page = Uuid::for($reference)?->model();
+				if ($page) {
+					return ['panelUrl' => $page->panel()->path(), 'type' => 'page'];
+				}
+			} catch (\Throwable) {
+				// Fall through to error
+			}
+			throw new Exception('Page not found');
+		}
+
+		// File UUID (file://xxx)
+		if (Uuid::is($reference, 'file')) {
+			try {
+				$file = Uuid::for($reference)?->model();
+				if ($file) {
+					$parentPath = $file->parent()->panel()->path();
+					return ['panelUrl' => $parentPath . '/files/' . $file->filename(), 'type' => 'file'];
+				}
+			} catch (\Throwable) {
+				// Fall through to error
+			}
+			throw new Exception('File not found');
+		}
+
+		// File/image/video tags with a filename (has file extension)
+		if (in_array($type, ['image', 'file', 'video']) && preg_match('/\.\w+$/', $reference)) {
+			$file = $model->file($reference);
+			if ($file) {
+				$parentPath = $file->parent()->panel()->path();
+				return ['panelUrl' => $parentPath . '/files/' . $file->filename(), 'type' => 'file'];
+			}
+			throw new Exception('File not found');
+		}
+
+		// Page slug/id (for link tags or anything that looks like a page reference)
+		$page = kirby()->page($reference);
+		if ($page) {
+			return ['panelUrl' => $page->panel()->path(), 'type' => 'page'];
+		}
+
+		throw new Exception('Reference could not be resolved');
 	}
 }
