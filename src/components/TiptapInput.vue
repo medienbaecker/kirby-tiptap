@@ -307,6 +307,11 @@ export default {
 	}
 }
 
+/* Override Kirby's pointer-events: none on block contents when Cmd/Ctrl is held (multiselect) */
+.k-blocks-list[data-multi-select-key="true"] .kirbytag-ref {
+	pointer-events: all;
+}
+
 /* Invisible characters */
 .tiptap-invisible-character {
 	display: inline-block;

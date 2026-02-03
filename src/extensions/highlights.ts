@@ -191,6 +191,7 @@ export const Highlights = Extension.create<HighlightsOptions>({
 							if (!reference || !type) return false;
 
 							event.preventDefault();
+							event.stopPropagation();
 
 							if (type === 'external') {
 								window.open(reference, '_blank');
