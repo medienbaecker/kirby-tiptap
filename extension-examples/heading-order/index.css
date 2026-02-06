@@ -1,0 +1,5 @@
+.tiptap .heading-order-warning {
+  outline: 2px dashed var(--color-red-400);
+  outline-offset: 2px;
+  border-radius: var(--rounded-xs);
+}
