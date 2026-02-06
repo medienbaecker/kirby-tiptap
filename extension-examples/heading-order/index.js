@@ -30,12 +30,23 @@
 		const decorations = [];
 		const issues = [];
 		let prevLevel = 0;
+		let hasH1 = false;
 
 		state.doc.forEach((node, pos) => {
 			if (node.type.name === "heading") {
 				const level = node.attrs.level;
-				if (level > prevLevel + 1) {
-					issues.push({ level, expected: prevLevel + 1 });
+				let issue = null;
+
+				if (level === 1 && hasH1) {
+					issue = "duplicate h1";
+				} else if (level > prevLevel + 1) {
+					issue = "h" + level + " found, but h" + (prevLevel + 1) + " expected";
+				}
+
+				if (level === 1) hasH1 = true;
+
+				if (issue) {
+					issues.push(issue);
 					decorations.push(
 						Decoration.node(pos, pos + node.nodeSize, {
 							class: "heading-order-warning",
@@ -114,10 +125,7 @@
 					}
 
 					const list = issues
-						.map(
-							(i) =>
-								"<li>h" + i.level + " found, but h" + i.expected + " expected</li>"
-						)
+						.map((i) => "<li>" + i + "</li>")
 						.join("");
 
 					window.panel.dialog.open({
