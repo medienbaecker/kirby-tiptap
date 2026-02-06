@@ -1,9 +1,4 @@
-import type { Component } from "vue";
 import type { ButtonRegistryEntry, ButtonMeta, RegistryButton } from "../types";
-
-/**
- * Button registry for Tiptap toolbar
- */
 
 const coreButtons: Record<string, ButtonRegistryEntry> = {
 	headings: {

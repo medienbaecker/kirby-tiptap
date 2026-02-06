@@ -40,7 +40,6 @@
 		label: "Snippets",
 		icon: "box",
 		command: ({ editor }) => {
-			// window.panel is not a public API — may break in future Panel versions
 			window.panel.dialog.open({
 				component: "k-form-dialog",
 				props: {

@@ -23,7 +23,6 @@
 		label: "Insert Signature",
 		icon: "pen",
 		command: ({ editor }) => {
-			// window.panel is not a public API — may break in future Panel versions
 			const name = window.panel?.user?.username || "Author";
 			editor
 				.chain()
