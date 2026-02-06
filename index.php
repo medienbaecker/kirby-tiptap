@@ -14,10 +14,7 @@ use Medienbaecker\Tiptap\Api;
 use Medienbaecker\Tiptap\TextareaConverter;
 
 Kirby::plugin('medienbaecker/tiptap', [
-	'options' => [
-		'highlights' => [],
-		'buttons' => []
-	],
+	'options' => [],
 	'blueprints' => [
 		'blocks/tiptap' => __DIR__ . '/blueprints/blocks/tiptap.yml',
 	],
@@ -58,11 +55,6 @@ Kirby::plugin('medienbaecker/tiptap', [
 	],
 	'fieldMethods' => [
 		'tiptapText' => function ($field, array $options = []) {
-			// Add custom buttons from plugin configuration
-			if (!isset($options['customButtons'])) {
-				$options['customButtons'] = option('medienbaecker.tiptap.buttons', []);
-			}
-
 			// UUID configuration
 			if (!isset($options['uuid'])) {
 				$options['uuid'] = Field::getUuidConfig();

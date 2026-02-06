@@ -233,9 +233,8 @@ export default {
 
 /* Blockquote */
 .tiptap blockquote {
-	padding-inline-start: var(--spacing-4);
-	--csstools-light-dark-toggle--2: var(--csstools-color-scheme--light) var(--color-border);
-	border-inline-start: 2px solid var(--csstools-light-dark-toggle--2, var(--color-black));
+	padding-inline-start: var(--spacing-2);
+	border-inline-start: 2px solid currentColor;
 }
 
 /* Horizontal rule */

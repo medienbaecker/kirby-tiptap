@@ -100,12 +100,6 @@ class Field
 				if ($buttons === false) return [];
 				return $buttons;
 			},
-			'highlights' => function () {
-				return option('medienbaecker.tiptap.highlights');
-			},
-			'customButtons' => function () {
-				return option('medienbaecker.tiptap.buttons');
-			},
 			'kirbytags' => function () {
 				return array_keys($this->kirby()->extensions('tags'));
 			},

@@ -47,7 +47,6 @@ class HtmlConverter
 		$options = array_merge([
 			'offsetHeadings' => 0,
 			'allowHtml' => false,
-			'customButtons' => []
 		], $options);
 
 		// Handle invalid input

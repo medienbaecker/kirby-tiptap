@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/vue-2'
+import type { AnyExtension } from '@tiptap/core'
 import type { Component } from 'vue'
 
 // Field props interface
@@ -17,36 +18,12 @@ export interface TiptapFieldProps {
 	size?: string
 	buttons?: string[]
 	inline?: boolean
-	highlights?: HighlightPattern[]
-	customButtons?: Record<string, CustomButtonConfig>
 	kirbytags?: string[]
 	links?: LinksConfig
 	files?: FilesConfig
 	endpoints?: EndpointsConfig
 	uploads?: UploadsConfig | false
 	uuid?: UuidConfig
-}
-
-// Highlight configuration
-export interface HighlightPattern {
-	pattern: string | RegExp
-	class: string
-	title?: string
-}
-
-// Custom button configuration
-export interface CustomButtonConfig {
-	icon?: string
-	title?: string
-	attributes?: Record<string, NodeAttributeConfig>
-	nodes?: string[]
-}
-
-export interface NodeAttributeConfig {
-	default?: unknown
-	rendered?: boolean
-	parseHTML?: (element: Element) => unknown
-	renderHTML?: (attributes: Record<string, unknown>) => Record<string, unknown> | null
 }
 
 // Links configuration
@@ -79,13 +56,13 @@ export interface UuidConfig {
 }
 
 // Button registry types
-export type ButtonGroup = 'text' | 'blocks' | 'lists' | 'custom'
+export type ButtonGroup = 'text' | 'blocks' | 'lists' | 'registry'
 
 export interface ButtonMeta {
 	icon: string
 	group: ButtonGroup
 	buttonName?: string
-	buttonConfig?: CustomButtonConfig
+	buttonConfig?: RegistryButton
 }
 
 export interface ButtonRegistryEntry {
@@ -97,24 +74,15 @@ export interface ButtonRegistry {
 	getButton(name: string): ButtonRegistryEntry | undefined
 	getAllButtons(): Map<string, ButtonRegistryEntry>
 	hasButton(name: string): boolean
-	registerCustomButtons(buttons: Record<string, CustomButtonConfig> | undefined): void
 }
 
 // Button item types for field configuration
 export type ButtonItem =
 	| string           // Core buttons: 'bold', 'italic', '|', etc.
 	| HeadingsButton   // { headings: [1, 2, 3] }
-	| CustomButtonItem // { type: 'className', className: '...', ... }
 
 export interface HeadingsButton {
 	headings: number[]
-}
-
-export interface CustomButtonItem {
-	type: string
-	className?: string
-	icon?: string
-	title?: string
 }
 
 // Tiptap document structure
@@ -182,6 +150,67 @@ export interface DialogFieldConfig {
 export interface DialogOption {
 	value: string
 	text: string
+}
+
+// Registry types for Extension API
+export interface RegistryButton {
+	name: string
+	label: string
+	icon: string
+	command: (ctx: { editor: Editor }) => void
+	activeCheck?: (ctx: { editor: Editor }) => boolean
+}
+
+export interface RegistryShortcut {
+	name: string
+	keys: string[]
+	command: (ctx: { editor: Editor }) => boolean | void
+}
+
+export interface RegistryExtension {
+	name: string
+	create: (ctx: TiptapContext) => AnyExtension
+	buttons?: () => RegistryButton[]
+}
+
+export interface TiptapContext {
+	tiptap: {
+		core: {
+			Extension: any
+			Node: any
+			Mark: any
+			mergeAttributes: any
+		}
+		vue2: {
+			VueNodeViewRenderer: any
+		}
+	}
+	pm: {
+		state: {
+			Plugin: any
+			PluginKey: any
+		}
+		view: {
+			Decoration: any
+			DecorationSet: any
+		}
+	}
+}
+
+export interface WindowKirbyTiptapRegistry {
+	extensions: RegistryExtension[]
+	buttons: RegistryButton[]
+	shortcuts: RegistryShortcut[]
+}
+
+export interface WindowKirbyTiptap {
+	registry: WindowKirbyTiptapRegistry
+}
+
+declare global {
+	interface Window {
+		kirbyTiptap?: WindowKirbyTiptap
+	}
 }
 
 // Editor type re-export for convenience

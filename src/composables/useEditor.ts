@@ -13,15 +13,14 @@ import {
 	NonBreakingSpaceCharacter,
 } from "../extensions/invisibles";
 import { Replacements } from "../extensions/replacements";
-import { NodeAttributes } from "../extensions/nodeAttributes";
-import type { TiptapFieldProps, TiptapDocument, CustomButtonConfig, ButtonItem, EndpointsConfig } from "../types";
+import { compileRegistry } from "../utils/registry";
+import { buttonRegistry } from "../utils/buttonRegistry";
+import type { TiptapDocument, ButtonItem, EndpointsConfig } from "../types";
 
 interface EditorProps {
 	buttons: ButtonItem[];
 	inline?: boolean;
 	kirbytags?: string[];
-	highlights?: TiptapFieldProps['highlights'];
-	customButtons?: Record<string, CustomButtonConfig>;
 	spellcheck?: boolean;
 	endpoints?: EndpointsConfig;
 }
@@ -121,7 +120,6 @@ export function useEditor(
 				StarterKit.configure(starterKitConfig.value),
 				Highlights.configure({
 					kirbytags: props.kirbytags,
-					highlights: props.highlights,
 					endpoints: props.endpoints,
 				}),
 				InvisibleCharacters.configure({
@@ -144,13 +142,13 @@ export function useEditor(
 				);
 			}
 
-			// Only add NodeAttributes extension if custom buttons are configured
-			if (props.customButtons && Object.keys(props.customButtons).length > 0) {
-				extensions.push(
-					NodeAttributes.configure({
-						customButtons: props.customButtons,
-					})
-				);
+			// Compile and append third-party extensions from window.kirbyTiptap.registry
+			const { extensions: registryExtensions, buttons: registryButtons } = compileRegistry();
+			if (registryButtons.length > 0) {
+				buttonRegistry.registerRegistryButtons(registryButtons);
+			}
+			if (registryExtensions.length > 0) {
+				extensions.push(...registryExtensions);
 			}
 
 			const newEditor = new Editor({

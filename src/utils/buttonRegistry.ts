@@ -1,5 +1,5 @@
 import type { Component } from "vue";
-import type { ButtonRegistryEntry, ButtonMeta, CustomButtonConfig } from "../types";
+import type { ButtonRegistryEntry, ButtonMeta, RegistryButton } from "../types";
 
 /**
  * Button registry for Tiptap toolbar
@@ -68,34 +68,43 @@ const coreButtons: Record<string, ButtonRegistryEntry> = {
 	}
 };
 
-const customButtons: Record<string, ButtonRegistryEntry> = {};
+const registryButtons: Record<string, ButtonRegistryEntry> = {};
 
 export const buttonRegistry = {
 	getButton(name: string): ButtonRegistryEntry | undefined {
-		return coreButtons[name] || customButtons[name];
+		return coreButtons[name] || registryButtons[name];
 	},
 
 	getAllButtons(): Map<string, ButtonRegistryEntry> {
-		return new Map(Object.entries({ ...coreButtons, ...customButtons }));
+		return new Map(Object.entries({ ...coreButtons, ...registryButtons }));
 	},
 
 	hasButton(name: string): boolean {
-		return name in coreButtons || name in customButtons;
+		return name in coreButtons || name in registryButtons;
 	},
 
-	registerCustomButtons(buttons: Record<string, CustomButtonConfig> | undefined): void {
-		if (!buttons) return;
-
-		Object.entries(buttons).forEach(([name, config]) => {
-			customButtons[name] = {
-				component: () => import('../components/toolbarButtons/CustomButton.vue'),
+	registerRegistryButtons(buttons: RegistryButton[]): void {
+		for (const button of buttons) {
+			if (!button.name) {
+				console.warn("[kirby-tiptap] Skipping registry button with no name");
+				continue;
+			}
+			if (button.name in coreButtons) {
+				console.warn(`[kirby-tiptap] Registry button "${button.name}" conflicts with core button, skipping`);
+				continue;
+			}
+			if (button.name in registryButtons) {
+				continue;
+			}
+			registryButtons[button.name] = {
+				component: () => import('../components/toolbarButtons/RegistryButton.vue'),
 				meta: {
-					icon: config.icon || 'style',
-					group: 'custom',
-					buttonName: name,
-					buttonConfig: config
+					icon: button.icon || 'puzzle',
+					group: 'registry',
+					buttonName: button.name,
+					buttonConfig: button
 				}
 			};
-		});
+		}
 	}
 };

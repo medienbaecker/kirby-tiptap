@@ -1,0 +1,5 @@
+.tiptap [data-callout] {
+  background: light-dark(var(--color-yellow-200), var(--color-yellow-800));
+  padding: var(--spacing-2);
+  border-inline-start: 2px solid var(--color-yellow-500);
+}

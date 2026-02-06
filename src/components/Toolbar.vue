@@ -23,13 +23,6 @@ export default {
 		...props
 	},
 
-	created() {
-		// Register custom buttons when component is created
-		if (this.customButtons) {
-			buttonRegistry.registerCustomButtons(this.customButtons)
-		}
-	},
-
 	mounted() {
 		this.$nextTick(() => this.initRovingTabindex())
 	},
@@ -124,17 +117,17 @@ export default {
 		},
 
 		getButtonName(button) {
-			// For custom buttons, return the button type (which is the name)
-			if (this.customButtons && this.customButtons[button.type]) {
-				return button.type
+			const entry = buttonRegistry.getButton(button.type)
+			if (entry && entry.meta.group === 'registry') {
+				return entry.meta.buttonName
 			}
 			return null
 		},
 
 		getButtonConfig(button) {
-			// For custom buttons, return the configuration
-			if (this.customButtons && this.customButtons[button.type]) {
-				return this.customButtons[button.type]
+			const entry = buttonRegistry.getButton(button.type)
+			if (entry && entry.meta.group === 'registry') {
+				return entry.meta.buttonConfig
 			}
 			return null
 		},

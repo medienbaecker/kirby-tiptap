@@ -1,4 +1,3 @@
-<?php $htmlAttrs = attr(array_filter($attrs ?? [])); ?>
-<blockquote<?= $htmlAttrs ? ' ' . $htmlAttrs : '' ?>>
+<blockquote>
 <?= $content ?>
 </blockquote>

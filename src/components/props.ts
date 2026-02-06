@@ -1,8 +1,6 @@
 import type { PropType } from "vue";
 import type {
 	ButtonItem,
-	HighlightPattern,
-	CustomButtonConfig,
 	LinksConfig,
 	FilesConfig,
 	EndpointsConfig,
@@ -25,8 +23,6 @@ export const props = {
 	size: String,
 	buttons: Array as PropType<ButtonItem[]>,
 	inline: Boolean,
-	highlights: Array as PropType<HighlightPattern[]>,
-	customButtons: Object as PropType<Record<string, CustomButtonConfig>>,
 	kirbytags: Array as PropType<string[]>,
 	links: Object as PropType<LinksConfig>,
 	files: Object as PropType<FilesConfig>,

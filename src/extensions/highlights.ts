@@ -2,12 +2,11 @@ import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { EditorView } from "@tiptap/pm/view";
-import type { HighlightPattern, EndpointsConfig } from "../types";
+import type { EndpointsConfig } from "../types";
 import { findKirbyTagRanges, findReferenceRange, parseKirbyTag, getNavigationTarget, navigateToKirbyTag, checkKirbyTagReferences } from "../utils/kirbyTags";
 import type { Panel } from "kirby-types";
 
 interface HighlightsOptions {
-	highlights: HighlightPattern[];
 	kirbytags?: string[];
 	endpoints?: EndpointsConfig;
 }
@@ -17,14 +16,13 @@ export const Highlights = Extension.create<HighlightsOptions>({
 
 	addOptions() {
 		return {
-			highlights: [],
 			kirbytags: [],
 			endpoints: undefined,
 		};
 	},
 
 	addProseMirrorPlugins() {
-		const { highlights, endpoints } = this.options;
+		const { endpoints } = this.options;
 
 		const resolvedCache = new Map<string, boolean>();
 		const pendingRefs = new Map<string, string>();
@@ -105,45 +103,6 @@ export const Highlights = Extension.create<HighlightsOptions>({
 										);
 									}
 								}
-							}
-
-							if (highlights.length > 0) {
-								highlights.forEach(({ pattern, class: className, title }) => {
-									const regex =
-										typeof pattern === "string"
-											? new RegExp(pattern, "g")
-											: new RegExp(pattern.source, pattern.flags + "g");
-
-									let highlightMatch: RegExpExecArray | null;
-									regex.lastIndex = 0;
-
-									while ((highlightMatch = regex.exec(text))) {
-										const highlightStart = highlightMatch.index;
-										const highlightEnd =
-											highlightStart + highlightMatch[0].length;
-
-										let overlapsWithKirbytag = false;
-
-										for (const [tagStartPos, tagEndPos] of kirbytagPositions) {
-											if (
-												!(highlightEnd <= tagStartPos || highlightStart >= tagEndPos)
-											) {
-												overlapsWithKirbytag = true;
-												break;
-											}
-										}
-
-										if (!overlapsWithKirbytag) {
-											decorations.push(
-												Decoration.inline(
-													pos + highlightStart,
-													pos + highlightEnd,
-													{ class: className, ...(title && { title }) }
-												)
-											);
-										}
-									}
-								});
 							}
 						});
 

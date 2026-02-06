@@ -15,6 +15,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
   - [Configuration](#configuration)
   - [Keyboard shortcuts](#keyboard-shortcuts)
   - [Custom buttons](#custom-buttons)
+  - [Extension API](#extension-api)
   - [Customizing HTML output](#customizing-html-output)
   - [Converting existing fields](#converting-existing-fields)
 - [Ideas for future improvements](#ideas-for-future-improvements)
@@ -33,6 +34,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 🔍 **Cmd+Click navigation** on page/file references to jump directly to the linked page or file in the Panel
 - 🌈 **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
 - 🔧 **Optional setting to allow HTML code** so you can paste your ⁠favourite `<script>`, `⁠<marquee>`, or ⁠`<blink>` tag directly
+- 🧩 **Extension API** for third-party plugins to add custom buttons, keyboard shortcuts, and full Tiptap extensions
 - 📋 **Abstracted JSON structure** for easy content manipulation with features like `offsetHeadings`
 
 ## Installation
@@ -164,15 +166,6 @@ return [
   // Supports https://getkirby.com/docs/reference/system/options/smartypants
   'smartypants' => true,
 
-  // Custom highlights via regex (can be styled via panel CSS)
-  'medienbaecker.tiptap.highlights' => [
-    [
-      'pattern' => '\\b[a-zA-ZäöüÄÖÜß\\w]{20,}\\b',
-      'class' => 'long-word',
-      'title' => 'Long word (20+ characters)'
-    ]
-  ],
-
   // UUID usage for KirbyTags when dragging pages/files
   'medienbaecker.tiptap.uuid' => [
     'pages' => false,  // Use page IDs instead of page://uuid
@@ -206,44 +199,158 @@ While the above shortcuts all come from [Tiptap's defaults](https://tiptap.dev/d
 
 - **Link dialog**: `Cmd+K` (Mac) / `Ctrl+K` (Windows/Linux)
 
-### Custom buttons
+### Extension API
 
-The plugin supports custom buttons that can add any attributes to nodes. This allows you to create semantic markup or add styling classes. Configure them in your `config.php`:
+Third-party Kirby plugins can extend the tiptap editor with custom buttons, keyboard shortcuts, and full Tiptap extensions via a window global registry. See the `extension-examples/` folder for working examples.
+
+#### Setup
+
+Every extension plugin needs a minimal `index.php` and an `index.js`:
 
 ```php
-return [
-  'medienbaecker.tiptap.buttons' => [
-    'twoColumn' => [
-      'icon' => 'columns',
-      'title' => 'Two Columns',
-      'nodes' => ['paragraph'],
-      'attributes' => [
-        'class' => 'two-column'
-      ]
-    ]
-  ]
-];
+<?php
+// site/plugins/my-extension/index.php
+Kirby::plugin('my/extension', []);
 ```
 
-Then use them in blueprints just like any other button:
+```js
+// site/plugins/my-extension/index.js
+(function () {
+	window.kirbyTiptap = window.kirbyTiptap || {};
+	window.kirbyTiptap.registry = window.kirbyTiptap.registry || {
+		extensions: [],
+		buttons: [],
+		shortcuts: [],
+	};
+
+	// Push buttons, shortcuts, or extensions here
+})();
+```
+
+#### Custom toolbar button
+
+```js
+window.kirbyTiptap.registry.buttons.push({
+	name: "signature",
+	label: "Insert Signature",
+	icon: "pen",
+	command: ({ editor }) => {
+		const name = window.panel?.user?.username || "Author";
+		editor
+			.chain()
+			.focus()
+			.insertContent("— " + name)
+			.run();
+	},
+});
+```
+
+Then add it to your blueprint:
 
 ```yaml
-tiptap:
-  buttons:
-    - bold
-    - italic
-    - "|"
-    - twoColumn # Custom button
+buttons:
+  - bold
+  - italic
+  - signature
 ```
 
-Add corresponding CSS to your frontend and `panel.css` for styling:
+#### Custom keyboard shortcut
 
-```css
-.two-column {
-	column-count: 2;
-	column-gap: 2rem;
-}
+```js
+window.kirbyTiptap.registry.shortcuts.push({
+	name: "insertHorizontalRule",
+	keys: ["Mod-Shift-H"],
+	command: ({ editor }) => {
+		editor.chain().focus().setHorizontalRule().run();
+		return true; // Mark shortcut as handled
+	},
+});
 ```
+
+Shortcuts work in all tiptap fields automatically — no blueprint changes needed.
+
+#### Advanced: Full Tiptap extensions
+
+For custom nodes, marks, or ProseMirror plugins, use the factory pattern. Your `create()` function receives kirby-tiptap's bundled Tiptap/ProseMirror modules to avoid duplicate bundle issues:
+
+```js
+window.kirbyTiptap.registry.extensions.push({
+	name: "wordCount",
+
+	create({ tiptap, pm }) {
+		const { Extension } = tiptap.core;
+		const { Plugin, PluginKey } = pm.state;
+
+		return Extension.create({
+			name: "wordCount",
+			addProseMirrorPlugins() {
+				return [
+					new Plugin({
+						key: new PluginKey("wordCount"),
+						view() {
+							return {
+								update(view) {
+									const words = view.state.doc.textContent
+										.split(/\s+/)
+										.filter(Boolean).length;
+									console.log("Words:", words);
+								},
+							};
+						},
+					}),
+				];
+			},
+		});
+	},
+
+	// Optional: co-located toolbar button
+	buttons: () => [
+		{
+			name: "wordCount",
+			label: "Word Count",
+			icon: "counter",
+			command: ({ editor }) => {
+				const words = editor.state.doc.textContent
+					.split(/\s+/)
+					.filter(Boolean).length;
+				alert("Words: " + words);
+			},
+		},
+	],
+});
+```
+
+#### Available modules
+
+The `create()` factory receives these modules:
+
+| Path                              | Module              |
+| --------------------------------- | ------------------- |
+| `tiptap.core.Extension`           | `@tiptap/core`      |
+| `tiptap.core.Node`                | `@tiptap/core`      |
+| `tiptap.core.Mark`                | `@tiptap/core`      |
+| `tiptap.core.mergeAttributes`     | `@tiptap/core`      |
+| `tiptap.vue2.VueNodeViewRenderer` | `@tiptap/vue-2`     |
+| `pm.state.Plugin`                 | `prosemirror-state` |
+| `pm.state.PluginKey`              | `prosemirror-state` |
+| `pm.view.Decoration`              | `prosemirror-view`  |
+| `pm.view.DecorationSet`           | `prosemirror-view`  |
+
+#### Button options
+
+| Property      | Type       | Required | Description                                                   |
+| ------------- | ---------- | -------- | ------------------------------------------------------------- |
+| `name`        | `string`   | Yes      | Unique identifier, used in blueprints                         |
+| `label`       | `string`   | Yes      | Tooltip text                                                  |
+| `icon`        | `string`   | Yes      | Kirby Panel icon name                                         |
+| `command`     | `function` | Yes      | Receives `{ editor }`, runs the action                        |
+| `activeCheck` | `function` | No       | Receives `{ editor }`, returns `true` to highlight the button |
+
+#### Important notes
+
+- Extensions must be registered **before** the Panel mounts (push to the registry in your plugin's `index.js`)
+- Extension names must be unique — duplicates are skipped with a console warning
+- Custom nodes render in the Panel editor but `tiptapText()` won't render them on the frontend unless you add a matching snippet in `site/snippets/tiptap/`
 
 ### Customizing HTML output
 
