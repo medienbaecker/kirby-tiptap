@@ -159,6 +159,8 @@ export interface RegistryButton {
 	icon: string
 	command: (ctx: { editor: Editor }) => void
 	activeCheck?: (ctx: { editor: Editor }) => boolean
+	shortcut?: string
+	dropdown?: (ctx: { editor: Editor }) => Array<{ label: string; icon?: string; click: () => void }>
 }
 
 export interface RegistryShortcut {

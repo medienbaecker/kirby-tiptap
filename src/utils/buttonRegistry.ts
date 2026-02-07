@@ -67,7 +67,7 @@ const registryButtons: Record<string, ButtonRegistryEntry> = {};
 
 export const buttonRegistry = {
 	getButton(name: string): ButtonRegistryEntry | undefined {
-		return coreButtons[name] || registryButtons[name];
+		return registryButtons[name] || coreButtons[name];
 	},
 
 	getAllButtons(): Map<string, ButtonRegistryEntry> {
@@ -85,8 +85,7 @@ export const buttonRegistry = {
 				continue;
 			}
 			if (button.name in coreButtons) {
-				console.warn(`[kirby-tiptap] Registry button "${button.name}" conflicts with core button, skipping`);
-				continue;
+				console.info(`[kirby-tiptap] Registry button "${button.name}" overrides core button`);
 			}
 			if (button.name in registryButtons) {
 				continue;

@@ -116,8 +116,28 @@ export function useEditor(
 	 */
 	const createEditor = (initialContent: TiptapDocument | string, eventHandlers: EventHandlers) => {
 		try {
+			// Compile third-party extensions first so we can disable overridden StarterKit extensions
+			const { extensions: registryExtensions, buttons: registryButtons } = compileRegistry();
+			if (registryButtons.length > 0) {
+				buttonRegistry.registerRegistryButtons(registryButtons);
+			}
+
+			// Disable StarterKit extensions that registry extensions replace
+			const starterKitNames = new Set([
+				'blockquote', 'bold', 'bulletList', 'code', 'codeBlock',
+				'document', 'dropcursor', 'gapcursor', 'hardBreak', 'heading',
+				'history', 'horizontalRule', 'italic', 'listItem', 'orderedList',
+				'paragraph', 'strike', 'text'
+			]);
+			const skConfig: Record<string, unknown> = { ...starterKitConfig.value };
+			for (const ext of registryExtensions) {
+				if (ext.name && starterKitNames.has(ext.name)) {
+					skConfig[ext.name] = false;
+				}
+			}
+
 			const extensions: AnyExtension[] = [
-				StarterKit.configure(starterKitConfig.value),
+				StarterKit.configure(skConfig),
 				Highlights.configure({
 					kirbytags: props.kirbytags,
 					endpoints: props.endpoints,
@@ -142,11 +162,7 @@ export function useEditor(
 				);
 			}
 
-			// Compile and append third-party extensions from window.kirbyTiptap.registry
-			const { extensions: registryExtensions, buttons: registryButtons } = compileRegistry();
-			if (registryButtons.length > 0) {
-				buttonRegistry.registerRegistryButtons(registryButtons);
-			}
+			// Append registry extensions
 			if (registryExtensions.length > 0) {
 				extensions.push(...registryExtensions);
 			}

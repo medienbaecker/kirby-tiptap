@@ -1,5 +1,5 @@
 <template>
-	<ToolbarButton :icon="icon" :title="label" :editor="editor" :command="executeCommand" :active-check="checkActive" />
+	<ToolbarButton :icon="icon" :title="label" :editor="editor" :command="executeCommand" :active-check="checkActive" :shortcut="buttonConfig.shortcut" :dropdown="dropdownItems" />
 </template>
 
 <script>
@@ -29,6 +29,17 @@ export default {
 		},
 		label() {
 			return this.buttonConfig.label || this.buttonName
+		},
+		dropdownItems() {
+			if (typeof this.buttonConfig.dropdown !== 'function') {
+				return null
+			}
+			try {
+				return this.buttonConfig.dropdown({ editor: this.editor })
+			} catch (error) {
+				console.warn(`[kirby-tiptap] Registry button "${this.buttonName}" dropdown failed:`, error)
+				return null
+			}
 		}
 	},
 	methods: {

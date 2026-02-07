@@ -1,0 +1,11 @@
+.tiptap code[data-language]::before {
+	content: attr(data-language);
+	display: block;
+	font-family: var(--code-font-family);
+	font-size: var(--code-inline-font-size);
+	color: light-dark(var(--color-blue-700), var(--color-blue-400));
+	opacity: 0.5;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	padding-block-end: var(--spacing-1);
+}
