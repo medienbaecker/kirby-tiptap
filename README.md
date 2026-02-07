@@ -409,7 +409,6 @@ The command looks at the blueprint to collect the fields and converts their valu
 
 ## Ideas for future improvements
 
-- [ ] Kirbytag button? (Fetch all Kirbytags except `link`, `image` and `file`?)
 - [ ] [Table button](https://tiptap.dev/docs/editor/extensions/nodes/table)
 - [ ] [Snapshot Compare](https://tiptap.dev/blog/release-notes/introducing-snapshot-compare-for-tiptap)?
 - [ ] [Blocks replacement](https://templates.tiptap.dev/)?

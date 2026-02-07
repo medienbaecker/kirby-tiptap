@@ -1,0 +1,4 @@
+.tiptap .long-word {
+  text-decoration: underline wavy var(--color-purple-400);
+  text-underline-offset: 3px;
+}

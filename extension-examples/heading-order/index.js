@@ -50,6 +50,7 @@
 					decorations.push(
 						Decoration.node(pos, pos + node.nodeSize, {
 							class: "heading-order-warning",
+							title: issue,
 						})
 					);
 				}
@@ -111,34 +112,14 @@
 				icon: "sitemap",
 				command: ({ editor }) => {
 					const issues = editor.storage.headingOrder?.issues ?? [];
-
-					if (issues.length === 0) {
-						window.panel.dialog.open({
-							component: "k-text-dialog",
-							props: {
-								text: "No heading order issues found.",
-								submitButton: false,
-								cancelButton: "Close",
-							},
-						});
-						return;
-					}
-
-					const list = issues
-						.map((i) => "<li>" + i + "</li>")
-						.join("");
+					const text = issues.length === 0
+						? "No heading order issues found."
+						: issues.map((i) => "- " + i).join("<br>");
 
 					window.panel.dialog.open({
 						component: "k-text-dialog",
 						props: {
-							text:
-								"<p><strong>" +
-								issues.length +
-								" heading " +
-								(issues.length === 1 ? "issue" : "issues") +
-								":</strong></p><ul>" +
-								list +
-								"</ul>",
+							text: text,
 							submitButton: false,
 							cancelButton: "Close",
 						},

@@ -1,0 +1,9 @@
+.tiptap [data-columns] {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-3);
+}
+
+.tiptap [data-column] {
+	min-height: 1lh;
+}
