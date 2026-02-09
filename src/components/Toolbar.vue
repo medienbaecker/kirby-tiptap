@@ -3,8 +3,8 @@
 		@keydown="handleKeydown" @focusin="handleFocusIn">
 		<template v-for="(button, index) in normalizedButtons">
 			<component v-if="!isSeparator(button)" :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
-				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads" :uuid="uuid"
-				:buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
+				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads"
+				:uuid="uuid" :buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
 			<hr v-else :key="'sep-' + index" />
 		</template>
 	</nav>

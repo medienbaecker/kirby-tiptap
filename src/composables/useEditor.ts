@@ -27,15 +27,27 @@ interface EditorProps {
 }
 
 interface EventHandlers {
-	handlePaste: (view: EditorView, event: ClipboardEvent, slice: Slice) => boolean | void;
-	handleDrop: (view: EditorView, event: DragEvent, slice: Slice, moved: boolean) => boolean | void;
+	handlePaste: (
+		view: EditorView,
+		event: ClipboardEvent,
+		slice: Slice
+	) => boolean | void;
+	handleDrop: (
+		view: EditorView,
+		event: DragEvent,
+		slice: Slice,
+		moved: boolean
+	) => boolean | void;
 }
 
 interface UseEditorReturn {
 	editor: Ref<Editor | null>;
 	allowedButtons: ComputedRef<ButtonItem[]>;
 	starterKitConfig: ComputedRef<Record<string, unknown>>;
-	createEditor: (initialContent: TiptapDocument | string, eventHandlers: EventHandlers) => void;
+	createEditor: (
+		initialContent: TiptapDocument | string,
+		eventHandlers: EventHandlers
+	) => void;
 	destroyEditor: () => void;
 }
 
@@ -91,7 +103,9 @@ export function useEditor(
 	const starterKitConfig = computed(() => {
 		const buttons = allowedButtons.value;
 		const has = (name: string) => buttons.includes(name);
-		const hasHeadings = buttons.some(btn => typeof btn === "object" && btn !== null && "headings" in btn);
+		const hasHeadings = buttons.some(
+			(btn) => typeof btn === "object" && btn !== null && "headings" in btn
+		);
 
 		// StarterKit expects false to disable, or options object to configure
 		return {
@@ -115,10 +129,14 @@ export function useEditor(
 	/**
 	 * Creates the Tiptap editor with all extensions and configurations
 	 */
-	const createEditor = (initialContent: TiptapDocument | string, eventHandlers: EventHandlers) => {
+	const createEditor = (
+		initialContent: TiptapDocument | string,
+		eventHandlers: EventHandlers
+	) => {
 		try {
 			// Compile third-party extensions first so we can disable overridden StarterKit extensions
-			const { extensions: registryExtensions, buttons: registryButtons } = compileRegistry();
+			const { extensions: registryExtensions, buttons: registryButtons } =
+				compileRegistry();
 			if (registryButtons.length > 0) {
 				buttonRegistry.registerRegistryButtons(registryButtons);
 			}
@@ -126,7 +144,7 @@ export function useEditor(
 			// Disable StarterKit extensions that registry extensions replace
 			const defaultSk = StarterKit.configure({});
 			const starterKitNames = new Set(
-				(Array.isArray(defaultSk) ? defaultSk : []).map(ext => ext.name)
+				(Array.isArray(defaultSk) ? defaultSk : []).map((ext) => ext.name)
 			);
 			const skConfig: Record<string, unknown> = { ...starterKitConfig.value };
 			for (const ext of registryExtensions) {
@@ -175,10 +193,14 @@ export function useEditor(
 					handleDrop: eventHandlers.handleDrop,
 				},
 				onCreate: ({ editor: editorInstance }) => {
-					editorInstance.view.dom.setAttribute("spellcheck", String(props.spellcheck));
+					editorInstance.view.dom.setAttribute(
+						"spellcheck",
+						String(props.spellcheck)
+					);
 					onEditorCreate(editorInstance as unknown as Editor);
 				},
-				onUpdate: ({ editor: editorInstance }) => onContentUpdate(editorInstance as unknown as Editor),
+				onUpdate: ({ editor: editorInstance }) =>
+					onContentUpdate(editorInstance as unknown as Editor),
 			});
 
 			editor.value = newEditor as unknown as Editor;

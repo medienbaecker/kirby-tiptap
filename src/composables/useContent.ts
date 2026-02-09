@@ -26,7 +26,9 @@ export function useContent(
 	 * Parse content from various input formats
 	 * Handles JSON strings, plain text with line breaks, and raw HTML
 	 */
-	const parseContent = (value: string | TiptapDocument): TiptapDocument | string => {
+	const parseContent = (
+		value: string | TiptapDocument
+	): TiptapDocument | string => {
 		// Handle non-string values (already parsed)
 		if (typeof value !== "string") {
 			return value;
@@ -54,10 +56,7 @@ export function useContent(
 	 */
 	const isContentEmpty = (content: TiptapDocument): boolean => {
 		// Check if content array exists and has items
-		if (
-			!Array.isArray(content.content) ||
-			content.content.length === 0
-		) {
+		if (!Array.isArray(content.content) || content.content.length === 0) {
 			return true;
 		}
 
