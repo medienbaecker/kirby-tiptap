@@ -91,6 +91,8 @@ export const Highlights = Extension.create<HighlightsOptions>({
 						const decorations: Decoration[] = [];
 
 						state.doc.descendants((node, pos) => {
+							// KirbyTags in code blocks are plain text — skip their children
+							if (node.type.spec.code) return false;
 							if (!node.isText) return;
 
 							const text = node.text || "";

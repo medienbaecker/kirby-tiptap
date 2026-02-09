@@ -4,7 +4,6 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue'
-import { kirbyTagDisabledCheck } from '../../extensions/insertionGuards'
 
 export default {
 	components: {
@@ -63,7 +62,6 @@ export default {
 			}
 		},
 		checkDisabled(editor) {
-			if (kirbyTagDisabledCheck(editor)) return true
 			if (typeof this.buttonConfig.disabledCheck !== 'function') {
 				return false
 			}
