@@ -311,6 +311,11 @@ export default {
 	pointer-events: all;
 }
 
+/* Gap cursor */
+.tiptap .ProseMirror-gapcursor:after {
+	border-top-color: currentColor;
+}
+
 /* Invisible characters */
 .tiptap-invisible-character {
 	display: inline-block;
