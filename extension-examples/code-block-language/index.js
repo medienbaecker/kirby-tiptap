@@ -14,6 +14,12 @@
 		shortcuts: [],
 	};
 
+	// Check if the current block contains KirbyTags
+	function blockHasKirbyTags(editor) {
+		var text = editor.state.selection.$from.parent.textContent;
+		return /\([a-z0-9_-]+:/i.test(text);
+	}
+
 	var LANGUAGES = [
 		{ value: null, label: "Plain" },
 		{ value: "javascript", label: "JavaScript" },
@@ -77,7 +83,10 @@
 
 				addKeyboardShortcuts() {
 					return {
-						"Mod-Alt-c": () => this.editor.commands.toggleCodeBlock(),
+						"Mod-Alt-c": () => {
+							if (!this.editor.isActive("codeBlock") && blockHasKirbyTags(this.editor)) return true;
+							return this.editor.commands.toggleCodeBlock();
+						},
 						Tab: () => {
 							if (!this.editor.isActive("codeBlock")) return false;
 							this.editor.commands.insertContent("\t");
@@ -96,6 +105,7 @@
 				shortcut: "Mod-Alt-c",
 				command: ({ editor }) => editor.chain().focus().toggleCodeBlock().run(),
 				activeCheck: ({ editor }) => editor.isActive("codeBlock"),
+				disabledCheck: ({ editor }) => blockHasKirbyTags(editor),
 				dropdown: ({ editor }) => {
 					var items = LANGUAGES.map((lang) => ({
 						label: lang.label,

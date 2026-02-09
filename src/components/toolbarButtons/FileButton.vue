@@ -1,6 +1,6 @@
 <template>
 	<ToolbarButton icon="image" :title="$t('toolbar.button.file')" :editor="editor" :command="handleSelect"
-		:active-check="isFileActive" :dropdown="dropdownItems" />
+		:active-check="isFileActive" :disabled-check="kirbyTagDisabledCheck" :dropdown="dropdownItems" />
 </template>
 
 <script>
@@ -8,6 +8,7 @@ import ToolbarButton from './ToolbarButton.vue';
 import { parseKirbyTag, generateKirbyTag, findTagAtPos } from '../../utils/kirbyTags';
 import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
+import { kirbyTagDisabledCheck } from '../../extensions/insertionGuards';
 
 export default {
 	components: {
@@ -325,6 +326,8 @@ export default {
 				return null;
 			}
 		},
+
+		kirbyTagDisabledCheck,
 
 		isFileTag(text) {
 			return /^\((image|file|video):/i.test(text);

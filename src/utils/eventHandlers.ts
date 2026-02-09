@@ -5,7 +5,7 @@ import type { Slice } from "@tiptap/pm/model";
 import type { Panel, PanelHelpers } from "kirby-types";
 import { validateInput, generateLinkTag } from "./inputValidation";
 import { processPlainTextParagraphs } from "./contentProcessing";
-import { findKirbyTagRanges } from "./kirbyTags";
+import { canInsertKirbyTag } from "../extensions/insertionGuards";
 import {
 	validateUploadConfig,
 	buildUploadOptions,
@@ -54,6 +54,9 @@ export function createPasteHandler(
 	allowedTypes: string[] = []
 ): (view: EditorView, event: ClipboardEvent, slice: Slice) => boolean | void {
 	return (view, event) => {
+		// Don't generate KirbyTags in forbidden contexts
+		if (!canInsertKirbyTag(view.state)) return false;
+
 		// HTML content
 		const htmlContent = event.clipboardData?.getData("text/html") || "";
 		if (htmlContent.trim()) {
@@ -70,27 +73,19 @@ export function createPasteHandler(
 		if (selectedText) {
 			const validation = validateInput(plainText, allowedTypes);
 			if (validation.type !== "unknown") {
-				// Don't wrap in a KirbyTag if the selection is inside an existing one
-				const resolved = selection.$from.parent.textContent;
-				const offset = selection.from - selection.$from.start();
-				const tagRanges = findKirbyTagRanges(resolved);
-				const insideTag = tagRanges.some(([s, e]) => offset >= s && offset < e);
+				const kirbyTag = generateLinkTag({
+					href: validation.href,
+					text: selectedText,
+				});
 
-				if (!insideTag) {
-					const kirbyTag = generateLinkTag({
-						href: validation.href,
-						text: selectedText,
-					});
+				editorRef.value
+					?.chain()
+					.focus()
+					.insertContentAt(selection, kirbyTag)
+					.run();
 
-					editorRef.value
-						?.chain()
-						.focus()
-						.insertContentAt(selection, kirbyTag)
-						.run();
-
-					event.preventDefault();
-					return true;
-				}
+				event.preventDefault();
+				return true;
 			}
 		}
 
@@ -157,6 +152,9 @@ export function createDropHandler(
 			});
 
 			if (!coordinates) return false;
+
+			// Don't insert KirbyTags in forbidden contexts
+			if (!canInsertKirbyTag(view.state, coordinates.pos)) return true;
 
 			if (panel.drag.type === "text") {
 				// Process the dragText according to UUID configuration

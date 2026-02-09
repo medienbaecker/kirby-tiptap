@@ -2,13 +2,13 @@
 	<div v-if="dropdown && dropdown.length" class="tiptap-button-wrapper">
 		<!-- Dropdown button when dropdown items exist -->
 		<k-button :icon="icon" :title="formattedTitle" :ariaLabel="formattedTitle"
-			:class="['k-toolbar-button', 'tiptap-button']" :current="active" @mousedown.prevent @click="toggleDropdown" />
+			:class="['k-toolbar-button', 'tiptap-button']" :current="active" :disabled="disabled" @mousedown.prevent @click="toggleDropdown" />
 		<k-dropdown-content ref="dropdown" :options="dropdownOptions" align-x="start" @action="onDropdownAction" />
 	</div>
 
 	<!-- Regular button when no dropdown -->
 	<k-button v-else :icon="icon" :title="formattedTitle" :ariaLabel="formattedTitle"
-		:class="['k-toolbar-button', 'tiptap-button']" :current="active" @mousedown.prevent @click="runCommand" />
+		:class="['k-toolbar-button', 'tiptap-button']" :current="active" :disabled="disabled" @mousedown.prevent @click="runCommand" />
 </template>
 
 <script>
@@ -22,11 +22,13 @@ export default {
 		command: [String, Function],
 		activeCheck: [String, Function],
 		dropdown: Array,
-		shortcut: String
+		shortcut: String,
+		disabledCheck: Function
 	},
 	data() {
 		return {
 			active: false,
+			disabled: false,
 			updateTimer: null
 		}
 	},
@@ -79,16 +81,24 @@ export default {
 				if (!editor) return
 
 				// Set up throttled update handler
-				const updateActiveState = () => {
+				const updateState = () => {
 					if (!this.editor || !this.editor.isActive) return
 
 					this.active = typeof this.activeCheck === 'function'
 						? this.activeCheck(this.editor)
 						: this.editor.isActive(this.activeCheck)
+
+					const disabledByCheck = typeof this.disabledCheck === 'function'
+						? this.disabledCheck(this.editor)
+						: false
+					const disabledByCommand = typeof this.command === 'string'
+						? !this.editor.can()[this.command]?.()
+						: false
+					this.disabled = (disabledByCheck || disabledByCommand) && !this.active
 				}
 
 				// Initial state
-				updateActiveState()
+				updateState()
 
 				// Listen to editor updates with throttling
 				editor.on('selectionUpdate', () => {
@@ -98,7 +108,7 @@ export default {
 					}
 
 					// Throttle updates to max once per 50ms
-					this.updateTimer = setTimeout(updateActiveState, 50)
+					this.updateTimer = setTimeout(updateState, 50)
 				})
 
 				editor.on('transaction', ({ transaction }) => {
@@ -107,7 +117,7 @@ export default {
 						if (this.updateTimer) {
 							clearTimeout(this.updateTimer)
 						}
-						this.updateTimer = setTimeout(updateActiveState, 50)
+						this.updateTimer = setTimeout(updateState, 50)
 					}
 				})
 
@@ -123,6 +133,8 @@ export default {
 	},
 	methods: {
 		runCommand() {
+			if (this.disabled) return
+
 			// If dropdown exists and has items, run the first dropdown item's click handler
 			if (this.dropdown && this.dropdown.length) {
 				this.dropdown[0].click?.()
@@ -172,7 +184,7 @@ export default {
 
 				if (modMatch && shiftMatch && altMatch && keyMatch) {
 					event.preventDefault()
-					this.runCommand()
+					if (!this.disabled) this.runCommand()
 				}
 			};
 

@@ -1,5 +1,5 @@
 <template>
-	<ToolbarButton :icon="icon" :title="label" :editor="editor" :command="executeCommand" :active-check="checkActive" :shortcut="buttonConfig.shortcut" :dropdown="dropdownItems" />
+	<ToolbarButton :icon="icon" :title="label" :editor="editor" :command="executeCommand" :active-check="checkActive" :disabled-check="checkDisabled" :shortcut="buttonConfig.shortcut" :dropdown="dropdownItems" />
 </template>
 
 <script>
@@ -58,6 +58,17 @@ export default {
 				return !!this.buttonConfig.activeCheck({ editor })
 			} catch (error) {
 				console.warn(`[kirby-tiptap] Registry button "${this.buttonName}" activeCheck failed:`, error)
+				return false
+			}
+		},
+		checkDisabled(editor) {
+			if (typeof this.buttonConfig.disabledCheck !== 'function') {
+				return false
+			}
+			try {
+				return !!this.buttonConfig.disabledCheck({ editor })
+			} catch (error) {
+				console.warn(`[kirby-tiptap] Registry button "${this.buttonName}" disabledCheck failed:`, error)
 				return false
 			}
 		}

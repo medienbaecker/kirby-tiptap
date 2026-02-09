@@ -1,6 +1,6 @@
 <template>
 	<ToolbarButton icon="url" :title="$t('toolbar.button.link')" :editor="editor" :command="handleLink"
-		:active-check="isLinkActive" shortcut="Mod-k" />
+		:active-check="isLinkActive" :disabled-check="kirbyTagDisabledCheck" shortcut="Mod-k" />
 </template>
 
 <script>
@@ -9,6 +9,7 @@ import { parseKirbyTag, findTagAtPos, isLinkTag, isCompleteLinkTag } from '../..
 import { validateInput, generateLinkTag } from '../../utils/inputValidation';
 import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
+import { kirbyTagDisabledCheck } from '../../extensions/insertionGuards';
 
 export default {
 	components: {
@@ -271,6 +272,8 @@ export default {
 		 * @param {Object} editor - The Tiptap editor instance
 		 * @returns {boolean} Whether a link tag is active
 		 */
+		kirbyTagDisabledCheck,
+
 		isLinkActive(editor) {
 			if (!editor.isFocused) return false;
 

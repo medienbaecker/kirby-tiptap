@@ -13,6 +13,7 @@ import {
 	NonBreakingSpaceCharacter,
 } from "../extensions/invisibles";
 import { Replacements } from "../extensions/replacements";
+import { InsertionGuards } from "../extensions/insertionGuards";
 import { compileRegistry } from "../utils/registry";
 import { buttonRegistry } from "../utils/buttonRegistry";
 import type { TiptapDocument, ButtonItem, EndpointsConfig } from "../types";
@@ -123,12 +124,10 @@ export function useEditor(
 			}
 
 			// Disable StarterKit extensions that registry extensions replace
-			const starterKitNames = new Set([
-				'blockquote', 'bold', 'bulletList', 'code', 'codeBlock',
-				'document', 'dropcursor', 'gapcursor', 'hardBreak', 'heading',
-				'history', 'horizontalRule', 'italic', 'listItem', 'orderedList',
-				'paragraph', 'strike', 'text'
-			]);
+			const defaultSk = StarterKit.configure({});
+			const starterKitNames = new Set(
+				(Array.isArray(defaultSk) ? defaultSk : []).map(ext => ext.name)
+			);
 			const skConfig: Record<string, unknown> = { ...starterKitConfig.value };
 			for (const ext of registryExtensions) {
 				if (ext.name && starterKitNames.has(ext.name)) {
@@ -150,6 +149,7 @@ export function useEditor(
 					],
 				}),
 				Replacements,
+				InsertionGuards,
 			];
 
 			// Add TaskList extensions if taskList button is enabled
