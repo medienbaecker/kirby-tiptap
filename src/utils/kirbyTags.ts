@@ -1,5 +1,10 @@
 import type { EditorView } from "@tiptap/pm/view";
-import type { ParsedKirbyTag, NavigationTarget, ResolvedKirbyTag, EndpointsConfig } from "../types";
+import type {
+	ParsedKirbyTag,
+	NavigationTarget,
+	ResolvedKirbyTag,
+	EndpointsConfig,
+} from "../types";
 import type { Panel } from "kirby-types";
 
 /**
@@ -97,7 +102,11 @@ export const resolveNodeAtPos = (node: Node, offset: number): Node => {
  * Finds a KirbyTag group at a given editor position.
  * Combines domAtPos → resolveNodeAtPos → findParentWithClass into a single call.
  */
-export const findTagAtPos = (view: EditorView, pos: number, className: string): KirbyTagGroup | null => {
+export const findTagAtPos = (
+	view: EditorView,
+	pos: number,
+	className: string
+): KirbyTagGroup | null => {
 	const { node, offset } = view.domAtPos(pos);
 	const result = findParentWithClass(resolveNodeAtPos(node, offset), className);
 	if (result) return result;
@@ -124,16 +133,21 @@ export interface KirbyTagGroup {
  * overlapping decorations), this collects all contiguous siblings with the
  * same class and returns a group with the combined text and boundary elements.
  */
-export const findParentWithClass = (node: Node, className: string): KirbyTagGroup | null => {
+export const findParentWithClass = (
+	node: Node,
+	className: string
+): KirbyTagGroup | null => {
 	let cur: Node | null = node.nodeType === 3 ? node.parentNode : node;
 	while (cur) {
 		if ((cur as Element).classList?.contains(className)) {
 			const el = cur as Element;
+			const tagId = (el as HTMLElement).dataset?.tagId;
 
 			let first = el;
 			while (
 				first.previousSibling === first.previousElementSibling &&
-				first.previousElementSibling?.classList?.contains(className)
+				first.previousElementSibling?.classList?.contains(className) &&
+				(first.previousElementSibling as HTMLElement)?.dataset?.tagId === tagId
 			) {
 				first = first.previousElementSibling;
 			}
@@ -141,15 +155,16 @@ export const findParentWithClass = (node: Node, className: string): KirbyTagGrou
 			let last = el;
 			while (
 				last.nextSibling === last.nextElementSibling &&
-				last.nextElementSibling?.classList?.contains(className)
+				last.nextElementSibling?.classList?.contains(className) &&
+				(last.nextElementSibling as HTMLElement)?.dataset?.tagId === tagId
 			) {
 				last = last.nextElementSibling;
 			}
 
-			let text = '';
+			let text = "";
 			let sibling: Element | null = first;
 			while (sibling) {
-				text += sibling.textContent || '';
+				text += sibling.textContent || "";
 				if (sibling === last) break;
 				sibling = sibling.nextElementSibling;
 			}
@@ -219,32 +234,38 @@ export const findKirbyTagRanges = (text: string): [number, number][] => {
  * Extract navigation target from a parsed KirbyTag.
  * Returns null for non-navigable tags (email, tel).
  */
-export const getNavigationTarget = (parsed: ParsedKirbyTag): NavigationTarget | null => {
+export const getNavigationTarget = (
+	parsed: ParsedKirbyTag
+): NavigationTarget | null => {
 	const type = parsed._type;
 
-	if (type === 'email' || type === 'tel') {
+	if (type === "email" || type === "tel") {
 		return null;
 	}
 
-	if (type === 'link') {
-		const href = parsed.href || '';
+	if (type === "link") {
+		const href = parsed.href || "";
 		if (!href) return null;
-		if (href.startsWith('http://') || href.startsWith('https://')) {
-			return { reference: href, type: 'external' };
+		if (href.startsWith("http://") || href.startsWith("https://")) {
+			return { reference: href, type: "external" };
 		}
-		if (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('#')) {
+		if (
+			href.startsWith("mailto:") ||
+			href.startsWith("tel:") ||
+			href.startsWith("#")
+		) {
 			return null;
 		}
-		return { reference: href, type: 'link' };
+		return { reference: href, type: "link" };
 	}
 
-	if (type === 'image' || type === 'file' || type === 'video') {
-		const ref = parsed.uuid || parsed.value || '';
+	if (type === "image" || type === "file" || type === "video") {
+		const ref = parsed.uuid || parsed.value || "";
 		return ref ? { reference: ref, type } : null;
 	}
 
 	// Unknown tag type with a value — try to navigate
-	const ref = parsed.value || parsed.href || parsed.uuid || '';
+	const ref = parsed.value || parsed.href || parsed.uuid || "";
 	return ref ? { reference: ref, type } : null;
 };
 
@@ -253,7 +274,7 @@ export const getNavigationTarget = (parsed: ParsedKirbyTag): NavigationTarget | 
  * External URLs open in a new tab; internal refs resolve via API then open in Panel.
  */
 export const getFieldApiPath = (endpoints: EndpointsConfig): string =>
-	endpoints.field.startsWith('/api/')
+	endpoints.field.startsWith("/api/")
 		? endpoints.field.substring(4)
 		: endpoints.field;
 
@@ -262,8 +283,8 @@ export const navigateToKirbyTag = async (
 	endpoints: EndpointsConfig | undefined,
 	panel: Panel
 ): Promise<void> => {
-	if (target.type === 'external') {
-		window.open(target.reference, '_blank');
+	if (target.type === "external") {
+		window.open(target.reference, "_blank");
 		return;
 	}
 
@@ -277,14 +298,16 @@ export const navigateToKirbyTag = async (
 			type: target.type,
 		});
 
-		if (response.type === 'external' && response.url) {
-			window.open(response.url, '_blank');
+		if (response.type === "external" && response.url) {
+			window.open(response.url, "_blank");
 		} else if (response.panelUrl) {
 			panel.open(response.panelUrl);
 		}
 	} catch {
-		const wp = window as unknown as { panel: Panel & { $t: (key: string) => string } };
-		panel.notification.error(wp.panel.$t('tiptap.navigate.error'));
+		const wp = window as unknown as {
+			panel: Panel & { $t: (key: string) => string };
+		};
+		panel.notification.error(wp.panel.$t("tiptap.navigate.error"));
 	}
 };
 
@@ -293,7 +316,9 @@ export const navigateToKirbyTag = async (
  * For example, in "(link: page://abc text: foo)" returns the position of "page://abc".
  * Returns null if no reference range can be determined.
  */
-export const findReferenceRange = (tagString: string): [number, number] | null => {
+export const findReferenceRange = (
+	tagString: string
+): [number, number] | null => {
 	const typeMatch = tagString.match(/^\((\w+):\s*/);
 	if (!typeMatch) return null;
 
@@ -308,16 +333,21 @@ export const findReferenceRange = (tagString: string): [number, number] | null =
 
 	// Trim the value to get exact boundaries
 	const rawValue = tagString.substring(valueStart, valueEnd);
-	const trimmedStart = valueStart + (rawValue.length - rawValue.trimStart().length);
+	const trimmedStart =
+		valueStart + (rawValue.length - rawValue.trimStart().length);
 	const trimmedEnd = valueEnd - (rawValue.length - rawValue.trimEnd().length);
 
 	if (trimmedStart >= trimmedEnd) return null;
 
 	// Only return range for navigable reference types
-	if (type === 'email' || type === 'tel') return null;
-	if (type === 'link') {
+	if (type === "email" || type === "tel") return null;
+	if (type === "link") {
 		const value = tagString.substring(trimmedStart, trimmedEnd);
-		if (value.startsWith('mailto:') || value.startsWith('tel:') || value.startsWith('#')) {
+		if (
+			value.startsWith("mailto:") ||
+			value.startsWith("tel:") ||
+			value.startsWith("#")
+		) {
 			return null;
 		}
 	}
@@ -342,14 +372,14 @@ export const checkKirbyTagReferences = async (
 	return response.results;
 };
 
-const LINK_TAG_PREFIXES = ['(link:', '(email:', '(tel:'] as const;
+const LINK_TAG_PREFIXES = ["(link:", "(email:", "(tel:"] as const;
 
 /**
  * Checks if text is a link-type KirbyTag (link, email, or tel)
  */
 export const isLinkTag = (text: string | null): boolean => {
 	if (!text) return false;
-	return LINK_TAG_PREFIXES.some(prefix => text.startsWith(prefix));
+	return LINK_TAG_PREFIXES.some((prefix) => text.startsWith(prefix));
 };
 
 /**
@@ -357,5 +387,5 @@ export const isLinkTag = (text: string | null): boolean => {
  */
 export const isCompleteLinkTag = (text: string | null): boolean => {
 	if (!text) return false;
-	return isLinkTag(text) && text.endsWith(')');
+	return isLinkTag(text) && text.endsWith(")");
 };

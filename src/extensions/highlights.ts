@@ -3,7 +3,14 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { EditorView } from "@tiptap/pm/view";
 import type { EndpointsConfig } from "../types";
-import { findKirbyTagRanges, findReferenceRange, parseKirbyTag, getNavigationTarget, navigateToKirbyTag, checkKirbyTagReferences } from "../utils/kirbyTags";
+import {
+	findKirbyTagRanges,
+	findReferenceRange,
+	parseKirbyTag,
+	getNavigationTarget,
+	navigateToKirbyTag,
+	checkKirbyTagReferences,
+} from "../utils/kirbyTags";
 import type { Panel } from "kirby-types";
 
 interface HighlightsOptions {
@@ -34,11 +41,18 @@ export const Highlights = Extension.create<HighlightsOptions>({
 		const flushPendingRefs = async () => {
 			if (!pendingRefs.size || !endpoints) return;
 
-			const batch = Array.from(pendingRefs, ([reference, type]) => ({ reference, type }));
+			const batch = Array.from(pendingRefs, ([reference, type]) => ({
+				reference,
+				type,
+			}));
 			pendingRefs.clear();
 
 			try {
-				const results = await checkKirbyTagReferences(batch, endpoints, getPanel());
+				const results = await checkKirbyTagReferences(
+					batch,
+					endpoints,
+					getPanel()
+				);
 				for (const [ref, resolvable] of Object.entries(results)) {
 					resolvedCache.set(ref, resolvable);
 				}
@@ -49,7 +63,9 @@ export const Highlights = Extension.create<HighlightsOptions>({
 			}
 
 			if (activeView) {
-				activeView.dispatch(activeView.state.tr.setMeta("resolvedRefsUpdated", true));
+				activeView.dispatch(
+					activeView.state.tr.setMeta("resolvedRefsUpdated", true)
+				);
 			}
 		};
 
@@ -88,18 +104,26 @@ export const Highlights = Extension.create<HighlightsOptions>({
 								decorations.push(
 									Decoration.inline(pos + start, pos + end, {
 										class: "kirbytag",
+										"data-tag-id": String(pos + start),
 									})
 								);
 
-								if (navTarget && isResolved(navTarget.reference, navTarget.type)) {
+								if (
+									navTarget &&
+									isResolved(navTarget.reference, navTarget.type)
+								) {
 									const refRange = findReferenceRange(tagText);
 									if (refRange) {
 										decorations.push(
-											Decoration.inline(pos + start + refRange[0], pos + start + refRange[1], {
-												class: "kirbytag-ref",
-												"data-ref": navTarget.reference,
-												"data-type": navTarget.type,
-											})
+											Decoration.inline(
+												pos + start + refRange[0],
+												pos + start + refRange[1],
+												{
+													class: "kirbytag-ref",
+													"data-ref": navTarget.reference,
+													"data-type": navTarget.type,
+												}
+											)
 										);
 									}
 								}
@@ -117,23 +141,23 @@ export const Highlights = Extension.create<HighlightsOptions>({
 					activeView = editorView;
 					const dom = editorView.dom;
 					const toggle = (e: KeyboardEvent) => {
-						if (e.key === 'Meta' || e.key === 'Control') {
-							dom.classList.toggle('cmd-held', e.type === 'keydown');
+						if (e.key === "Meta" || e.key === "Control") {
+							dom.classList.toggle("cmd-held", e.type === "keydown");
 						}
 					};
-					const clear = () => dom.classList.remove('cmd-held');
+					const clear = () => dom.classList.remove("cmd-held");
 
-					document.addEventListener('keydown', toggle);
-					document.addEventListener('keyup', toggle);
-					window.addEventListener('blur', clear);
+					document.addEventListener("keydown", toggle);
+					document.addEventListener("keyup", toggle);
+					window.addEventListener("blur", clear);
 
 					return {
 						destroy() {
 							activeView = null;
 							if (debounceTimer) clearTimeout(debounceTimer);
-							document.removeEventListener('keydown', toggle);
-							document.removeEventListener('keyup', toggle);
-							window.removeEventListener('blur', clear);
+							document.removeEventListener("keydown", toggle);
+							document.removeEventListener("keyup", toggle);
+							window.removeEventListener("blur", clear);
 						},
 					};
 				},
@@ -142,7 +166,9 @@ export const Highlights = Extension.create<HighlightsOptions>({
 						mousedown: (_view: EditorView, event: MouseEvent) => {
 							if (!event.metaKey && !event.ctrlKey) return false;
 
-							const el = (event.target as Element).closest?.('.kirbytag-ref') as HTMLElement | null;
+							const el = (event.target as Element).closest?.(
+								".kirbytag-ref"
+							) as HTMLElement | null;
 							if (!el) return false;
 
 							const reference = el.dataset.ref;
@@ -152,8 +178,8 @@ export const Highlights = Extension.create<HighlightsOptions>({
 							event.preventDefault();
 							event.stopPropagation();
 
-							if (type === 'external') {
-								window.open(reference, '_blank');
+							if (type === "external") {
+								window.open(reference, "_blank");
 							} else {
 								navigateToKirbyTag({ reference, type }, endpoints, getPanel());
 							}
