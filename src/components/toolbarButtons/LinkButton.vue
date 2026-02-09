@@ -210,17 +210,45 @@ export default {
 		 */
 		openLinkDialog(editor, context, initialValues) {
 			this.$panel.dialog.open({
-				component: 'k-link-dialog',
+				component: 'tiptap-link-dialog',
 				props: {
 					fields: this.linkFields,
 					value: initialValues,
-					submitButton: window.panel.$t(context.isEditing ? 'change' : 'insert')
+					submitButton: window.panel.$t(context.isEditing ? 'change' : 'insert'),
+					removable: context.isEditing
 				},
 				on: {
 					cancel: () => this.handleDialogCancel(editor),
-					submit: (values) => this.handleDialogSubmit(editor, context, values)
+					submit: (values) => this.handleDialogSubmit(editor, context, values),
+					remove: () => this.handleDialogRemove(editor, context)
 				}
 			});
+		},
+
+		/**
+		 * Handles removing a KirbyTag, replacing it with its text value
+		 * @param {Object} editor - Editor instance
+		 * @param {Object} context - Editing context
+		 */
+		handleDialogRemove(editor, context) {
+			this.$panel.dialog.close();
+
+			if (context.replaceRange) {
+				try {
+					const parsed = parseKirbyTag(context.tagText);
+					const text = parsed.text || '';
+					editor.chain().focus()
+						.deleteRange(context.replaceRange)
+						.insertContent(text)
+						.run();
+				} catch {
+					editor.chain().focus()
+						.deleteRange(context.replaceRange)
+						.run();
+				}
+			} else {
+				editor.chain().focus().run();
+			}
 		},
 
 		/**

@@ -20,6 +20,10 @@
 
 		<!-- Form fields section -->
 		<k-dialog-fields v-if="hasFields" :fields="fields" :value="fieldValues" @input="fieldValues = $event" />
+
+		<template v-if="removable" #footer>
+			<DialogFooterWithRemove :submit-button="submitButton" @cancel="$emit('cancel')" @remove="$emit('remove')" />
+		</template>
 	</k-dialog>
 </template>
 
@@ -27,8 +31,10 @@
 import Dialog from "@/mixins/dialog.js";
 import Search from "@/mixins/search.js";
 import { set, del } from "vue";
+import DialogFooterWithRemove from "./DialogFooterWithRemove.vue";
 
 export default {
+	components: { DialogFooterWithRemove },
 	mixins: [Dialog, Search],
 	props: {
 		endpoint: String,
@@ -67,9 +73,13 @@ export default {
 		value: {
 			type: Array,
 			default: () => []
+		},
+		removable: {
+			type: Boolean,
+			default: false
 		}
 	},
-	emits: ["cancel", "fetched", "submit"],
+	emits: ["cancel", "fetched", "remove", "submit"],
 	data() {
 		return {
 			models: [],

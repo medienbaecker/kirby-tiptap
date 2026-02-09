@@ -244,10 +244,12 @@ export default {
 					value: value,
 					fields: this.fileFields,
 					initialFieldValues: processedFieldValues,
-					submitButton: window.panel.$t(isEditing ? 'change' : 'insert')
+					submitButton: window.panel.$t(isEditing ? 'change' : 'insert'),
+					removable: isEditing
 				},
 				on: {
 					cancel: restoreSelection,
+					remove: () => this.handleDialogRemove(restoreSelection, initial, replaceRange),
 					submit: (files, fieldValues) => {
 						if (!files?.length) {
 							this.$panel.notification.error(
@@ -298,6 +300,22 @@ export default {
 					}
 				}
 			});
+		},
+
+		handleDialogRemove(restoreSelection, initial, replaceRange) {
+			this.$panel.dialog.close();
+
+			if (replaceRange) {
+				restoreSelection(() => {
+					const text = initial?.text || '';
+					this.editor.chain().focus()
+						.deleteRange(replaceRange)
+						.insertContent(text)
+						.run();
+				});
+			} else {
+				restoreSelection();
+			}
 		},
 
 		restoreSelectionCallback() {
