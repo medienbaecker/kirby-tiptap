@@ -30,15 +30,16 @@ export const kirbyTagDisabledCheck = (editor: Editor): boolean =>
 	!canInsertKirbyTag(editor.state);
 
 export const InsertionGuards = Extension.create({
-	name: 'insertionGuards',
+	name: "insertionGuards",
 
 	addProseMirrorPlugins() {
 		return [
 			new Plugin({
-				key: new PluginKey('kirbytagMarkStrip'),
+				key: new PluginKey("kirbytagMarkStrip"),
 				appendTransaction(transactions, _oldState, newState) {
-					if (!transactions.some(tr => tr.docChanged)) return null;
+					if (!transactions.some((tr) => tr.docChanged)) return null;
 
+					// Strip marks from KirbyTag ranges
 					const tr = newState.tr;
 					let modified = false;
 
@@ -54,7 +55,8 @@ export const InsertionGuards = Extension.create({
 
 							let hasMarks = false;
 							newState.doc.nodesBetween(from, to, (child) => {
-								if (child.isText && child.marks.length > 0) hasMarks = true;
+								if (child.isText && child.marks.length > 0)
+									hasMarks = true;
 							});
 
 							if (hasMarks) {
