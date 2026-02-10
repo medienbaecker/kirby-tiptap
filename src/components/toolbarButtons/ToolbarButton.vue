@@ -88,13 +88,9 @@ export default {
 						? this.activeCheck(this.editor)
 						: this.editor.isActive(this.activeCheck)
 
-					const disabledByCheck = typeof this.disabledCheck === 'function'
-						? this.disabledCheck(this.editor)
+					this.disabled = typeof this.disabledCheck === 'function'
+						? this.disabledCheck(this.editor) && !this.active
 						: false
-					const disabledByCommand = typeof this.command === 'string'
-						? !this.editor.can()[this.command]?.()
-						: false
-					this.disabled = (disabledByCheck || disabledByCommand) && !this.active
 				}
 
 				// Initial state
