@@ -29,6 +29,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 🛼 **Inline mode** for paragraph-free content with buttons being disabled automatically
 - 🧠 **One method to rule them all** with `tiptapText()` handling [UUID resolution](https://getkirby.com/docs/reference/templates/field-methods/permalinks-to-urls), [smartypants](https://getkirby.com/docs/reference/system/options/smartypants), automatic [inline mode](https://getkirby.com/docs/reference/templates/helpers/kirbytextinline) and more
 - ✨ **Intuitive drag & drop support** for pages and files with intelligent spacing
+- 📋 **Smart paste** converts HTML links to KirbyTags automatically
 - 👀 **Custom field preview** showing formatted text in structure/object fields
 - 🔗 **Improved link and file handling** with dialogs that allow custom fields, automatically pick the right KirbyTag (`(link: )`, `(email: )`, `(file: )` or `(tel: )`) and allow editing existing links/files by pre-filling dialogs
 - 🔍 **Cmd+Click navigation** on page/file references to jump directly to the linked page or file in the Panel

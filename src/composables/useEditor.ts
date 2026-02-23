@@ -16,6 +16,7 @@ import { Replacements } from "../extensions/replacements";
 import { InsertionGuards } from "../extensions/insertionGuards";
 import { compileRegistry } from "../utils/registry";
 import { buttonRegistry } from "../utils/buttonRegistry";
+import { transformLinksToKirbyTags } from "../utils/pasteTransform";
 import type { TiptapDocument, ButtonItem, EndpointsConfig } from "../types";
 
 interface EditorProps {
@@ -191,6 +192,7 @@ export function useEditor(
 				editorProps: {
 					handlePaste: eventHandlers.handlePaste,
 					handleDrop: eventHandlers.handleDrop,
+					transformPastedHTML: (html: string) => transformLinksToKirbyTags(html),
 				},
 				onCreate: ({ editor: editorInstance }) => {
 					editorInstance.view.dom.setAttribute(
