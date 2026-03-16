@@ -296,6 +296,7 @@ export default {
 	text-decoration-color: color-mix(in srgb, currentColor, transparent 60%);
 	text-underline-offset: .15em;
 	text-decoration-thickness: .075em;
+	word-break: break-word;
 }
 
 .tiptap.cmd-held .kirbytag-ref {
