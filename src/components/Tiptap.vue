@@ -3,7 +3,7 @@
 		:counter="counterOptions">
 		<k-input-element>
 			<div :data-disabled="disabled" :data-size="size" :data-inline="inline" class="k-input k-tiptap-input">
-				<TiptapInput v-bind="$props" @input="handleInput" @editor="editor = $event" />
+				<TiptapInput ref="input" v-bind="$props" @input="handleInput" @editor="editor = $event" />
 			</div>
 		</k-input-element>
 	</k-field>
@@ -29,7 +29,16 @@ export default {
 		}
 	},
 
+	mounted() {
+		this.$el.querySelector('label')?.addEventListener('click', this.focus);
+	},
+	beforeDestroy() {
+		this.$el.querySelector('label')?.removeEventListener('click', this.focus);
+	},
 	methods: {
+		focus() {
+			this.$refs.input.focus();
+		},
 		handleInput(value) {
 			this.$emit('input', value.json);
 		}
