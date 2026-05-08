@@ -4,8 +4,6 @@
 	"toolbar.button.blockquote": "Zitat",
 	"toolbar.button.taskList": "Aufgabenliste",
 	"upload.error.disabled": "Datei-Uploads sind für dieses Feld nicht aktiviert",
-	"upload.error.endpoint": "Upload-Endpunkt nicht konfiguriert",
-	"upload.error.noFiles": "Es wurden keine Dateien hochgeladen",
 	"upload.error.noData": "Keine Dateien vom Upload erhalten",
 	"upload.error.insert": "Fehler beim Einfügen der hochgeladenen Datei",
 	"upload.error.dialog": "Fehler beim Öffnen des Upload-Dialogs",

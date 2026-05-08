@@ -8,6 +8,7 @@ import ToolbarButton from './ToolbarButton.vue';
 import { parseKirbyTag, generateKirbyTag, findTagAtPos } from '../../utils/kirbyTags';
 import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
+import { buildUploadOptions } from '../../utils/upload';
 import { kirbyTagDisabledCheck } from '../../extensions/insertionGuards';
 
 export default {
@@ -40,7 +41,6 @@ export default {
 
 	data() {
 		return {
-			editingContext: null, // Store editing context for upload handler
 			isEditingFileTag: false
 		}
 	},
@@ -253,8 +253,6 @@ export default {
 		},
 
 		openFileDialog(restoreSelection, initial, value, isEditing, replaceRange) {
-			this.editingContext = isEditing ? { replaceRange, restoreSelection } : null;
-
 			const { _type, uuid, href, value: tagValue, ...fieldValues } = initial || {};
 			const processedFieldValues = processFieldValues(fieldValues, this.fileFields);
 
@@ -397,173 +395,39 @@ export default {
 			}
 		},
 
-		/**
-		 * Handles file upload functionality
-		 */
 		handleUpload() {
-			if (!this.validateUploadPreconditions()) {
+			if (!this.uploads) {
+				this.$panel.notification.error(this.$t('tiptap.upload.error.disabled'));
 				return;
 			}
 
-			const uploadContext = this.getUploadContext();
-			const uploadOptions = this.buildUploadOptions(uploadContext);
-			this.initiateUpload(uploadOptions, uploadContext.restoreSelection);
-		},
-
-		/**
-		 * Validates that upload functionality can be used
-		 * @returns {boolean} Whether upload is possible
-		 */
-		validateUploadPreconditions() {
-			if (!this.uploads) {
-				this.$panel.notification.error(this.$t('tiptap.upload.error.disabled'));
-				return false;
-			}
-
-			if (!this.endpoints?.field) {
-				this.$panel.notification.error(this.$t('tiptap.upload.error.endpoint'));
-				return false;
-			}
-
-			return true;
-		},
-
-		/**
-		 * Gets the context for file upload (editing state, selection restore)
-		 * @returns {Object} Upload context
-		 */
-		getUploadContext() {
-			const { state, view } = this.editor;
-			const { from, empty } = state.selection;
 			const restoreSelection = this.restoreSelectionCallback();
+			const options = buildUploadOptions(this.endpoints, this.uploads, this.$panel, {
+				cancel: () => restoreSelection(),
+				error: (error) => {
+					restoreSelection();
+					this.$panel.notification.error(`${this.$t('tiptap.upload.error.failed')}: ${error.message ?? ''}`);
+				},
+				done: (file) => restoreSelection(() => this.insertUploadedFile(file)),
+			});
 
-			let isEditing = false;
-			let replaceRange = null;
-
-			if (empty) {
-				const tagEl = findTagAtPos(view, from, 'kirbytag');
-				isEditing = Boolean(tagEl) && this.isFileTag(tagEl.textContent);
-
-				if (isEditing) {
-					replaceRange = this.getFileTagRange(view, tagEl);
-				}
-			}
-
-			this.editingContext = isEditing ? { replaceRange, restoreSelection } : null;
-
-			return { isEditing, replaceRange, restoreSelection };
-		},
-
-		/**
-		 * Builds upload options configuration
-		 * @param {Object} context - Upload context
-		 * @returns {Object} Upload options
-		 */
-		buildUploadOptions(context) {
-			const { restoreSelection } = context;
-
-			const uploadOptions = {
-				url: this.getUploadUrl(),
-				accept: this.uploads.accept || '*/*',
-				multiple: false,
-				on: {
-					cancel: () => restoreSelection(),
-					done: (files) => {
-						restoreSelection(() => {
-							this.handleUploadComplete(files);
-						});
-					},
-					error: (error) => {
-						restoreSelection();
-						this.$panel.notification.error(`${this.$t('tiptap.upload.error.failed')}: ${error.message || 'Unknown error'}`);
-					}
-				}
-			};
-
-			this.addUploadAttributes(uploadOptions);
-
-			return uploadOptions;
-		},
-
-		/**
-		 * Gets the correct upload URL
-		 * @returns {string} Upload URL
-		 */
-		getUploadUrl() {
-			return this.endpoints.field.includes('/api/')
-				? `${this.endpoints.field}/upload`
-				: `/api${this.endpoints.field}/upload`;
-		},
-
-		/**
-		 * Adds upload attributes (template, parent) to upload options
-		 * @param {Object} uploadOptions - Upload options to modify
-		 */
-		addUploadAttributes(uploadOptions) {
-			if (this.uploads.template) {
-				uploadOptions.attributes = { template: this.uploads.template };
-			}
-
-			if (this.uploads.parent) {
-				uploadOptions.attributes = {
-					...uploadOptions.attributes,
-					parent: this.uploads.parent
-				};
-			}
-		},
-
-		/**
-		 * Initiates the upload process
-		 * @param {Object} uploadOptions - Upload configuration
-		 * @param {Function} restoreSelection - Selection restore callback
-		 */
-		initiateUpload(uploadOptions, restoreSelection) {
 			try {
-				this.$panel.upload.pick(uploadOptions);
+				this.$panel.upload.pick(options);
 			} catch (error) {
 				this.$panel.notification.error(`${this.$t('tiptap.upload.error.dialog')}: ${error.message}`);
 				restoreSelection();
 			}
 		},
 
-		async handleUploadComplete(files) {
-			if (!files?.length) {
-				this.$panel.notification.error(this.$t('tiptap.upload.error.noFiles'));
+		async insertUploadedFile(file) {
+			if (!file?.dragText) {
+				this.$panel.notification.error(this.$t('tiptap.upload.error.noData'));
 				return;
 			}
 
 			try {
-				const file = files[0];
-				if (!file) {
-					this.$panel.notification.error(this.$t('tiptap.upload.error.noData'));
-					return;
-				}
-
-				let content = file.dragText;
-
-				// Process UUID configuration via API
-				content = await processKirbyTagApi(content, this.endpoints, this.$panel);
-
-				if (!content || !this.editor?.commands) {
-					this.$panel.notification.error(this.$t('tiptap.upload.error.insert'));
-					return;
-				}
-
-				if (this.editingContext?.restoreSelection && this.editingContext?.replaceRange) {
-					// Store context locally before clearing
-					const { restoreSelection, replaceRange } = this.editingContext;
-					this.editingContext = null;
-
-					restoreSelection(() => {
-						this.editor.chain().focus()
-							.deleteRange(replaceRange)
-							.insertContent(content)
-							.run();
-					});
-				} else {
-					this.editor.commands.insertContent(content);
-					this.editingContext = null;
-				}
+				const content = await processKirbyTagApi(file.dragText, this.endpoints, this.$panel);
+				this.editor.commands.insertContent(content);
 			} catch (error) {
 				this.$panel.notification.error(`${this.$t('tiptap.upload.error.insert')}: ${error.message}`);
 			}

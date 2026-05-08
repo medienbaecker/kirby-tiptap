@@ -6,13 +6,7 @@ import type { Panel, PanelHelpers } from "kirby-types";
 import { validateInput, generateLinkTag } from "./inputValidation";
 import { processPlainTextParagraphs } from "./contentProcessing";
 import { canInsertKirbyTag } from "../extensions/insertionGuards";
-import {
-	validateUploadConfig,
-	buildUploadOptions,
-	createUploadSuccessHandler,
-	createUploadErrorHandler,
-	createUploadCancelHandler
-} from "./fileUploadHelpers";
+import { buildUploadOptions } from "./upload";
 import type { UploadsConfig, EndpointsConfig, UuidConfig } from "../types";
 
 interface Coordinates {
@@ -195,40 +189,30 @@ function handleFileUpload(
 	uploads: UploadsConfig | false | undefined,
 	panel: Panel
 ): void {
-	// Validate upload configuration
-	if (!validateUploadConfig(uploads, endpoints, panel)) {
-		return;
-	}
+	if (!uploads || !endpoints?.field) return;
 
-	try {
-		const files = event.dataTransfer?.files;
-		if (!files || files.length === 0) {
-			return;
-		}
+	const files = event.dataTransfer?.files;
+	if (!files?.length) return;
 
-		// Store current selection for restoration after upload
-		const selection = editorRef.value?.state.selection;
-		const originalFrom = selection?.from || 0;
-		const originalTo = selection?.to || 0;
-		const dropPosition = coordinates.pos;
+	const editor = editorRef.value;
+	if (!editor) return;
 
-		// Build upload options
-		const uploadOptions = buildUploadOptions(
-			endpoints!,
-			uploads as UploadsConfig,
-			panel
-		);
+	const { from, to } = editor.state.selection;
+	const dropPosition = coordinates.pos;
+	const restore = () => editor.commands.setTextSelection({ from, to });
 
-		// Add event handlers
-		uploadOptions.on = {
-			done: createUploadSuccessHandler(editorRef, dropPosition, panel),
-			cancel: createUploadCancelHandler(editorRef, originalFrom, originalTo),
-			error: createUploadErrorHandler(editorRef, originalFrom, originalTo, panel)
-		};
+	const options = buildUploadOptions(endpoints, uploads as UploadsConfig, panel, {
+		cancel: restore,
+		error: () => restore(),
+		done: async (file) => {
+			if (!file?.dragText) return;
+			const content = await processKirbyTagApi(file.dragText, endpoints, panel);
+			editor.chain().focus()
+				.insertContentAt(dropPosition, content, { parseOptions: { preserveWhitespace: true } })
+				.unsetAllMarks()
+				.run();
+		},
+	});
 
-		// Use Kirby's upload dialog (same as textarea field)
-		panel.upload.open(files, uploadOptions);
-	} catch {
-		panel.notification.error('File upload setup failed');
-	}
+	panel.upload.open(files, options);
 }

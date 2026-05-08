@@ -4,8 +4,6 @@
 	"toolbar.button.blockquote": "Blockquote",
 	"toolbar.button.taskList": "Task list",
 	"upload.error.disabled": "Uploads are not enabled for this field",
-	"upload.error.endpoint": "Upload endpoint not configured",
-	"upload.error.noFiles": "No files were uploaded",
 	"upload.error.noData": "No file data received from upload",
 	"upload.error.insert": "Failed to insert uploaded file",
 	"upload.error.dialog": "Failed to open upload dialog",
