@@ -45,6 +45,7 @@ Kirby::plugin('medienbaecker/tiptap', [
 		'tiptap' => [
 			'mixins' => [
 				'filepicker',
+				'upload',
 			],
 			'props' => Field::props(),
 			'validations' => Validations::rules(),

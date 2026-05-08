@@ -73,15 +73,14 @@ export function buildUploadOptions(
 /**
  * Process uploaded files and generate content
  */
-export function processUploadedFiles(uploadedFiles: unknown[][]): string[] {
+export function processUploadedFiles(uploadedFiles: unknown[]): string[] {
 	if (!uploadedFiles?.length) {
 		return [];
 	}
 
 	return uploadedFiles
-		.map((fileArray) => {
-			// Each upload is nested: uploadedFiles[0][0] contains the actual file
-			const file = fileArray[0] as UploadedFile | undefined;
+		.map((entry) => {
+			const file = entry as UploadedFile | undefined;
 			if (!file?.dragText) {
 				return null;
 			}
@@ -144,7 +143,7 @@ export function createUploadSuccessHandler(
 	editorRef: Ref<Editor | null>,
 	dropPosition: number,
 	panel: Panel
-): (uploadedFiles: unknown[][]) => void {
+): (uploadedFiles: unknown[]) => void {
 	return (uploadedFiles) => {
 		try {
 			// Restore selection to drop position
@@ -168,8 +167,6 @@ export function createUploadSuccessHandler(
 					dropPosition,
 					finalContent
 				);
-
-				panel.notification.success('File uploaded and inserted successfully');
 			} else {
 				panel.notification.error('No content could be generated from uploaded files');
 			}

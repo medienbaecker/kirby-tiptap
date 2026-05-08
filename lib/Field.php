@@ -110,30 +110,16 @@ class Field
 				return $links;
 			},
 			'files' => function ($files = []) {
+				if (is_string($files) === true) {
+					return ['query' => $files];
+				}
+				if (is_array($files) === false) {
+					$files = [];
+				}
 				if (isset($files['fields']) && is_array($files['fields'])) {
 					$files['fields'] = \Medienbaecker\Tiptap\Field::processDialogFields($files['fields']);
 				}
 				return $files;
-			},
-			'uploads' => function ($uploads = false) {
-				// Handle upload configuration similar to textarea field
-				if ($uploads === false) {
-					return false;
-				}
-
-				if ($uploads === true) {
-					return ['accept' => '*'];
-				}
-
-				if (is_string($uploads)) {
-					return ['template' => $uploads, 'accept' => '*'];
-				}
-
-				if (is_array($uploads)) {
-					return array_merge(['accept' => '*'], $uploads);
-				}
-
-				return ['accept' => '*'];
 			},
 			'uuid' => function () {
 				return static::getUuidConfig();

@@ -109,17 +109,20 @@ fields:
             shadow: Shadow
             rounded: Rounded
     files:
+      # Filter files shown in the picker (Kirby query)
+      query: page.images
       # Add custom fields to the file dialog
       fields:
         caption:
           label: Caption
           type: textarea
-    uploads: true # Enable file uploads (default: false)
+    files: page.images # String shorthand for files.query:
+    uploads: false # Disable file uploads (default: enabled)
     # Or with options:
-    # uploads:
-    #   accept: 'image/*' # Restrict file types
-    #   template: 'image' # Template for uploaded files
-    #   parent: 'media'   # Upload destination
+    uploads:
+      template: image # File blueprint for uploaded files
+      parent: site    # Upload destination (any Kirby query)
+    uploads: image # String shorthand for uploads.template:
     required: true
     placeholder: My placeholder
     default: My default content

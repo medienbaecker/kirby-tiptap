@@ -40,12 +40,30 @@ export default {
 
 	data() {
 		return {
-			editingContext: null // Store editing context for upload handler
+			editingContext: null, // Store editing context for upload handler
+			isEditingFileTag: false
 		}
+	},
+
+	mounted() {
+		this.updateEditingFlag();
+		this.editor.on('selectionUpdate', this.updateEditingFlag);
+		this.editor.on('update', this.updateEditingFlag);
+	},
+
+	beforeDestroy() {
+		this.editor.off('selectionUpdate', this.updateEditingFlag);
+		this.editor.off('update', this.updateEditingFlag);
 	},
 
 	computed: {
 		dropdownItems() {
+			// Skip dropdown when editing an existing file kirbytag — clicking
+			// the button should jump straight to the file picker so the user
+			// can replace the existing file.
+			if (this.isEditingFileTag) {
+				return null;
+			}
 			// Only show dropdown if uploads are enabled
 			if (!this.uploads) {
 				return null;
@@ -72,6 +90,10 @@ export default {
 	},
 
 	methods: {
+		updateEditingFlag() {
+			this.isEditingFileTag = this.getFileEditingContext().isEditing;
+		},
+
 		/**
 		 * Handles selecting existing files
 		 */
@@ -511,7 +533,7 @@ export default {
 			}
 
 			try {
-				const file = files[0][0];
+				const file = files[0];
 				if (!file) {
 					this.$panel.notification.error(this.$t('tiptap.upload.error.noData'));
 					return;
@@ -542,8 +564,6 @@ export default {
 					this.editor.commands.insertContent(content);
 					this.editingContext = null;
 				}
-
-				this.$panel.notification.success(this.$t('tiptap.upload.success'));
 			} catch (error) {
 				this.$panel.notification.error(`${this.$t('tiptap.upload.error.insert')}: ${error.message}`);
 			}

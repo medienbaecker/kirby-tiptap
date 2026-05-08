@@ -10,6 +10,5 @@
 	"upload.error.insert": "Failed to insert uploaded file",
 	"upload.error.dialog": "Failed to open upload dialog",
 	"upload.error.failed": "Upload failed",
-	"upload.success": "File uploaded and inserted successfully",
 	"navigate.error": "Could not open this reference"
 }
