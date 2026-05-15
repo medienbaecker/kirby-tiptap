@@ -2,13 +2,13 @@
 	<div v-if="dropdown && dropdown.length" class="tiptap-button-wrapper">
 		<!-- Dropdown button when dropdown items exist -->
 		<k-button :icon="icon" :title="formattedTitle" :ariaLabel="formattedTitle"
-			:class="['k-toolbar-button', 'tiptap-button']" :current="active" :disabled="disabled" @mousedown.prevent @click="toggleDropdown" />
+			:class="['k-toolbar-button', 'tiptap-button']" :current="active" :disabled="disabled" @click="toggleDropdown" />
 		<k-dropdown-content ref="dropdown" :options="dropdownOptions" align-x="start" @action="onDropdownAction" />
 	</div>
 
 	<!-- Regular button when no dropdown -->
 	<k-button v-else :icon="icon" :title="formattedTitle" :ariaLabel="formattedTitle"
-		:class="['k-toolbar-button', 'tiptap-button']" :current="active" :disabled="disabled" @mousedown.prevent @click="runCommand" />
+		:class="['k-toolbar-button', 'tiptap-button']" :current="active" :disabled="disabled" @click="runCommand" />
 </template>
 
 <script>
