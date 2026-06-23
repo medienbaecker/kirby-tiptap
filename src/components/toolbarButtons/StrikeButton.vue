@@ -1,11 +1,11 @@
 <template>
 	<ToolbarButton icon="strikethrough" :title="$t('toolbar.button.strike')" :editor="editor" command="toggleStrike"
-		active-check="strike" :disabled-check="kirbyTagDisabledCheck" />
+		active-check="strike" :disabled-check="formattingDisabledCheck" />
 </template>
 
 <script>
 import ToolbarButton from './ToolbarButton.vue'
-import { kirbyTagDisabledCheck } from '../../extensions/insertionGuards'
+import { formattingDisabledCheck } from '../../extensions/insertionGuards'
 
 export default {
 	components: {
@@ -18,7 +18,7 @@ export default {
 		}
 	},
 	methods: {
-		kirbyTagDisabledCheck
+		formattingDisabledCheck
 	}
 }
 </script>

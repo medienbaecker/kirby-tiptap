@@ -85,6 +85,18 @@ class Field
 			'spellcheck' => function ($spellcheck = true) {
 				return $spellcheck;
 			},
+			'inline' => function ($inline = false) {
+				return $inline;
+			},
+			'pretty' => function ($pretty = false) {
+				return $pretty;
+			},
+			'minlength' => function ($minlength = null) {
+				return $minlength;
+			},
+			'maxlength' => function ($maxlength = null) {
+				return $maxlength;
+			},
 			'buttons' => function ($buttons = [
 				['headings' => [1, 2, 3]],
 				'|',

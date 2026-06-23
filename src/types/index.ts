@@ -2,39 +2,17 @@ import type { Editor } from '@tiptap/vue-2'
 import type { AnyExtension } from '@tiptap/core'
 import type { Component } from 'vue'
 
-// Field props interface
-export interface TiptapFieldProps {
-	name: string
-	label?: string
-	value?: string
-	pretty?: boolean
-	placeholder?: string
-	disabled?: boolean
-	required?: boolean
-	spellcheck?: boolean
-	help?: string
-	minlength?: number
-	maxlength?: number
-	size?: string
-	buttons?: string[]
-	inline?: boolean
-	kirbytags?: string[]
-	links?: LinksConfig
-	files?: FilesConfig
-	endpoints?: EndpointsConfig
-	uploads?: UploadsConfig | false
-	uuid?: UuidConfig
-}
-
 // Links configuration
 export interface LinksConfig {
 	options?: string[]
+	fields?: Record<string, unknown>
 }
 
 // Files configuration
 export interface FilesConfig {
 	query?: string
 	image?: Record<string, unknown>
+	fields?: Record<string, unknown>
 }
 
 // Endpoints configuration
@@ -68,12 +46,6 @@ export interface ButtonMeta {
 export interface ButtonRegistryEntry {
 	component: () => Promise<{ default: Component }>
 	meta: ButtonMeta
-}
-
-export interface ButtonRegistry {
-	getButton(name: string): ButtonRegistryEntry | undefined
-	getAllButtons(): Map<string, ButtonRegistryEntry>
-	hasButton(name: string): boolean
 }
 
 // Button item types for field configuration
@@ -159,6 +131,7 @@ export interface RegistryButton {
 	icon: string
 	command: (ctx: { editor: Editor }) => void
 	activeCheck?: (ctx: { editor: Editor }) => boolean
+	disabledCheck?: (ctx: { editor: Editor }) => boolean
 	shortcut?: string
 	dropdown?: (ctx: { editor: Editor }) => Array<{ label: string; icon?: string; click: () => void }>
 }

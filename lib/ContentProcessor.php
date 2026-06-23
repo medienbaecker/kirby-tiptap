@@ -15,9 +15,9 @@ class ContentProcessor
 	 */
 	public static function cleanListItemContent($node)
 	{
-		if ($node['type'] === 'listItem' && isset($node['content'])) {
-			if (count($node['content']) === 1 && $node['content'][0]['type'] === 'paragraph') {
-				$node['content'] = $node['content'][0]['content'];
+		if (($node['type'] ?? '') === 'listItem' && isset($node['content'])) {
+			if (count($node['content']) === 1 && ($node['content'][0]['type'] ?? '') === 'paragraph') {
+				$node['content'] = $node['content'][0]['content'] ?? [];
 			}
 		}
 
@@ -80,9 +80,41 @@ class ContentProcessor
 				$currentLevel = $node['attrs']['level'] ?? 1;
 				$node['attrs']['level'] = min($currentLevel + $offset, 6);
 			}
+
+			if (isset($node['content']) && is_array($node['content'])) {
+				$node['content'] = static::applyHeadingOffset($node['content'], $offset);
+			}
 		}
 
 		return $nodes;
+	}
+
+	/**
+	 * Build a Tiptap doc from a plain-text (non-JSON) value
+	 * @param string $text Plain text content
+	 * @return array Tiptap doc structure
+	 */
+	public static function plainTextToDoc(string $text): array
+	{
+		$content = [];
+
+		foreach (preg_split('/\n{2,}/', $text) as $paragraph) {
+			$paragraph = trim($paragraph);
+			if ($paragraph === '') {
+				continue;
+			}
+
+			$content[] = [
+				'type' => 'paragraph',
+				'content' => [['type' => 'text', 'text' => $paragraph]],
+			];
+		}
+
+		if (empty($content)) {
+			$content[] = ['type' => 'paragraph'];
+		}
+
+		return ['type' => 'doc', 'content' => $content];
 	}
 
 	/**

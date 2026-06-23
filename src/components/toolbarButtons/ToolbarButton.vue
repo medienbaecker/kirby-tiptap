@@ -29,7 +29,10 @@ export default {
 		return {
 			active: false,
 			disabled: false,
-			updateTimer: null
+			updateTimer: null,
+			keyboardHandler: null,
+			onSelectionUpdate: null,
+			onTransaction: null
 		}
 	},
 	computed: {
@@ -77,16 +80,19 @@ export default {
 	watch: {
 		editor: {
 			immediate: true,
-			handler(editor) {
+			handler(editor, oldEditor) {
+				// Detach the old editor so its listeners don't leak on prop change.
+				if (oldEditor) this.detachEditor(oldEditor)
 				if (!editor) return
 
-				// Set up throttled update handler
 				const updateState = () => {
 					if (!this.editor || !this.editor.isActive) return
 
 					this.active = typeof this.activeCheck === 'function'
 						? this.activeCheck(this.editor)
-						: this.editor.isActive(this.activeCheck)
+						: this.activeCheck
+							? this.editor.isActive(this.activeCheck)
+							: false
 
 					this.disabled = typeof this.disabledCheck === 'function'
 						? this.disabledCheck(this.editor) && !this.active
@@ -96,36 +102,29 @@ export default {
 				// Initial state
 				updateState()
 
-				// Listen to editor updates with throttling
-				editor.on('selectionUpdate', () => {
-					// Clear existing timer
-					if (this.updateTimer) {
-						clearTimeout(this.updateTimer)
-					}
-
-					// Throttle updates to max once per 50ms
+				// Named (not inline) so detachEditor can remove them. Throttled to 50ms.
+				this.onSelectionUpdate = () => {
+					clearTimeout(this.updateTimer)
 					this.updateTimer = setTimeout(updateState, 50)
-				})
+				}
 
-				editor.on('transaction', ({ transaction }) => {
-					// Only update on selection changes or doc changes
+				this.onTransaction = ({ transaction }) => {
 					if (transaction.docChanged || transaction.selectionSet) {
-						if (this.updateTimer) {
-							clearTimeout(this.updateTimer)
-						}
+						clearTimeout(this.updateTimer)
 						this.updateTimer = setTimeout(updateState, 50)
 					}
-				})
+				}
+
+				editor.on('selectionUpdate', this.onSelectionUpdate)
+				editor.on('transaction', this.onTransaction)
 
 				this.registerShortcut()
 			}
 		}
 	},
 	beforeDestroy() {
-		if (this.updateTimer) {
-			clearTimeout(this.updateTimer)
-		}
-		this.unregisterShortcut()
+		clearTimeout(this.updateTimer)
+		this.detachEditor(this.editor)
 	},
 	methods: {
 		runCommand() {
@@ -166,6 +165,9 @@ export default {
 			if (!this.shortcut || !this.editor) return;
 
 			this.keyboardHandler = (event) => {
+				// Already handled by a ProseMirror keymap — don't double-fire.
+				if (event.defaultPrevented) return
+
 				const parts = this.shortcut.split('-')
 				const key = parts.pop().toLowerCase()
 
@@ -189,10 +191,15 @@ export default {
 			}
 		},
 
-		unregisterShortcut() {
-			if (this.keyboardHandler && this.editor?.view?.dom) {
-				this.editor.view.dom.removeEventListener('keydown', this.keyboardHandler);
-				this.keyboardHandler = null;
+		detachEditor(editor) {
+			if (!editor) return
+
+			if (this.onSelectionUpdate) editor.off('selectionUpdate', this.onSelectionUpdate)
+			if (this.onTransaction) editor.off('transaction', this.onTransaction)
+
+			if (this.keyboardHandler && editor.view?.dom) {
+				editor.view.dom.removeEventListener('keydown', this.keyboardHandler)
+				this.keyboardHandler = null
 			}
 		}
 	}

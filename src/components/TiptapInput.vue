@@ -49,7 +49,7 @@ export default {
 		onMounted(() => {
 			const eventHandlers = {
 				handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url']),
-				handleDrop: createDropHandler(editor, instance.proxy.$panel, instance.proxy.$helper, props.endpoints, props.uploads, props.uuid)
+				handleDrop: createDropHandler(editor, instance.proxy.$panel, instance.proxy.$helper, props.endpoints, props.uploads)
 			}
 
 			const content = parseContent(props.value)

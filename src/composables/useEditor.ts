@@ -17,6 +17,7 @@ import { InsertionGuards } from "../extensions/insertionGuards";
 import { compileRegistry } from "../utils/registry";
 import { buttonRegistry } from "../utils/buttonRegistry";
 import { transformLinksToKirbyTags } from "../utils/pasteTransform";
+import { starterKitOverrides } from "../utils/starterKit";
 import type { TiptapDocument, ButtonItem, EndpointsConfig } from "../types";
 
 interface EditorProps {
@@ -143,16 +144,10 @@ export function useEditor(
 			}
 
 			// Disable StarterKit extensions that registry extensions replace
-			const defaultSk = StarterKit.configure({});
-			const starterKitNames = new Set(
-				(Array.isArray(defaultSk) ? defaultSk : []).map((ext) => ext.name)
+			const skConfig = starterKitOverrides(
+				starterKitConfig.value,
+				registryExtensions
 			);
-			const skConfig: Record<string, unknown> = { ...starterKitConfig.value };
-			for (const ext of registryExtensions) {
-				if (ext.name && starterKitNames.has(ext.name)) {
-					skConfig[ext.name] = false;
-				}
-			}
 
 			const extensions: AnyExtension[] = [
 				StarterKit.configure(skConfig),

@@ -14,7 +14,9 @@ use Medienbaecker\Tiptap\Api;
 use Medienbaecker\Tiptap\TextareaConverter;
 
 Kirby::plugin('medienbaecker/tiptap', [
-	'options' => [],
+	'options' => [
+		'uuid' => null,
+	],
 	'blueprints' => [
 		'blocks/tiptap' => __DIR__ . '/blueprints/blocks/tiptap.yml',
 	],
@@ -61,32 +63,39 @@ Kirby::plugin('medienbaecker/tiptap', [
 				$options['uuid'] = Field::getUuidConfig();
 			}
 
-			$field->value = convertTiptapToHtml(
+			return $field->value(convertTiptapToHtml(
 				$field->value,
 				$field->parent(),
 				$options
-			);
-
-			return $field;
+			));
 		}
 	],
-	'translations' => A::keyBy(
-		A::map(
-			Dir::files(__DIR__ . '/translations'),
-			function ($file) {
-				$translations = [];
-				foreach (Json::read(__DIR__ . '/translations/' . $file) as $key => $value) {
-					$translations["tiptap.{$key}"] = $value;
-				}
+	'translations' => (function () {
+		$translations = A::keyBy(
+			A::map(
+				Dir::files(__DIR__ . '/translations'),
+				function ($file) {
+					$strings = [];
+					foreach (Json::read(__DIR__ . '/translations/' . $file) as $key => $value) {
+						$strings["tiptap.{$key}"] = $value;
+					}
 
-				return A::merge(
-					['lang' => F::name($file)],
-					$translations
-				);
-			}
-		),
-		'lang'
-	),
+					return A::merge(
+						['lang' => F::name($file)],
+						$strings
+					);
+				}
+			),
+			'lang'
+		);
+
+		foreach ($translations as &$strings) {
+			unset($strings['lang']);
+		}
+		unset($strings);
+
+		return $translations;
+	})(),
 	'commands' => [
 		'tiptap:convert' => [
 			'description' => 'Convert textarea fields to Tiptap JSON format',

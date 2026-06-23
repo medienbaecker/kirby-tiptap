@@ -2,7 +2,36 @@ import { Extension } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorState } from "@tiptap/pm/state";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { findKirbyTagRanges } from "../utils/kirbyTags";
+
+const FORMATTING_MARKS = new Set(["bold", "italic", "strike"]);
+
+function charIndexToPos(
+	block: ProseMirrorNode,
+	contentStart: number,
+	charIndex: number
+): number {
+	let pos = contentStart;
+	let chars = 0;
+	let found = false;
+
+	block.forEach((child) => {
+		if (found) return;
+		if (child.isText) {
+			const len = child.text?.length ?? 0;
+			if (charIndex < chars + len) {
+				pos += charIndex - chars;
+				found = true;
+				return;
+			}
+			chars += len;
+		}
+		pos += child.nodeSize;
+	});
+
+	return pos;
+}
 
 /**
  * Checks whether a KirbyTag can be inserted at the given position.
@@ -14,20 +43,40 @@ export function canInsertKirbyTag(state: EditorState, pos?: number): boolean {
 	if ($pos.parent.type.spec.code) return false;
 
 	// No nested KirbyTags
-	const text = $pos.parent.textContent;
+	const parent = $pos.parent;
 	const offset = $pos.parentOffset;
-	const ranges = findKirbyTagRanges(text);
-	if (ranges.some(([s, e]) => offset >= s && offset < e)) return false;
+	const ranges = findKirbyTagRanges(parent.textContent);
+	if (
+		ranges.some(([s, e]) => {
+			const from = charIndexToPos(parent, 0, s);
+			const to = charIndexToPos(parent, 0, e);
+			return offset >= from && offset < to;
+		})
+	)
+		return false;
 
 	return true;
 }
 
 /**
- * Ready-to-use disabledCheck for toolbar buttons that should be
- * disabled in code contexts or inside existing KirbyTags.
+ * disabledCheck for tag-insertion buttons (link, file): disabled in code
+ * contexts and inside existing KirbyTags (no nested tags).
  */
 export const kirbyTagDisabledCheck = (editor: Editor): boolean =>
 	!canInsertKirbyTag(editor.state);
+
+/**
+ * disabledCheck for text-formatting buttons (bold/italic/strike): disabled where
+ * inline formatting doesn't belong. Not inside a KirbyTag, though — its text can
+ * be formatted. Add future contexts to the list below.
+ */
+export const formattingDisabledCheck = (editor: Editor): boolean => {
+	const inCodeBlock =
+		editor.state.selection.$from.parent.type.spec.code === true;
+	const inInlineCode = editor.isActive("code");
+
+	return inCodeBlock || inInlineCode;
+};
 
 export const InsertionGuards = Extension.create({
 	name: "insertionGuards",
@@ -39,28 +88,62 @@ export const InsertionGuards = Extension.create({
 				appendTransaction(transactions, _oldState, newState) {
 					if (!transactions.some((tr) => tr.docChanged)) return null;
 
-					// Strip marks from KirbyTag ranges
+					// A KirbyTag's source must carry uniform marks, or it splits into
+					// several text nodes and stops being detected. Strip disallowed
+					// marks; for a partial formatting mark, normalize the whole tag.
 					const tr = newState.tr;
 					let modified = false;
+					const { from: selFrom, to: selTo } = newState.selection;
 
 					newState.doc.descendants((node, pos) => {
 						if (!node.isTextblock) return;
 
-						const text = node.textContent;
-						const ranges = findKirbyTagRanges(text);
+						const ranges = findKirbyTagRanges(node.textContent);
 
 						for (const [start, end] of ranges) {
-							const from = pos + 1 + start;
-							const to = pos + 1 + end;
+							const from = charIndexToPos(node, pos + 1, start);
+							const to = charIndexToPos(node, pos + 1, end);
 
-							let hasMarks = false;
+							// Per mark type: how many of the tag's text nodes carry it.
+							let textNodes = 0;
+							const coverage = new Map<string, number>();
 							newState.doc.nodesBetween(from, to, (child) => {
-								if (child.isText && child.marks.length > 0)
-									hasMarks = true;
+								if (!child.isText) return;
+								textNodes++;
+								for (const mark of child.marks) {
+									const name = mark.type.name;
+									coverage.set(name, (coverage.get(name) ?? 0) + 1);
+								}
 							});
 
-							if (hasMarks) {
-								tr.removeMark(from, to);
+							for (const [name, covered] of coverage) {
+								const markType = newState.schema.marks[name];
+								if (!markType) continue;
+
+								// Non-formatting marks are never allowed on a tag.
+								if (!FORMATTING_MARKS.has(name)) {
+									tr.removeMark(from, to, markType);
+									modified = true;
+									continue;
+								}
+
+								// Already uniform across the whole tag — nothing to do.
+								if (covered === textNodes) continue;
+
+								// Partial: after a toggle the overlapping selection is fully
+								// marked when adding and unmarked when removing, so its mark
+								// state tells us which way to normalize the whole tag.
+								const overlapFrom = Math.max(selFrom, from);
+								const overlapTo = Math.min(selTo, to);
+								const wantsMark =
+									overlapFrom < overlapTo &&
+									newState.doc.rangeHasMark(overlapFrom, overlapTo, markType);
+
+								if (wantsMark) {
+									tr.addMark(from, to, markType.create());
+								} else {
+									tr.removeMark(from, to, markType);
+								}
 								modified = true;
 							}
 						}

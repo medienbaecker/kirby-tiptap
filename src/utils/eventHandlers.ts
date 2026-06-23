@@ -7,7 +7,8 @@ import { validateInput, generateLinkTag } from "./inputValidation";
 import { processPlainTextParagraphs } from "./contentProcessing";
 import { canInsertKirbyTag } from "../extensions/insertionGuards";
 import { buildUploadOptions } from "./upload";
-import type { UploadsConfig, EndpointsConfig, UuidConfig } from "../types";
+import { getFieldApiPath } from "./kirbyTags";
+import type { UploadsConfig, EndpointsConfig } from "../types";
 
 interface Coordinates {
 	pos: number;
@@ -27,11 +28,8 @@ export async function processKirbyTagApi(
 	}
 
 	try {
-		// Remove /api prefix if present, since panel.api.post() adds it automatically
-		const fieldPath = endpoints.field.startsWith("/api/")
-			? endpoints.field.substring(4)
-			: endpoints.field;
-		const apiUrl = `${fieldPath}/process-kirbytag`;
+		// getFieldApiPath strips the /api prefix, which panel.api.post() re-adds.
+		const apiUrl = `${getFieldApiPath(endpoints)}/process-kirbytag`;
 
 		const response = await panel.api.post<{ text?: string }>(apiUrl, { kirbyTag });
 		return response.text || kirbyTag;
@@ -102,7 +100,6 @@ export async function handleTextDrop(
 	editorRef: Ref<Editor | null>,
 	coordinates: Coordinates,
 	dragText: string,
-	uuid: UuidConfig = { pages: true, files: true },
 	endpoints: EndpointsConfig | null = null,
 	panel: Panel | null = null
 ): Promise<void> {
@@ -135,8 +132,7 @@ export function createDropHandler(
 	panel: Panel,
 	helper: PanelHelpers | null,
 	endpoints: EndpointsConfig | undefined,
-	uploads: UploadsConfig | false | undefined,
-	uuid: UuidConfig = { pages: true, files: true }
+	uploads: UploadsConfig | false | undefined
 ): (view: EditorView, event: DragEvent, slice: Slice, moved: boolean) => boolean {
 	return (view, event, slice, moved) => {
 		if (!moved && panel.drag.data) {
@@ -157,7 +153,6 @@ export function createDropHandler(
 					editorRef,
 					coordinates,
 					dragText,
-					uuid,
 					endpoints || null,
 					panel
 				);

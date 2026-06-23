@@ -7,6 +7,8 @@ import type {
 } from "../types";
 import type { Panel } from "kirby-types";
 
+const KIRBYTAG_FIELD_BOUNDARY = String.raw`\s+(\w+):(?!\/\/)\s*`;
+
 /**
  * Parse a Kirby‐tag string like "(tag: value attr1: value1 attr2: value2)"
  * into an object { type, value, attr1, attr2, ... }
@@ -20,7 +22,7 @@ export const parseKirbyTag = (tagString: string): ParsedKirbyTag => {
 		_type: tagType,
 	};
 
-	const fieldPattern = /\s+(\w+):(?!\/\/)\s*/g;
+	const fieldPattern = new RegExp(KIRBYTAG_FIELD_BOUNDARY, "g");
 
 	// Find all field positions
 	const matches = [...tagString.matchAll(fieldPattern)];
@@ -284,7 +286,7 @@ export const navigateToKirbyTag = async (
 	panel: Panel
 ): Promise<void> => {
 	if (target.type === "external") {
-		window.open(target.reference, "_blank");
+		window.open(target.reference, "_blank", "noopener,noreferrer");
 		return;
 	}
 
@@ -299,7 +301,7 @@ export const navigateToKirbyTag = async (
 		});
 
 		if (response.type === "external" && response.url) {
-			window.open(response.url, "_blank");
+			window.open(response.url, "_blank", "noopener,noreferrer");
 		} else if (response.panelUrl) {
 			panel.open(response.panelUrl);
 		}
@@ -325,7 +327,7 @@ export const findReferenceRange = (
 	const type = typeMatch[1];
 	const valueStart = typeMatch[0].length;
 
-	const fieldPattern = /\s+(\w+):(?!\/\/)\s*/g;
+	const fieldPattern = new RegExp(KIRBYTAG_FIELD_BOUNDARY, "g");
 	fieldPattern.lastIndex = valueStart;
 	const nextField = fieldPattern.exec(tagString);
 

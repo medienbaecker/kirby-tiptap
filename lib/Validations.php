@@ -3,7 +3,7 @@
 namespace Medienbaecker\Tiptap;
 
 use Kirby\Exception\InvalidArgumentException;
-use Kirby\Toolkit\V;
+use Kirby\Toolkit\Str;
 
 /**
  * Tiptap field validations
@@ -17,14 +17,9 @@ class Validations
 	{
 		return [
 			'minlength' => function ($value) {
-				$value = convertTiptapToHtml(
-					$value,
-					$this->model()
-				);
-
 				if (
 					$this->minlength &&
-					V::minLength(strip_tags($value), $this->minlength) === false
+					Validations::measure($value, $this->model()) < $this->minlength
 				) {
 					throw new InvalidArgumentException([
 						'key' => 'validation.minlength',
@@ -33,14 +28,9 @@ class Validations
 				}
 			},
 			'maxlength'  => function ($value) {
-				$value = convertTiptapToHtml(
-					$value,
-					$this->model()
-				);
-
 				if (
 					$this->maxlength &&
-					V::maxLength(strip_tags($value), $this->maxlength) === false
+					Validations::measure($value, $this->model()) > $this->maxlength
 				) {
 					throw new InvalidArgumentException([
 						'key' => 'validation.maxlength',
@@ -49,5 +39,15 @@ class Validations
 				}
 			},
 		];
+	}
+
+	/**
+	 * Plain-text length of rendered content as a reader sees it: strip tags and
+	 * decode entities so '&' counts as one char, not the five of '&amp;'.
+	 */
+	public static function measure($value, $model): int
+	{
+		$html = convertTiptapToHtml($value, $model);
+		return Str::length(trim(html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5)));
 	}
 }

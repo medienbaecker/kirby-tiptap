@@ -1,5 +1,6 @@
 import type { Panel } from "kirby-types";
 import type { UploadsConfig, EndpointsConfig } from "../types";
+import { getFieldApiPath } from "./kirbyTags";
 
 export interface UploadedFile {
 	dragText?: string;
@@ -20,7 +21,7 @@ export function buildUploadOptions(
 	handlers: UploadHandlers
 ) {
 	const options: any = {
-		url: `${panel.urls.api}/${endpoints.field}/upload`,
+		url: `${panel.urls.api}/${getFieldApiPath(endpoints)}/upload`,
 		multiple: false,
 		on: {
 			cancel: handlers.cancel,

@@ -9,8 +9,12 @@
 <script>
 import { generateHTML } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { findKirbyTagRanges } from '../utils/kirbyTags';
+import { compileRegistry } from '../utils/registry';
+import { starterKitOverrides } from '../utils/starterKit';
 
 const decorateKirbyTags = (html) => {
 	const ranges = findKirbyTagRanges(html);
@@ -34,7 +38,7 @@ const flattenInline = (json) => ({
 		content: json.content.flatMap((node, i) =>
 			node.type !== 'paragraph'
 				? [node]
-				: i === 0 ? node.content : [{ type: 'hardBreak' }, ...node.content]
+				: i === 0 ? (node.content ?? []) : [{ type: 'hardBreak' }, ...(node.content ?? [])]
 		)
 	}]
 });
@@ -46,9 +50,26 @@ export default {
 	},
 	computed: {
 		html() {
-			const json = JSON.parse(this.value);
-			const doc = json.inline === true ? flattenInline(json) : json;
-			return decorateKirbyTags(generateHTML(doc, [StarterKit]));
+			let json;
+			try {
+				json = JSON.parse(this.value);
+			} catch {
+				// Legacy plain-text / HTML value — show it as-is.
+				return this.value;
+			}
+			try {
+				const doc = json.inline === true ? flattenInline(json) : json;
+				const { extensions } = compileRegistry();
+				const starterKit = StarterKit.configure(
+					starterKitOverrides({}, extensions)
+				);
+				return decorateKirbyTags(
+					generateHTML(doc, [starterKit, TaskList, TaskItem, ...extensions])
+				);
+			} catch {
+				// Unknown node or broken extension — show raw value, don't crash the table.
+				return this.value;
+			}
 		}
 	}
 };

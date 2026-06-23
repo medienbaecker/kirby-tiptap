@@ -28,10 +28,6 @@ export default {
 		links: {
 			type: Object,
 			default: () => ({})
-		},
-		uuid: {
-			type: Object,
-			default: () => ({ pages: true, files: true })
 		}
 	},
 

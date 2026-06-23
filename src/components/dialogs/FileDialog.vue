@@ -124,6 +124,15 @@ export default {
 				const response = await this.$panel.api.get(this.endpoint, params);
 				this.models = response.data;
 				this.pagination = response.pagination;
+
+				// Upgrade preselected ids to full models as pages load, so submit()
+				// keeps them across pagination instead of resolving against this page.
+				for (const model of this.models) {
+					if (this.selected[model.id] !== undefined) {
+						set(this.selected, model.id, model);
+					}
+				}
+
 				this.$emit("fetched", response);
 			} catch (e) {
 				this.$panel.error(e);
@@ -141,14 +150,13 @@ export default {
 			this.fetch();
 		},
 		submit() {
-			const selectedFiles = Object.keys(this.selected).map(id => {
-				return this.models.find(file => file.id === id);
-			}).filter(Boolean);
+			// Read from `selected` so a pick made on another page isn't dropped.
+			const selectedFiles = Object.values(this.selected);
 
 			this.$emit("submit", selectedFiles, this.fieldValues);
 		},
 		async search() {
-			this.pagination.page = 0;
+			this.pagination.page = 1;
 			await this.fetch();
 		},
 		toggle(item) {

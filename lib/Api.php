@@ -34,7 +34,7 @@ class Api
 					$field   = $this->field();
 					$uploads = $field->uploads();
 
-					return $field->upload($this, $uploads, fn ($file, $parent) => [
+					return $field->upload($this, $uploads, fn($file, $parent) => [
 						'filename' => $file->filename(),
 						'dragText' => $file->panel()->dragText(
 							absolute: $field->model()->is($parent) === false
@@ -153,7 +153,7 @@ class Api
 	{
 		$parts = [$tag->type . ': ' . $tag->value];
 		foreach ($tag->attrs as $key => $value) {
-			if ($value !== null && $value !== '') {
+			if ($value !== null) {
 				$parts[] = $key . ': ' . $value;
 			}
 		}
@@ -217,7 +217,7 @@ class Api
 			} catch (\Throwable) {
 				// Fall through to error
 			}
-			throw new Exception('Page not found');
+			throw new Exception(message: 'Page not found');
 		}
 
 		// File UUID (file://xxx)
@@ -231,7 +231,7 @@ class Api
 			} catch (\Throwable) {
 				// Fall through to error
 			}
-			throw new Exception('File not found');
+			throw new Exception(message: 'File not found');
 		}
 
 		// File/image/video tags with a filename (has file extension)
@@ -241,7 +241,7 @@ class Api
 				$parentPath = $file->parent()->panel()->path();
 				return ['panelUrl' => $parentPath . '/files/' . $file->filename(), 'type' => 'file'];
 			}
-			throw new Exception('File not found');
+			throw new Exception(message: 'File not found');
 		}
 
 		// Page slug/id (for link tags or anything that looks like a page reference)
@@ -250,6 +250,6 @@ class Api
 			return ['panelUrl' => $page->panel()->path(), 'type' => 'page'];
 		}
 
-		throw new Exception('Reference could not be resolved');
+		throw new Exception(message: 'Reference could not be resolved');
 	}
 }

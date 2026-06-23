@@ -57,10 +57,14 @@ class HtmlConverter
 		// Parse JSON if needed
 		if (is_string($json)) {
 			$decoded = json_decode($json, true);
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				return ''; // Invalid JSON
+			if (
+				json_last_error() !== JSON_ERROR_NONE ||
+				!ContentProcessor::validateJsonStructure($decoded)
+			) {
+				$json = ContentProcessor::plainTextToDoc($json);
+			} else {
+				$json = $decoded;
 			}
-			$json = $decoded;
 		}
 
 		// Validate JSON structure
@@ -85,20 +89,21 @@ class HtmlConverter
 			$options['offsetHeadings']
 		);
 
-		// Process nodes for KirbyTags and UUIDs
-		foreach ($json['content'] as &$node) {
-			if (!is_array($node)) {
-				continue;
-			}
-
-			KirbyTagProcessor::processContent($node, $parent, $options['allowHtml'], false);
-		}
-
-		// Split paragraphs containing block-level kirbyTags
-		$json['content'] = ContentProcessor::splitBlockContent($json['content']);
-
-		// Convert to HTML using snippets
 		try {
+			// Process nodes for KirbyTags and UUIDs
+			foreach ($json['content'] as &$node) {
+				if (!is_array($node)) {
+					continue;
+				}
+
+				KirbyTagProcessor::processContent($node, $parent, $options['allowHtml'], false);
+			}
+			unset($node);
+
+			// Split paragraphs containing block-level kirbyTags
+			$json['content'] = ContentProcessor::splitBlockContent($json['content']);
+
+			// Convert to HTML using snippets
 			$dom = (new MarkProcessor())->processNode($json);
 			$html = static::renderSnippets([$dom]);
 
@@ -108,8 +113,11 @@ class HtmlConverter
 			}
 
 			return $html;
-		} catch (\Exception) {
-			// Graceful degradation: return empty string on conversion failure
+		} catch (\Throwable $e) {
+			if (option('debug', false) === true) {
+				throw $e;
+			}
+			error_log('kirby-tiptap: render failed: ' . $e->getMessage());
 			return '';
 		}
 	}

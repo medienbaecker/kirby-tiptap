@@ -1,11 +1,11 @@
 <template>
 	<ToolbarButton icon="bold" :title="$t('toolbar.button.bold')" :editor="editor" command="toggleBold"
-		active-check="bold" :disabled-check="kirbyTagDisabledCheck" />
+		active-check="bold" :disabled-check="formattingDisabledCheck" />
 </template>
 
 <script>
 import ToolbarButton from './ToolbarButton.vue'
-import { kirbyTagDisabledCheck } from '../../extensions/insertionGuards'
+import { formattingDisabledCheck } from '../../extensions/insertionGuards'
 
 export default {
 	components: {
@@ -18,7 +18,7 @@ export default {
 		}
 	},
 	methods: {
-		kirbyTagDisabledCheck
+		formattingDisabledCheck
 	}
 }
 </script>

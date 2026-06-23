@@ -32,10 +32,6 @@ export default {
 		files: {
 			type: Object,
 			default: () => ({})
-		},
-		uuid: {
-			type: Object,
-			default: () => ({ pages: true, files: true })
 		}
 	},
 

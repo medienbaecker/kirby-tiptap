@@ -59,6 +59,9 @@ class TextareaConverter
 
 	private function convertPages($pages): void
 	{
+		// Convert every language on multilang sites; [null] = default language only.
+		$languages = kirby()->multilang() ? kirby()->languages() : [null];
+
 		foreach ($pages as $page) {
 			$this->cli->out('📁 /' . $page->id());
 
@@ -71,28 +74,34 @@ class TextareaConverter
 					continue;
 				}
 
-				$hasChanges = false;
-				$updates = [];
+				$pageChanged = false;
 
-				foreach ($fields as $fieldName) {
-					$result = $this->convertField($page, $fieldName);
-					if ($result) {
-						$hasChanges = true;
-						$updates[$fieldName] = $result['json'];
-						$this->cli->green()->out('  ✓ ' . $fieldName . ': converted ' . $result['length'] . ' characters');
+				foreach ($languages as $language) {
+					$code = $language?->code();
+					$updates = [];
+
+					foreach ($fields as $fieldName) {
+						$result = $this->convertField($page, $fieldName, $code);
+						if ($result) {
+							$updates[$fieldName] = $result['json'];
+							$label = $code ? $fieldName . ' (' . $code . ')' : $fieldName;
+							$this->cli->green()->out('  ✓ ' . $label . ': converted ' . $result['length'] . ' characters');
+						}
+					}
+
+					if (!empty($updates)) {
+						if (!$this->config['dryRun']) {
+							kirby()->impersonate('kirby', function () use ($page, $updates, $code) {
+								$page->update($updates, $code);
+							});
+						}
+						$pageChanged = true;
 					}
 				}
 
-				if ($hasChanges && !$this->config['dryRun']) {
-					kirby()->impersonate('kirby', function () use ($page, $updates) {
-						$page->update($updates);
-					});
+				if ($pageChanged) {
 					$this->processed++;
-				} elseif ($hasChanges) {
-					$this->processed++;
-				}
-
-				if (!$hasChanges) {
+				} else {
 					$this->cli->dim()->out('  No changes needed');
 				}
 			} catch (\Exception $e) {
@@ -118,15 +127,21 @@ class TextareaConverter
 		return $textareaFields;
 	}
 
-	private function convertField($page, string $fieldName): ?array
+	private function convertField($page, string $fieldName, ?string $languageCode = null): ?array
 	{
-		$content = $page->content()->get($fieldName);
+		$content = $page->content($languageCode)->get($fieldName);
 
 		if ($content->isEmpty()) {
 			return null;
 		}
 
 		$textContent = $content->value();
+
+		// Skip content that's already Tiptap JSON
+		$decoded = json_decode($textContent, true);
+		if (is_array($decoded) && ($decoded['type'] ?? null) === 'doc') {
+			return null;
+		}
 
 		try {
 			$markdown = new Markdown();

@@ -3,7 +3,7 @@
 		@keydown="handleKeydown" @focusin="handleFocusIn" @mousedown.prevent>
 		<template v-for="(button, index) in normalizedButtons">
 			<component v-if="!isSeparator(button)" :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
-				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads" :uuid="uuid"
+				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads"
 				:buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
 			<hr v-else :key="'sep-' + index" />
 		</template>
@@ -23,8 +23,21 @@ export default {
 		...props
 	},
 
+	created() {
+		// Non-reactive: mutated during render, so keep it out of data().
+		this.warnedButtons = new Set()
+	},
+
 	mounted() {
 		this.$nextTick(() => this.initRovingTabindex())
+	},
+
+	updated() {
+		// Buttons load async, so the first roving-tabindex pass can run before any
+		// exist. Re-run once buttons are present but none is the tab stop yet.
+		if (this.getButtons().length && !this.$el.querySelector('button[tabindex="0"]')) {
+			this.initRovingTabindex()
+		}
 	},
 
 	computed: {
@@ -99,7 +112,12 @@ export default {
 		},
 
 		getComponentType(button) {
-			return this.buttonComponents[button.type]
+			const component = this.buttonComponents[button.type]
+			if (!component && button.type !== '|' && !this.warnedButtons.has(button.type)) {
+				this.warnedButtons.add(button.type)
+				console.warn(`[kirby-tiptap] Unknown toolbar button "${button.type}" — not found in registry. Check the blueprint or that its extension is loaded.`)
+			}
+			return component
 		},
 
 		getKey(button) {
@@ -134,7 +152,10 @@ export default {
 
 		// Roving tabindex methods
 		getButtons() {
-			return this.$el ? Array.from(this.$el.querySelectorAll('button')) : []
+			if (!this.$el) return []
+			// Toolbar-level buttons only — exclude buttons inside open dropdowns.
+			return Array.from(this.$el.querySelectorAll('button'))
+				.filter(btn => !btn.closest('.k-dropdown-content'))
 		},
 
 		initRovingTabindex() {

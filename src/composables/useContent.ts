@@ -60,22 +60,15 @@ export function useContent(
 			return true;
 		}
 
-		// If there's only one element
+		// A lone node is only "empty" if it's an empty paragraph; any other one
+		// (heading, hr, registry atoms) is real content.
 		if (content.content.length === 1) {
 			const firstNode = content.content[0] as TiptapNode;
 
-			// Special handling for headings - they're not empty even without content
-			if (firstNode.type === "heading") {
-				return false;
-			}
-
-			// Check if element has content array
-			if (!Array.isArray(firstNode.content)) {
-				return true;
-			}
-
-			// Check if content is empty
-			return firstNode.content.length === 0;
+			return (
+				firstNode.type === "paragraph" &&
+				(!Array.isArray(firstNode.content) || firstNode.content.length === 0)
+			);
 		}
 
 		return false;

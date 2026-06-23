@@ -29,7 +29,10 @@ export const Highlights = Extension.create<HighlightsOptions>({
 	},
 
 	addProseMirrorPlugins() {
-		const { endpoints } = this.options;
+		const { endpoints, kirbytags } = this.options;
+
+		const registeredTags =
+			kirbytags && kirbytags.length ? new Set(kirbytags) : null;
 
 		const resolvedCache = new Map<string, boolean>();
 		const pendingRefs = new Map<string, string>();
@@ -101,6 +104,15 @@ export const Highlights = Extension.create<HighlightsOptions>({
 							for (const [start, end] of kirbytagPositions) {
 								const tagText = text.substring(start, end);
 								const parsed = parseKirbyTag(tagText);
+
+								if (
+									registeredTags &&
+									parsed._type &&
+									!registeredTags.has(parsed._type)
+								) {
+									continue;
+								}
+
 								const navTarget = getNavigationTarget(parsed);
 
 								decorations.push(
@@ -181,7 +193,7 @@ export const Highlights = Extension.create<HighlightsOptions>({
 							event.stopPropagation();
 
 							if (type === "external") {
-								window.open(reference, "_blank");
+								window.open(reference, "_blank", "noopener,noreferrer");
 							} else {
 								navigateToKirbyTag({ reference, type }, endpoints, getPanel());
 							}
