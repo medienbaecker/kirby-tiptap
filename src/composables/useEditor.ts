@@ -73,8 +73,15 @@ export function useEditor(
 	 * Returns filtered buttons based on inline mode
 	 */
 	const allowedButtons = computed<ButtonItem[]>(() => {
+		// Kirby's Markdown parser has no task list syntax, so the button
+		// would produce content that renders as literal "[x]" on the frontend
+		const buttons =
+			props.format === "markdown"
+				? props.buttons.filter((btn) => btn !== "taskList")
+				: props.buttons;
+
 		if (!props.inline) {
-			return props.buttons;
+			return buttons;
 		}
 
 		const blockElements = [
@@ -87,7 +94,7 @@ export function useEditor(
 			"horizontalRule",
 		];
 
-		return props.buttons
+		return buttons
 			.filter((btn) => {
 				// Handle object buttons (headings, paragraphClass, etc.)
 				if (typeof btn === "object") {

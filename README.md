@@ -159,7 +159,9 @@ Notes:
 
 - Switching the format does **not** convert existing content: fields keep whatever is stored until they are edited and saved again. Don't flip the global option on a site with existing JSON tiptap content.
 - The `pretty` and `offsetHeadings` options only apply to JSON fields
+- The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax
 - Custom nodes from the Extension API need Markdown serialization support to survive the round-trip — stick to the standard buttons for Markdown fields
+- Rendering goes through `kirbytext()`, so output details match textarea fields (e.g. block-level KirbyTags inside a paragraph keep Kirby's markup) rather than the JSON pipeline. `scripts/format-compare.sh` diffs the two pipelines case by case.
 
 ### Blocks field
 
