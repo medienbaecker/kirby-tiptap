@@ -50,7 +50,8 @@ export function canInsertKirbyTag(state: EditorState, pos?: number): boolean {
 		ranges.some(([s, e]) => {
 			const from = charIndexToPos(parent, 0, s);
 			const to = charIndexToPos(parent, 0, e);
-			return offset >= from && offset < to;
+			// The tag's first position is a valid insertion point (before it)
+			return offset > from && offset < to;
 		})
 	)
 		return false;
