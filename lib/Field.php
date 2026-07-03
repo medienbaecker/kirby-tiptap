@@ -123,7 +123,9 @@ class Field
 			},
 			'links' => function ($links = []) {
 				if (isset($links['fields']) && is_array($links['fields'])) {
-					$links['fields'] = static::processDialogFields($links['fields']);
+					// Explicit class: Kirby calls prop closures with Closure::call(),
+					// which rebinds static:: to the field class
+					$links['fields'] = Field::processDialogFields($links['fields']);
 				}
 				return $links;
 			},
@@ -135,12 +137,12 @@ class Field
 					$files = [];
 				}
 				if (isset($files['fields']) && is_array($files['fields'])) {
-					$files['fields'] = static::processDialogFields($files['fields']);
+					$files['fields'] = Field::processDialogFields($files['fields']);
 				}
 				return $files;
 			},
 			'uuid' => function () {
-				return static::getUuidConfig();
+				return Field::getUuidConfig();
 			},
 		];
 	}
