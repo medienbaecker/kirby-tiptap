@@ -12,6 +12,8 @@
 </template>
 
 <script>
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { keydownHandler } from '@tiptap/pm/keymap'
 import { getShortcut } from '../../utils/shortcuts.js'
 
 export default {
@@ -30,7 +32,7 @@ export default {
 			active: false,
 			disabled: false,
 			updateTimer: null,
-			keyboardHandler: null,
+			shortcutPluginKey: null,
 			onSelectionUpdate: null,
 			onTransaction: null
 		}
@@ -164,31 +166,20 @@ export default {
 		registerShortcut() {
 			if (!this.shortcut || !this.editor) return;
 
-			this.keyboardHandler = (event) => {
-				// Already handled by a ProseMirror keymap — don't double-fire.
-				if (event.defaultPrevented) return
-
-				const parts = this.shortcut.split('-')
-				const key = parts.pop().toLowerCase()
-
-				const needsMod = parts.includes('Mod')
-				const needsShift = parts.includes('Shift')
-				const needsAlt = parts.includes('Alt')
-
-				const modMatch = needsMod === (event.metaKey || event.ctrlKey)
-				const shiftMatch = needsShift === event.shiftKey
-				const altMatch = needsAlt === event.altKey
-				const keyMatch = event.key.toLowerCase() === key
-
-				if (modMatch && shiftMatch && altMatch && keyMatch) {
-					event.preventDefault()
-					if (!this.disabled) this.runCommand()
+			// A ProseMirror keymap plugin handles Mod normalization and runs
+			// after the extensions' own keymaps, so built-in shortcuts win.
+			this.shortcutPluginKey = new PluginKey(`toolbarShortcut:${this.shortcut}`)
+			this.editor.registerPlugin(new Plugin({
+				key: this.shortcutPluginKey,
+				props: {
+					handleKeyDown: keydownHandler({
+						[this.shortcut]: () => {
+							if (!this.disabled) this.runCommand()
+							return true
+						}
+					})
 				}
-			};
-
-			if (this.editor.view?.dom) {
-				this.editor.view.dom.addEventListener('keydown', this.keyboardHandler);
-			}
+			}))
 		},
 
 		detachEditor(editor) {
@@ -197,9 +188,9 @@ export default {
 			if (this.onSelectionUpdate) editor.off('selectionUpdate', this.onSelectionUpdate)
 			if (this.onTransaction) editor.off('transaction', this.onTransaction)
 
-			if (this.keyboardHandler && editor.view?.dom) {
-				editor.view.dom.removeEventListener('keydown', this.keyboardHandler)
-				this.keyboardHandler = null
+			if (this.shortcutPluginKey && !editor.isDestroyed) {
+				editor.unregisterPlugin(this.shortcutPluginKey)
+				this.shortcutPluginKey = null
 			}
 		}
 	}
