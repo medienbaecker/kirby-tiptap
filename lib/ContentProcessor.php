@@ -15,7 +15,7 @@ class ContentProcessor
 	 */
 	public static function cleanListItemContent($node)
 	{
-		if (($node['type'] ?? '') === 'listItem' && isset($node['content'])) {
+		if (in_array($node['type'] ?? '', ['listItem', 'taskItem'], true) && isset($node['content'])) {
 			if (count($node['content']) === 1 && ($node['content'][0]['type'] ?? '') === 'paragraph') {
 				$node['content'] = $node['content'][0]['content'] ?? [];
 			}
