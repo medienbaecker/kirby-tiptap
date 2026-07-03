@@ -50,12 +50,10 @@ interface EventHandlers {
 interface UseEditorReturn {
 	editor: Ref<Editor | null>;
 	allowedButtons: ComputedRef<ButtonItem[]>;
-	starterKitConfig: ComputedRef<Record<string, unknown>>;
 	createEditor: (
 		initialContent: TiptapDocument | string,
 		eventHandlers: EventHandlers
 	) => void;
-	destroyEditor: () => void;
 }
 
 /**
@@ -212,19 +210,13 @@ export function useEditor(
 		}
 	};
 
-	const destroyEditor = () => {
-		editor.value?.destroy();
-	};
-
 	onUnmounted(() => {
-		destroyEditor();
+		editor.value?.destroy();
 	});
 
 	return {
 		editor,
 		allowedButtons,
-		starterKitConfig,
 		createEditor,
-		destroyEditor,
 	};
 }

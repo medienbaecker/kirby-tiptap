@@ -14,13 +14,24 @@ interface UploadHandlers {
 	error?: (error: Error) => void;
 }
 
+interface UploadOptions {
+	url: string;
+	multiple: boolean;
+	on: {
+		cancel: () => void;
+		error?: (error: Error) => void;
+		done: (files: unknown[]) => void;
+	};
+	attributes?: { template?: string; parent?: string };
+}
+
 export function buildUploadOptions(
 	endpoints: EndpointsConfig,
 	uploads: UploadsConfig,
 	panel: Panel,
 	handlers: UploadHandlers
-) {
-	const options: any = {
+): UploadOptions {
+	const options: UploadOptions = {
 		url: `${panel.urls.api}/${getFieldApiPath(endpoints)}/upload`,
 		multiple: false,
 		on: {

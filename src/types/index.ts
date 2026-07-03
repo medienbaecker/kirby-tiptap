@@ -137,22 +137,23 @@ export interface DialogOption {
 	text: string
 }
 
-// Registry types for Extension API
+// Registry types for Extension API — callbacks receive the core editor
+// instance (extensions run below the Vue layer)
 export interface RegistryButton {
 	name: string
 	label: string
 	icon: string
-	command: (ctx: { editor: Editor }) => void
-	activeCheck?: (ctx: { editor: Editor }) => boolean
-	disabledCheck?: (ctx: { editor: Editor }) => boolean
+	command: (ctx: { editor: CoreEditor }) => void
+	activeCheck?: (ctx: { editor: CoreEditor }) => boolean
+	disabledCheck?: (ctx: { editor: CoreEditor }) => boolean
 	shortcut?: string
-	dropdown?: (ctx: { editor: Editor }) => Array<{ label: string; icon?: string; click: () => void }>
+	dropdown?: (ctx: { editor: CoreEditor }) => Array<{ label: string; icon?: string; click: () => void }>
 }
 
 export interface RegistryShortcut {
 	name: string
 	keys: string[]
-	command: (ctx: { editor: Editor }) => boolean | void
+	command: (ctx: { editor: CoreEditor }) => boolean | void
 }
 
 export interface RegistryExtension {

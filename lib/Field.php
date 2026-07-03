@@ -123,7 +123,7 @@ class Field
 			},
 			'links' => function ($links = []) {
 				if (isset($links['fields']) && is_array($links['fields'])) {
-					$links['fields'] = \Medienbaecker\Tiptap\Field::processDialogFields($links['fields']);
+					$links['fields'] = static::processDialogFields($links['fields']);
 				}
 				return $links;
 			},
@@ -135,7 +135,7 @@ class Field
 					$files = [];
 				}
 				if (isset($files['fields']) && is_array($files['fields'])) {
-					$files['fields'] = \Medienbaecker\Tiptap\Field::processDialogFields($files['fields']);
+					$files['fields'] = static::processDialogFields($files['fields']);
 				}
 				return $files;
 			},

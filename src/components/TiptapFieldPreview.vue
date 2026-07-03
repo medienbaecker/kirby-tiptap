@@ -43,6 +43,20 @@ const flattenInline = (json) => ({
 	}]
 });
 
+// The registry doesn't change at runtime — compile the extension set once
+// instead of per table cell.
+let previewExtensions = null;
+const getPreviewExtensions = () => {
+	if (!previewExtensions) {
+		const { extensions } = compileRegistry();
+		const starterKit = StarterKit.configure(
+			starterKitOverrides({}, extensions)
+		);
+		previewExtensions = [starterKit, TaskList, TaskItem, ...extensions];
+	}
+	return previewExtensions;
+};
+
 export default {
 	mixins: [FieldPreview],
 	props: {
@@ -59,12 +73,8 @@ export default {
 			}
 			try {
 				const doc = json.inline === true ? flattenInline(json) : json;
-				const { extensions } = compileRegistry();
-				const starterKit = StarterKit.configure(
-					starterKitOverrides({}, extensions)
-				);
 				return decorateKirbyTags(
-					generateHTML(doc, [starterKit, TaskList, TaskItem, ...extensions])
+					generateHTML(doc, getPreviewExtensions())
 				);
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.

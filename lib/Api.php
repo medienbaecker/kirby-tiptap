@@ -20,8 +20,10 @@ class Api
 			[
 				'pattern' => 'files',
 				'action' => function () {
+					// Only the query is picker config; other keys in files()
+					// (like dialog fields) don't belong in picker params
 					return $this->field()->filepicker([
-						...$this->field()->files(),
+						'query'  => $this->field()->files()['query'] ?? null,
 						'page'   => $this->requestQuery('page'),
 						'search' => $this->requestQuery('search'),
 					]);
