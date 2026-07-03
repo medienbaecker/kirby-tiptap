@@ -2,6 +2,9 @@
 
 namespace Medienbaecker\Tiptap;
 
+use Kirby\Exception\Exception;
+use Kirby\Template\Snippet;
+
 /**
  * Converts Tiptap JSON content to HTML using Kirby snippets.
  * Each node type is rendered by a snippet in snippets/tiptap/{type}.php
@@ -20,7 +23,23 @@ class HtmlConverter
 			$node = $content[$i];
 			$children = static::renderSnippets($node['content'] ?? [], $node);
 
-			$html .= snippet('tiptap/' . $node['type'], [
+			$name = 'tiptap/' . ($node['type'] ?? '');
+
+			// A node type without a snippet (e.g. a custom extension node)
+			// must not silently swallow content: warn, throw in debug mode,
+			// and fall back to the children so text survives.
+			if (Snippet::file($name) === null) {
+				$message = 'kirby-tiptap: no snippet "' . $name . '" for node type "' . ($node['type'] ?? '?') . '"';
+				if (option('debug', false) === true) {
+					throw new Exception(message: $message);
+				}
+				error_log($message);
+				$html .= $children;
+				$previous = $node;
+				continue;
+			}
+
+			$html .= snippet($name, [
 				...$node,
 				'content' => $children,
 				'next' => $content[$i + 1] ?? null,
