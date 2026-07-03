@@ -88,7 +88,9 @@ class Field
 			'inline' => function ($inline = false) {
 				return $inline;
 			},
-			'format' => function ($format = 'json') {
+			'format' => function ($format = null) {
+				// Blueprint value wins over the global config option
+				$format ??= option('medienbaecker.tiptap.format', 'json');
 				return $format === 'markdown' ? 'markdown' : 'json';
 			},
 			'pretty' => function ($pretty = false) {

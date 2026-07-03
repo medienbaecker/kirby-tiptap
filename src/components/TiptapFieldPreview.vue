@@ -8,6 +8,7 @@
 
 <script>
 import { generateHTML } from '@tiptap/core';
+import { MarkdownManager } from '@tiptap/markdown';
 import StarterKit from '@tiptap/starter-kit';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
@@ -49,12 +50,22 @@ let previewExtensions = null;
 const getPreviewExtensions = () => {
 	if (!previewExtensions) {
 		const { extensions } = compileRegistry();
+		// link: false matches the editor schema, so KirbyTags containing
+		// URLs stay plain text instead of being autolinked
 		const starterKit = StarterKit.configure(
-			starterKitOverrides({}, extensions)
+			starterKitOverrides({ link: false }, extensions)
 		);
 		previewExtensions = [starterKit, TaskList, TaskItem, ...extensions];
 	}
 	return previewExtensions;
+};
+
+let markdownManager = null;
+const parseMarkdown = (value) => {
+	if (!markdownManager) {
+		markdownManager = new MarkdownManager({ extensions: getPreviewExtensions() });
+	}
+	return markdownManager.parse(value);
 };
 
 export default {
@@ -68,8 +79,12 @@ export default {
 			try {
 				json = JSON.parse(this.value);
 			} catch {
-				// Legacy plain-text / HTML value — show it as-is.
-				return this.value;
+				// Markdown (format: markdown) or legacy plain-text value
+				try {
+					json = parseMarkdown(this.value);
+				} catch {
+					return this.value;
+				}
 			}
 			try {
 				const doc = json.inline === true ? flattenInline(json) : json;

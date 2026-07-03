@@ -148,11 +148,18 @@ fields:
 
 `tiptapText()` renders Markdown values through Kirby's own `kirbytext()` pipeline (KirbyTags, Markdown, SmartyPants), so templates work unchanged. For inline rendering pass `['inline' => true]`.
 
+To switch every tiptap field to Markdown, set the format globally (blueprint values still win):
+
+```php
+// site/config/config.php
+'medienbaecker.tiptap.format' => 'markdown',
+```
+
 Notes:
 
+- Switching the format does **not** convert existing content: fields keep whatever is stored until they are edited and saved again. Don't flip the global option on a site with existing JSON tiptap content.
 - The `pretty` and `offsetHeadings` options only apply to JSON fields
 - Custom nodes from the Extension API need Markdown serialization support to survive the round-trip — stick to the standard buttons for Markdown fields
-- The field preview in structure/object fields shows the raw Markdown
 
 ### Blocks field
 

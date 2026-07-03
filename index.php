@@ -16,6 +16,7 @@ use Medienbaecker\Tiptap\TextareaConverter;
 Kirby::plugin('medienbaecker/tiptap', [
 	'options' => [
 		'uuid' => null,
+		'format' => 'json',
 	],
 	'blueprints' => [
 		'blocks/tiptap' => __DIR__ . '/blueprints/blocks/tiptap.yml',
