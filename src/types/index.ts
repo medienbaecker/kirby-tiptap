@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/vue-2'
-import type { AnyExtension } from '@tiptap/core'
+import type { AnyExtension, Editor as CoreEditor } from '@tiptap/core'
 import type { Component } from 'vue'
 
 // Links configuration
@@ -46,8 +46,18 @@ export interface ButtonMeta {
 	buttonConfig?: RegistryButton
 }
 
+// Config for buttons that render a plain ToolbarButton without a
+// dedicated component (icon comes from ButtonMeta)
+export interface SimpleButtonConfig {
+	title: string // i18n key
+	command: string | ((editor: CoreEditor) => void)
+	activeCheck?: string | ((editor: CoreEditor) => boolean)
+	disabledCheck?: (editor: CoreEditor) => boolean
+}
+
 export interface ButtonRegistryEntry {
-	component: () => Promise<{ default: Component }>
+	component?: () => Promise<{ default: Component }>
+	simple?: SimpleButtonConfig
 	meta: ButtonMeta
 }
 

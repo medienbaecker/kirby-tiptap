@@ -2,10 +2,13 @@
 	<nav class="k-toolbar tiptap-toolbar" role="toolbar" :aria-label="$t('toolbar')" v-if="editor"
 		@keydown="handleKeydown" @focusin="handleFocusIn" @mousedown.prevent>
 		<template v-for="(button, index) in normalizedButtons">
-			<component v-if="!isSeparator(button)" :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
+			<hr v-if="isSeparator(button)" :key="'sep-' + index" />
+			<ToolbarButton v-else-if="getSimple(button)" :key="getKey(button)" :editor="editor"
+				:icon="getIcon(button)" :title="$t(getSimple(button).title)" :command="getSimple(button).command"
+				:active-check="getSimple(button).activeCheck" :disabled-check="getSimple(button).disabledCheck" />
+			<component v-else :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
 				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads"
 				:kirbytags="kirbytags" :buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
-			<hr v-else :key="'sep-' + index" />
 		</template>
 	</nav>
 </template>
@@ -13,11 +16,14 @@
 <script>
 import { props } from './props.js'
 import { buttonRegistry } from '../utils/buttonRegistry.js'
+import ToolbarButton from './toolbarButtons/ToolbarButton.vue'
 
 // Component cache to avoid recreating async components
 const componentCache = new Map()
 
 export default {
+	components: { ToolbarButton },
+
 	props: {
 		editor: Object,
 		...props
@@ -47,6 +53,10 @@ export default {
 
 			// Get all buttons from registry
 			for (const [name, config] of buttonRegistry.getAllButtons()) {
+				// Simple buttons render a plain ToolbarButton, no component to load
+				if (!config.component) {
+					continue
+				}
 				// Use cached component or create new one
 				if (!componentCache.has(name)) {
 					componentCache.set(name, () => {
@@ -109,6 +119,16 @@ export default {
 	methods: {
 		isSeparator(button) {
 			return button.type === '|'
+		},
+
+		getSimple(button) {
+			// Registry buttons can override core buttons, so only treat the
+			// button as simple when the resolved entry itself is simple
+			return buttonRegistry.getButton(button.type)?.simple || null
+		},
+
+		getIcon(button) {
+			return buttonRegistry.getButton(button.type)?.meta.icon
 		},
 
 		getComponentType(button) {

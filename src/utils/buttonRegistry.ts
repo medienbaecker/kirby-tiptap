@@ -1,32 +1,70 @@
-import type { ButtonRegistryEntry, ButtonMeta, RegistryButton } from "../types";
+import type { ButtonRegistryEntry, RegistryButton } from "../types";
+import {
+	formattingDisabledCheck,
+	kirbyTagDisabledCheck,
+} from "../extensions/insertionGuards";
+import type { Editor } from "@tiptap/core";
 
+/**
+ * Buttons that only toggle an editor command render a plain ToolbarButton
+ * straight from this config (`simple`). Buttons with their own UI
+ * (dropdowns, dialogs) load a dedicated component instead.
+ */
 const coreButtons: Record<string, ButtonRegistryEntry> = {
 	headings: {
 		component: () => import('../components/toolbarButtons/HeadingsButton.vue'),
 		meta: { icon: 'title', group: 'text' }
 	},
 	bold: {
-		component: () => import('../components/toolbarButtons/BoldButton.vue'),
+		simple: {
+			title: 'toolbar.button.bold',
+			command: 'toggleBold',
+			activeCheck: 'bold',
+			disabledCheck: formattingDisabledCheck
+		},
 		meta: { icon: 'bold', group: 'text' }
 	},
 	italic: {
-		component: () => import('../components/toolbarButtons/ItalicButton.vue'),
+		simple: {
+			title: 'toolbar.button.italic',
+			command: 'toggleItalic',
+			activeCheck: 'italic',
+			disabledCheck: formattingDisabledCheck
+		},
 		meta: { icon: 'italic', group: 'text' }
 	},
 	strike: {
-		component: () => import('../components/toolbarButtons/StrikeButton.vue'),
+		simple: {
+			title: 'toolbar.button.strike',
+			command: 'toggleStrike',
+			activeCheck: 'strike',
+			disabledCheck: formattingDisabledCheck
+		},
 		meta: { icon: 'strikethrough', group: 'text' }
 	},
 	code: {
-		component: () => import('../components/toolbarButtons/CodeButton.vue'),
+		simple: {
+			title: 'toolbar.button.code',
+			command: 'toggleCode',
+			activeCheck: 'code',
+			disabledCheck: kirbyTagDisabledCheck
+		},
 		meta: { icon: 'code', group: 'text' }
 	},
 	codeBlock: {
-		component: () => import('../components/toolbarButtons/CodeBlockButton.vue'),
+		simple: {
+			title: 'tiptap.toolbar.button.codeBlock',
+			command: 'toggleCodeBlock',
+			activeCheck: 'codeBlock'
+		},
 		meta: { icon: 'code-block', group: 'blocks' }
 	},
 	blockquote: {
-		component: () => import('../components/toolbarButtons/BlockquoteButton.vue'),
+		simple: {
+			title: 'tiptap.toolbar.button.blockquote',
+			command: 'toggleBlockquote',
+			activeCheck: 'blockquote'
+		},
 		meta: { icon: 'quote', group: 'blocks' }
 	},
 	link: {
@@ -42,24 +80,44 @@ const coreButtons: Record<string, ButtonRegistryEntry> = {
 		meta: { icon: 'image', group: 'blocks' }
 	},
 	bulletList: {
-		component: () => import('../components/toolbarButtons/BulletListButton.vue'),
+		simple: {
+			title: 'toolbar.button.ul',
+			command: 'toggleBulletList',
+			activeCheck: 'bulletList'
+		},
 		meta: { icon: 'list-bullet', group: 'lists' }
 	},
 	orderedList: {
-		component: () => import('../components/toolbarButtons/OrderedListButton.vue'),
+		simple: {
+			title: 'toolbar.button.ol',
+			command: 'toggleOrderedList',
+			activeCheck: 'orderedList'
+		},
 		meta: { icon: 'list-numbers', group: 'lists' }
 	},
 	taskList: {
-		component: () => import('../components/toolbarButtons/TaskListButton.vue'),
+		simple: {
+			title: 'tiptap.toolbar.button.taskList',
+			command: 'toggleTaskList',
+			activeCheck: 'taskList'
+		},
 		meta: { icon: 'checklist', group: 'lists' }
 	},
 	horizontalRule: {
-		component: () => import('../components/toolbarButtons/HorizontalRuleButton.vue'),
+		simple: {
+			title: 'tiptap.toolbar.button.horizontalRule',
+			command: 'setHorizontalRule',
+			activeCheck: 'horizontalRule'
+		},
 		meta: { icon: 'horizontal-rule', group: 'blocks' }
 	},
 	removeFormatting: {
-		component: () => import('../components/toolbarButtons/RemoveFormattingButton.vue'),
-		meta: { icon: 'remove-formatting', group: 'text' }
+		simple: {
+			title: 'toolbar.button.clear',
+			command: (editor: Editor) =>
+				editor.chain().focus().clearNodes().unsetAllMarks().run()
+		},
+		meta: { icon: 'clear', group: 'text' }
 	}
 };
 
