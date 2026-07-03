@@ -256,6 +256,32 @@ export const findKirbyTagRanges = (text: string): [number, number][] => {
 };
 
 /**
+ * Reader-visible text: each KirbyTag is replaced by what it renders as
+ * text — its `text:` attribute if present, otherwise the main value for
+ * link-like tags, nothing for media tags. Approximates the server-side
+ * length measure (rendered HTML with tags stripped) so the counter and
+ * min/maxlength validation agree.
+ */
+export const getVisibleText = (text: string, tags?: KirbytagsMap): string => {
+	const ranges = findKirbyTagRanges(text);
+	if (ranges.length === 0) return text;
+
+	let out = "";
+	let cursor = 0;
+	for (const [start, end] of ranges) {
+		out += text.substring(cursor, start);
+		const parsed = parseKirbyTag(text.substring(start, end), tags);
+		if (typeof parsed.text === "string" && parsed.text) {
+			out += parsed.text;
+		} else if (["link", "email", "tel"].includes(parsed._type)) {
+			out += parsed.href ?? "";
+		}
+		cursor = end;
+	}
+	return out + text.substring(cursor);
+};
+
+/**
  * Extract navigation target from a parsed KirbyTag.
  * Returns null for non-navigable tags (email, tel).
  */

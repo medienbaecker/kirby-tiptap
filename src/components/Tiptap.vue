@@ -12,6 +12,7 @@
 <script>
 import TiptapInput from './TiptapInput.vue'
 import { props } from './props.js'
+import { getVisibleText } from '../utils/kirbyTags'
 import counter from "@/mixins/forms/counter.js";
 
 export default {
@@ -25,7 +26,9 @@ export default {
 
 	computed: {
 		counterValue() {
-			return this.editor?.getText() || '';
+			// Count reader-visible text so the counter matches the
+			// server-side min/maxlength validation.
+			return getVisibleText(this.editor?.getText() || '', this.kirbytags);
 		}
 	},
 
