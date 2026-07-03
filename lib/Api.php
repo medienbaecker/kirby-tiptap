@@ -198,7 +198,7 @@ class Api
 	 * @param string $reference The reference value (UUID, slug, filename, URL)
 	 * @param string $type The KirbyTag type (link, image, file, video)
 	 * @param mixed $model The parent model for context (resolving filenames)
-	 * @return array{panelUrl?: string, url?: string, type: string}
+	 * @return array{panelUrl?: string, url?: string, type: string, id?: string}
 	 */
 	public static function resolveKirbyTagReference(string $reference, string $type, $model): array
 	{
@@ -226,7 +226,11 @@ class Api
 				$file = Uuid::for($reference)?->model();
 				if ($file) {
 					$parentPath = $file->parent()->panel()->path();
-					return ['panelUrl' => $parentPath . '/files/' . $file->filename(), 'type' => 'file'];
+					return [
+						'panelUrl' => $parentPath . '/files/' . $file->filename(),
+						'type' => 'file',
+						'id' => static::filePickerId($file, $model),
+					];
 				}
 			} catch (\Throwable) {
 				// Fall through to error
@@ -239,7 +243,11 @@ class Api
 			$file = $model->file($reference);
 			if ($file) {
 				$parentPath = $file->parent()->panel()->path();
-				return ['panelUrl' => $parentPath . '/files/' . $file->filename(), 'type' => 'file'];
+				return [
+					'panelUrl' => $parentPath . '/files/' . $file->filename(),
+					'type' => 'file',
+					'id' => static::filePickerId($file, $model),
+				];
 			}
 			throw new Exception(message: 'File not found');
 		}
@@ -251,5 +259,17 @@ class Api
 		}
 
 		throw new Exception(message: 'Reference could not be resolved');
+	}
+
+	/**
+	 * The id the filepicker uses for a file: just the filename when the
+	 * file belongs to the field's model (see Panel\File::pickerData()).
+	 */
+	private static function filePickerId($file, $model): string
+	{
+		if ($model && $file->parent()->is($model)) {
+			return $file->filename();
+		}
+		return $file->id();
 	}
 }

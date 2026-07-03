@@ -5,7 +5,7 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
-import { parseKirbyTag, generateKirbyTag, findTagAtPos } from '../../utils/kirbyTags';
+import { parseKirbyTag, generateKirbyTag, findTagAtPos, getFieldApiPath } from '../../utils/kirbyTags';
 import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
 import { buildUploadOptions } from '../../utils/upload';
@@ -236,7 +236,7 @@ export default {
 				const initial = parseKirbyTag(context.tagText, this.kirbytags);
 
 				if (initial.uuid) {
-					this.findFileByReference(initial.uuid)
+					this.findFileByReference(initial.uuid, initial._type)
 						.then(fileId => {
 							const value = fileId ? [fileId] : [];
 							this.openFileDialog(restoreSelection, initial, value, true, context.replaceRange);
@@ -282,6 +282,12 @@ export default {
 
 						restoreSelection(async () => {
 							const file = files[0];
+							// Same file as before: keep the original reference so
+							// editing attributes doesn't rewrite filename → UUID
+							const originalReference =
+								isEditing && initial?.uuid && value?.[0] === file.id
+									? initial.uuid
+									: null;
 							let content = file.dragText;
 
 							// Process UUID configuration via API
@@ -290,7 +296,7 @@ export default {
 							if (fieldValues && Object.keys(fieldValues).length > 0) {
 								try {
 									const parsed = parseKirbyTag(content, this.kirbytags);
-									const { _type, uuid, href, value, ...existingAttributes } = parsed;
+									const { _type, uuid, href, value: parsedValue, ...existingAttributes } = parsed;
 									const plainFieldValues = JSON.parse(JSON.stringify(fieldValues));
 									const filteredFieldValues = Object.fromEntries(
 										Object.entries(plainFieldValues).filter(([, value]) =>
@@ -298,11 +304,19 @@ export default {
 										)
 									);
 									const enhanced = { ...existingAttributes, ...filteredFieldValues };
-									const reference = uuid || href || value;
+									const reference = originalReference || uuid || href || parsedValue;
 									content = generateKirbyTag(_type, reference, enhanced);
-									
+
 									// Process the enhanced tag through API for UUID conversion
 									content = await processKirbyTagApi(content, this.endpoints, this.$panel);
+								} catch {
+									// Fall back to unenhanced tag
+								}
+							} else if (originalReference) {
+								try {
+									const parsed = parseKirbyTag(content, this.kirbytags);
+									const { _type, uuid, href, value: parsedValue, ...existingAttributes } = parsed;
+									content = generateKirbyTag(_type, originalReference, existingAttributes);
 								} catch {
 									// Fall back to unenhanced tag
 								}
@@ -348,18 +362,13 @@ export default {
 			};
 		},
 
-		async findFileByReference(reference) {
+		async findFileByReference(reference, type = 'file') {
 			try {
-				const response = await this.$panel.api.get(`${this.endpoints.field}/files`);
-				const files = response.data || [];
-
-				let file = files.find(f => f.uuid === reference);
-				if (file) return file.id;
-
-				file = files.find(f => f.filename === reference);
-				if (file) return file.id;
-
-				return null;
+				const response = await this.$panel.api.post(
+					`${getFieldApiPath(this.endpoints)}/resolve-kirbytag`,
+					{ reference, type }
+				);
+				return response.id || null;
 			} catch (error) {
 				return null;
 			}
