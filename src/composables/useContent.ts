@@ -6,6 +6,7 @@ import type { TiptapDocument, TiptapNode } from "../types";
 interface ContentProps {
 	inline?: boolean;
 	pretty?: boolean;
+	format?: "json" | "markdown";
 }
 
 interface UseContentReturn {
@@ -31,6 +32,11 @@ export function useContent(
 	): TiptapDocument | string => {
 		// Handle non-string values (already parsed)
 		if (typeof value !== "string") {
+			return value;
+		}
+
+		// Markdown values are handled by the editor's markdown extension
+		if (props.format === "markdown") {
 			return value;
 		}
 
@@ -99,9 +105,16 @@ export function useContent(
 
 		const isEmpty = isContentEmpty(content);
 
-		const json = isEmpty
-			? ""
-			: JSON.stringify(
+		let json = "";
+		if (!isEmpty) {
+			if (props.format === "markdown") {
+				json = (
+					editorInstance as unknown as {
+						markdown: { serialize: (doc: TiptapDocument) => string };
+					}
+				).markdown.serialize(content);
+			} else {
+				json = JSON.stringify(
 					{
 						type: "doc",
 						content: content.content,
@@ -109,7 +122,9 @@ export function useContent(
 					},
 					null,
 					props.pretty ? 2 : 0
-			  );
+				);
+			}
+		}
 
 		emit("input", { json });
 

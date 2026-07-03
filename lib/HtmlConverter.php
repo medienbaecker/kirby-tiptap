@@ -66,6 +66,7 @@ class HtmlConverter
 		$options = array_merge([
 			'offsetHeadings' => 0,
 			'allowHtml' => false,
+			'inline' => false,
 		], $options);
 
 		// Handle invalid input
@@ -80,10 +81,15 @@ class HtmlConverter
 				json_last_error() !== JSON_ERROR_NONE ||
 				!ContentProcessor::validateJsonStructure($decoded)
 			) {
-				$json = ContentProcessor::plainTextToDoc($json);
-			} else {
-				$json = $decoded;
+				// Markdown value (format: markdown) or legacy plain text:
+				// render with Kirby's own pipeline (KirbyTags + Markdown +
+				// SmartyPants), like a textarea field
+				return kirbytext($json, [
+					'parent' => $parent,
+					'markdown' => ['inline' => $options['inline'] === true],
+				]);
 			}
+			$json = $decoded;
 		}
 
 		// Validate JSON structure

@@ -88,6 +88,9 @@ class Field
 			'inline' => function ($inline = false) {
 				return $inline;
 			},
+			'format' => function ($format = 'json') {
+				return $format === 'markdown' ? 'markdown' : 'json';
+			},
 			'pretty' => function ($pretty = false) {
 				return $pretty;
 			},

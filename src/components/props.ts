@@ -24,6 +24,7 @@ export const props = {
 	size: String,
 	buttons: Array as PropType<ButtonItem[]>,
 	inline: Boolean,
+	format: String as PropType<'json' | 'markdown'>,
 	kirbytags: Object as PropType<KirbytagsMap>,
 	links: Object as PropType<LinksConfig>,
 	files: Object as PropType<FilesConfig>,

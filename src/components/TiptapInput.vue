@@ -41,7 +41,10 @@ export default {
 			if (newValue !== oldValue && newValue !== lastEmittedJson.value) {
 				const newContent = parseContent(newValue)
 				if (editor.value) {
-					editor.value.commands.setContent(newContent, { emitUpdate: false })
+					editor.value.commands.setContent(newContent, {
+						emitUpdate: false,
+						...(props.format === 'markdown' ? { contentType: 'markdown' } : {})
+					})
 				}
 			}
 		})

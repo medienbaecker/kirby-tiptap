@@ -90,6 +90,7 @@ fields:
     type: tiptap
     inline: true # remove block elements like paragraphs
     counter: false # disable character counter
+    format: markdown # store Markdown instead of Tiptap JSON (see below)
     size: small # small, medium, large, huge or the default auto
     spellcheck: false # disable spellcheck
     pretty: true # pretty-print JSON in content file (incompatible with structure fields)
@@ -133,6 +134,25 @@ fields:
     maxlength: 10
     minlength: 10
 ```
+
+#### Markdown format
+
+With `format: markdown` the field stores Markdown instead of Tiptap JSON — the same format a textarea field uses. This makes the field a drop-in replacement for existing textarea fields: change the field type in the blueprint and you're done, no content conversion needed.
+
+```yml
+fields:
+  text:
+    type: tiptap
+    format: markdown
+```
+
+`tiptapText()` renders Markdown values through Kirby's own `kirbytext()` pipeline (KirbyTags, Markdown, SmartyPants), so templates work unchanged. For inline rendering pass `['inline' => true]`.
+
+Notes:
+
+- The `pretty` and `offsetHeadings` options only apply to JSON fields
+- Custom nodes from the Extension API need Markdown serialization support to survive the round-trip — stick to the standard buttons for Markdown fields
+- The field preview in structure/object fields shows the raw Markdown
 
 ### Blocks field
 

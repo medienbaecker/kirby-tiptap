@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import InvisibleCharacters from "@tiptap/extension-invisible-characters";
+import { Markdown } from "@tiptap/markdown";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
@@ -28,6 +29,7 @@ import type {
 interface EditorProps {
 	buttons: ButtonItem[];
 	inline?: boolean;
+	format?: "json" | "markdown";
 	kirbytags?: KirbytagsMap;
 	spellcheck?: boolean;
 	endpoints?: EndpointsConfig;
@@ -184,8 +186,14 @@ export function useEditor(
 				extensions.push(...registryExtensions);
 			}
 
+			const isMarkdown = props.format === "markdown";
+			if (isMarkdown) {
+				extensions.push(Markdown);
+			}
+
 			const newEditor = new Editor({
 				content: initialContent,
+				...(isMarkdown ? { contentType: "markdown" as const } : {}),
 				extensions,
 				editorProps: {
 					handlePaste: eventHandlers.handlePaste,

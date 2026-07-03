@@ -90,34 +90,6 @@ class ContentProcessor
 	}
 
 	/**
-	 * Build a Tiptap doc from a plain-text (non-JSON) value
-	 * @param string $text Plain text content
-	 * @return array Tiptap doc structure
-	 */
-	public static function plainTextToDoc(string $text): array
-	{
-		$content = [];
-
-		foreach (preg_split('/\n{2,}/', $text) as $paragraph) {
-			$paragraph = trim($paragraph);
-			if ($paragraph === '') {
-				continue;
-			}
-
-			$content[] = [
-				'type' => 'paragraph',
-				'content' => [['type' => 'text', 'text' => $paragraph]],
-			];
-		}
-
-		if (empty($content)) {
-			$content[] = ['type' => 'paragraph'];
-		}
-
-		return ['type' => 'doc', 'content' => $content];
-	}
-
-	/**
 	 * Validate JSON structure for Tiptap content
 	 * @param mixed $json Content to validate
 	 * @return bool Whether the JSON structure is valid
