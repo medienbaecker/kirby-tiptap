@@ -152,6 +152,82 @@ export interface KirbyTagGroup {
 	childNodes: NodeListOf<ChildNode>;
 }
 
+export interface TagEditingContext {
+	isEditing: boolean;
+	tagText?: string;
+	replaceRange?: { from: number; to: number };
+	selectedText?: string;
+}
+
+interface EditorLike {
+	state: { doc: any; selection: { from: number; to: number; empty: boolean } };
+	view: EditorView;
+	isFocused?: boolean;
+}
+
+const tagGroupRange = (view: EditorView, group: KirbyTagGroup) => ({
+	from: view.posAtDOM(group.firstElement, 0),
+	to: view.posAtDOM(group.lastElement, group.childNodes.length),
+});
+
+/**
+ * Determine whether the current selection sits inside or overlaps a
+ * KirbyTag matched by `matches`, returning the tag's text and document
+ * range for editing/replacing. Shared by the link and file buttons.
+ */
+export const getTagEditingContext = (
+	editor: EditorLike,
+	matches: (text: string | null) => boolean
+): TagEditingContext => {
+	const { state, view } = editor;
+	const { from, to, empty } = state.selection;
+
+	if (empty) {
+		const group = findTagAtPos(view, from, "kirbytag");
+		if (group && matches(group.textContent)) {
+			return {
+				isEditing: true,
+				tagText: group.textContent,
+				replaceRange: tagGroupRange(view, group),
+			};
+		}
+		return { isEditing: false };
+	}
+
+	const selectedText = state.doc.textBetween(from, to).trim();
+
+	// Selection is a complete tag
+	if (matches(selectedText) && selectedText.endsWith(")")) {
+		return { isEditing: true, tagText: selectedText, replaceRange: { from, to } };
+	}
+
+	// Selection intersects a tag at either end
+	for (const pos of [from, to]) {
+		const group = findTagAtPos(view, pos, "kirbytag");
+		if (group && matches(group.textContent)) {
+			return {
+				isEditing: true,
+				tagText: group.textContent,
+				replaceRange: tagGroupRange(view, group),
+			};
+		}
+	}
+
+	return { isEditing: false, selectedText };
+};
+
+/**
+ * activeCheck shared by the link and file buttons: whether the selection
+ * is in or on a tag matched by `matches`.
+ */
+export const isTagActive = (
+	editor: EditorLike,
+	matches: (text: string | null) => boolean
+): boolean => {
+	if (!editor.isFocused) return false;
+	return getTagEditingContext(editor, matches).isEditing;
+};
+
 /**
  * Traverses up the DOM tree to find an element with the specified class.
  * When ProseMirror splits a decoration into adjacent sibling spans (due to
@@ -434,10 +510,3 @@ export const isLinkTag = (text: string | null): boolean => {
 	return LINK_TAG_PREFIXES.some((prefix) => text.startsWith(prefix));
 };
 
-/**
- * Checks if text is a complete link-type KirbyTag (starts with link prefix and ends with ")")
- */
-export const isCompleteLinkTag = (text: string | null): boolean => {
-	if (!text) return false;
-	return isLinkTag(text) && text.endsWith(")");
-};

@@ -5,7 +5,7 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
-import { parseKirbyTag, generateKirbyTag, findTagAtPos, getFieldApiPath } from '../../utils/kirbyTags';
+import { parseKirbyTag, generateKirbyTag, getFieldApiPath, getTagEditingContext, isTagActive } from '../../utils/kirbyTags';
 import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
 import { buildUploadOptions } from '../../utils/upload';
@@ -108,109 +108,7 @@ export default {
 		 * @returns {Object} Context object with editing state and tag information
 		 */
 		getFileEditingContext() {
-			const { state, view } = this.editor;
-			const { from, to, empty } = state.selection;
-
-			if (empty) {
-				return this.checkCursorInFileTag(view, from);
-			} else {
-				return this.checkSelectionForFileTag(state, view, from, to);
-			}
-		},
-
-		/**
-		 * Checks if cursor is positioned inside a file tag
-		 * @param {Object} view - Editor view
-		 * @param {number} from - Cursor position
-		 * @returns {Object} Context object
-		 */
-		checkCursorInFileTag(view, from) {
-			const tagEl = findTagAtPos(view, from, 'kirbytag');
-
-			if (tagEl && this.isFileTag(tagEl.textContent)) {
-				return {
-					isEditing: true,
-					tagEl,
-					replaceRange: this.getFileTagRange(view, tagEl),
-					tagText: tagEl.textContent
-				};
-			}
-
-			return { isEditing: false };
-		},
-
-		/**
-		 * Checks if selection contains or intersects with a file tag
-		 * @param {Object} state - Editor state
-		 * @param {Object} view - Editor view
-		 * @param {number} from - Selection start
-		 * @param {number} to - Selection end
-		 * @returns {Object} Context object
-		 */
-		checkSelectionForFileTag(state, view, from, to) {
-			const selectedText = state.doc.textBetween(from, to).trim();
-
-			if (this.isCompleteFileTag(selectedText)) {
-				return {
-					isEditing: true,
-					replaceRange: { from, to },
-					tagText: selectedText
-				};
-			}
-
-			const tagEl = this.findIntersectingFileTag(view, from, to);
-			if (tagEl) {
-				return {
-					isEditing: true,
-					tagEl,
-					replaceRange: this.getFileTagRange(view, tagEl),
-					tagText: tagEl.textContent
-				};
-			}
-
-			return { isEditing: false };
-		},
-
-		/**
-		 * Checks if text is a complete file tag
-		 * @param {string} text - Text to check
-		 * @returns {boolean}
-		 */
-		isCompleteFileTag(text) {
-			return this.isFileTag(text) && text.endsWith(')');
-		},
-
-		/**
-		 * Finds a file tag element that intersects with the selection
-		 * @param {Object} view - Editor view
-		 * @param {number} from - Selection start
-		 * @param {number} to - Selection end
-		 * @returns {Element|null} Tag element or null
-		 */
-		findIntersectingFileTag(view, from, to) {
-			const startTagEl = findTagAtPos(view, from, 'kirbytag');
-			if (startTagEl && this.isFileTag(startTagEl.textContent)) {
-				return startTagEl;
-			}
-
-			const endTagEl = findTagAtPos(view, to, 'kirbytag');
-			if (endTagEl && this.isFileTag(endTagEl.textContent)) {
-				return endTagEl;
-			}
-
-			return null;
-		},
-
-		/**
-		 * Gets the range (from/to positions) of a file tag element
-		 * @param {Object} view - Editor view
-		 * @param {Element} tagEl - Tag element
-		 * @returns {Object} Range object with from and to positions
-		 */
-		getFileTagRange(view, tagEl) {
-			const start = view.posAtDOM(tagEl.firstElement, 0);
-			const end = view.posAtDOM(tagEl.lastElement, tagEl.childNodes.length);
-			return { from: start, to: end };
+			return getTagEditingContext(this.editor, this.isFileTag);
 		},
 
 		/**
@@ -381,27 +279,7 @@ export default {
 		},
 
 		isFileActive(editor) {
-			if (!editor.isFocused) return false;
-
-			const { from, to, empty } = editor.state.selection;
-
-			if (empty) {
-				const tagEl = findTagAtPos(editor.view, from, 'kirbytag');
-				return tagEl ? this.isFileTag(tagEl.textContent) : false;
-			} else {
-				const selectedText = editor.state.doc.textBetween(from, to).trim();
-				if (this.isFileTag(selectedText) && selectedText.endsWith(')')) {
-					return true;
-				}
-
-				const startTagEl = findTagAtPos(editor.view, from, 'kirbytag');
-				if (startTagEl && this.isFileTag(startTagEl.textContent)) {
-					return true;
-				}
-
-				const endTagEl = findTagAtPos(editor.view, to, 'kirbytag');
-				return endTagEl ? this.isFileTag(endTagEl.textContent) : false;
-			}
+			return isTagActive(editor, this.isFileTag);
 		},
 
 		handleUpload() {

@@ -5,7 +5,7 @@
 
 <script>
 import ToolbarButton from './ToolbarButton.vue';
-import { parseKirbyTag, findTagAtPos, isLinkTag, isCompleteLinkTag } from '../../utils/kirbyTags';
+import { parseKirbyTag, isLinkTag, getTagEditingContext, isTagActive } from '../../utils/kirbyTags';
 import { validateInput, generateLinkTag } from '../../utils/inputValidation';
 import { buildDialogFields, processFieldValues } from '../../utils/dialogFields';
 import { processKirbyTagApi } from '../../utils/eventHandlers';
@@ -41,113 +41,9 @@ export default {
 		 * @param {Object} editor - The Tiptap editor instance
 		 */
 		handleLink(editor) {
-			const editingContext = this.getEditingContext(editor);
+			const editingContext = getTagEditingContext(editor, isLinkTag);
 			const initialValues = this.prepareInitialValues(editingContext);
 			this.openLinkDialog(editor, editingContext, initialValues);
-		},
-
-		/**
-		 * Determines if we're editing an existing tag and extracts context
-		 * @param {Object} editor - The Tiptap editor instance
-		 * @returns {Object} Context object with editing state and tag information
-		 */
-		getEditingContext(editor) {
-			const { state, view } = editor;
-			const { from, to, empty } = state.selection;
-
-			if (empty) {
-				return this.checkCursorInTag(view, from);
-			} else {
-				return this.checkSelectionForTag(state, view, from, to);
-			}
-		},
-
-		/**
-		 * Checks if cursor is positioned inside a link tag
-		 * @param {Object} view - Editor view
-		 * @param {number} from - Cursor position
-		 * @returns {Object} Context object
-		 */
-		checkCursorInTag(view, from) {
-			const tagEl = findTagAtPos(view, from, 'kirbytag');
-
-			if (tagEl && isLinkTag(tagEl.textContent)) {
-				return {
-					isEditing: true,
-					tagEl,
-					replaceRange: this.getTagRange(view, tagEl),
-					tagText: tagEl.textContent
-				};
-			}
-
-			return { isEditing: false };
-		},
-
-		/**
-		 * Checks if selection contains or intersects with a link tag
-		 * @param {Object} state - Editor state
-		 * @param {Object} view - Editor view
-		 * @param {number} from - Selection start
-		 * @param {number} to - Selection end
-		 * @returns {Object} Context object
-		 */
-		checkSelectionForTag(state, view, from, to) {
-			const selectedText = state.doc.textBetween(from, to).trim();
-
-			// Check if selection is a complete tag
-			if (isCompleteLinkTag(selectedText)) {
-				return {
-					isEditing: true,
-					replaceRange: { from, to },
-					tagText: selectedText
-				};
-			}
-
-			// Check if selection intersects with a tag
-			const tagEl = this.findIntersectingTag(view, from, to);
-			if (tagEl) {
-				return {
-					isEditing: true,
-					tagEl,
-					replaceRange: this.getTagRange(view, tagEl),
-					tagText: tagEl.textContent
-				};
-			}
-
-			return { isEditing: false, selectedText };
-		},
-
-		/**
-		 * Finds a tag element that intersects with the selection
-		 * @param {Object} view - Editor view
-		 * @param {number} from - Selection start
-		 * @param {number} to - Selection end
-		 * @returns {Element|null} Tag element or null
-		 */
-		findIntersectingTag(view, from, to) {
-			const startTagEl = findTagAtPos(view, from, 'kirbytag');
-			if (startTagEl && isLinkTag(startTagEl.textContent)) {
-				return startTagEl;
-			}
-
-			const endTagEl = findTagAtPos(view, to, 'kirbytag');
-			if (endTagEl && isLinkTag(endTagEl.textContent)) {
-				return endTagEl;
-			}
-
-			return null;
-		},
-
-		/**
-		 * Gets the range (from/to positions) of a tag element
-		 * @param {Object} view - Editor view
-		 * @param {Element} tagEl - Tag element
-		 * @returns {Object} Range object with from and to positions
-		 */
-		getTagRange(view, tagEl) {
-			const start = view.posAtDOM(tagEl.firstElement, 0);
-			const end = view.posAtDOM(tagEl.lastElement, tagEl.childNodes.length);
-			return { from: start, to: end };
 		},
 
 		/**
@@ -295,40 +191,10 @@ export default {
 			}
 		},
 
-		/**
-		 * Checks if the cursor is positioned within a link tag
-		 * @param {Object} editor - The Tiptap editor instance
-		 * @returns {boolean} Whether a link tag is active
-		 */
 		kirbyTagDisabledCheck,
 
 		isLinkActive(editor) {
-			if (!editor.isFocused) return false;
-
-			const { from, to, empty } = editor.state.selection;
-
-			if (empty) {
-				const tagEl = findTagAtPos(editor.view, from, 'kirbytag');
-				return tagEl ? isLinkTag(tagEl.textContent) : false;
-			}
-			else {
-				const selectedText = editor.state.doc.textBetween(from, to).trim();
-				if (isCompleteLinkTag(selectedText)) {
-					return true;
-				}
-
-				const startTagEl = findTagAtPos(editor.view, from, 'kirbytag');
-				if (startTagEl && isLinkTag(startTagEl.textContent)) {
-					return true;
-				}
-
-				const endTagEl = findTagAtPos(editor.view, to, 'kirbytag');
-				if (endTagEl && isLinkTag(endTagEl.textContent)) {
-					return true;
-				}
-
-				return false;
-			}
+			return isTagActive(editor, isLinkTag);
 		},
 
 	},
