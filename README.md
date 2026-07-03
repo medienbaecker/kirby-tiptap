@@ -14,10 +14,10 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
   - [Frontend/templates](#frontendtemplates)
   - [Configuration](#configuration)
   - [Keyboard shortcuts](#keyboard-shortcuts)
-  - [Custom buttons](#custom-buttons)
   - [Extension API](#extension-api)
   - [Customizing HTML output](#customizing-html-output)
   - [Converting existing fields](#converting-existing-fields)
+- [Upgrading to 1.3](#upgrading-to-13)
 - [Ideas for future improvements](#ideas-for-future-improvements)
 
 ## Features
@@ -25,7 +25,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 🌏 **Best of both worlds:** Uses (and highlights) [KirbyTags](https://getkirby.com/docs/reference/plugins/extensions/kirbytags) for images/links while providing WYSIWYG formatting
 - 📦 **Supports all standard Kirby field features** like `required`, `default`, `placeholder`, `counter`, `disabled`, `help`, `size`, `spellcheck` and `minlength`/`maxlength`
 - 🤓 **Smart text handling** with intuitive soft hyphen `(-)` and non-breaking space `(_)` replacements, and visible special characters
-- 🔧 **Configurable buttons** with customizable heading levels and custom buttons that can add any attributes to nodes
+- 🔧 **Configurable buttons** with customizable heading levels
 - 🛼 **Inline mode** for paragraph-free content with buttons being disabled automatically
 - 🧠 **One method to rule them all** with `tiptapText()` handling [UUID resolution](https://getkirby.com/docs/reference/templates/field-methods/permalinks-to-urls), [smartypants](https://getkirby.com/docs/reference/system/options/smartypants), automatic [inline mode](https://getkirby.com/docs/reference/templates/helpers/kirbytextinline) and more
 - ✨ **Intuitive drag & drop support** for pages and files with intelligent spacing
@@ -33,7 +33,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 👀 **Custom field preview** showing formatted text in structure/object fields
 - 🔗 **Improved link and file handling** with dialogs that allow custom fields, automatically pick the right KirbyTag (`(link: )`, `(email: )`, `(file: )` or `(tel: )`) and allow editing existing links/files by pre-filling dialogs
 - 🔍 **Cmd+Click navigation** on page/file references to jump directly to the linked page or file in the Panel
-- 🌈 **Custom highlights** via a regular expression config option, making it possible to e.g. highlight long words
+- 🌈 **Custom decorations** via the Extension API, e.g. highlighting long words (see `extension-examples/long-words`)
 - 🔧 **Optional setting to allow HTML code** so you can paste your ⁠favourite `<script>`, `⁠<marquee>`, or ⁠`<blink>` tag directly
 - 🧩 **Extension API** for third-party plugins to add custom buttons, keyboard shortcuts, and full Tiptap extensions
 - 📋 **Abstracted JSON structure** for easy content manipulation with features like `offsetHeadings`
@@ -111,7 +111,10 @@ fields:
     files:
       # Filter files shown in the picker (Kirby query)
       query: page.images
-      # Add custom fields to the file dialog
+      # Add custom fields to the file dialog.
+      # Field names must be registered KirbyTag attributes (e.g. caption,
+      # alt, class for images) — Kirby ignores unknown attribute names
+      # when rendering and folds them into the preceding attribute's value.
       fields:
         caption:
           label: Caption
@@ -410,6 +413,15 @@ kirby tiptap:convert --page blog
 ```
 
 The command looks at the blueprint to collect the fields and converts their values to HTML using Kirby's `markdown()` method before transforming it to Tiptap's JSON format using the same logic as the field itself. After running the command you can change the field type in your blueprints to `tiptap`.
+
+## Upgrading to 1.3
+
+Two config options were removed in favor of the [Extension API](#extension-api):
+
+- `medienbaecker.tiptap.highlights` — regex-based highlights are now custom decorations, see `extension-examples/long-words`
+- `medienbaecker.tiptap.buttons` — custom buttons are registered via `window.kirbyTiptap.registry`, see `extension-examples/button-insert` and `extension-examples/two-columns`
+
+Both options are silently ignored if still present.
 
 ## Ideas for future improvements
 
