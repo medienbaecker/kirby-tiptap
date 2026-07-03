@@ -17,7 +17,6 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
   - [Extension API](#extension-api)
   - [Customizing HTML output](#customizing-html-output)
   - [Converting existing fields](#converting-existing-fields)
-- [Upgrading to 1.3](#upgrading-to-13)
 - [Ideas for future improvements](#ideas-for-future-improvements)
 
 ## Features
@@ -413,15 +412,6 @@ kirby tiptap:convert --page blog
 ```
 
 The command looks at the blueprint to collect the fields and converts their values to HTML using Kirby's `markdown()` method before transforming it to Tiptap's JSON format using the same logic as the field itself. After running the command you can change the field type in your blueprints to `tiptap`.
-
-## Upgrading to 1.3
-
-Two config options were removed in favor of the [Extension API](#extension-api):
-
-- `medienbaecker.tiptap.highlights` — regex-based highlights are now custom decorations, see `extension-examples/long-words`
-- `medienbaecker.tiptap.buttons` — custom buttons are registered via `window.kirbyTiptap.registry`, see `extension-examples/button-insert` and `extension-examples/two-columns`
-
-Both options are silently ignored if still present.
 
 ## Ideas for future improvements
 
