@@ -113,7 +113,13 @@ class Field
 				return $buttons;
 			},
 			'kirbytags' => function () {
-				return array_keys($this->kirby()->extensions('tags'));
+				// Map of tag name => registered attribute names, so the Panel
+				// can split attributes exactly like KirbyTag::parse() does.
+				$tags = [];
+				foreach ($this->kirby()->extensions('tags') as $name => $tag) {
+					$tags[$name] = $tag['attr'] ?? [];
+				}
+				return $tags;
 			},
 			'links' => function ($links = []) {
 				if (isset($links['fields']) && is_array($links['fields'])) {

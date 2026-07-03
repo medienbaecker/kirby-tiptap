@@ -21,6 +21,9 @@ export interface EndpointsConfig {
 	'process-kirbytag'?: string
 }
 
+// Registered KirbyTags: tag name => registered attribute names
+export type KirbytagsMap = Record<string, string[]>
+
 // Uploads configuration
 export interface UploadsConfig {
 	template?: string

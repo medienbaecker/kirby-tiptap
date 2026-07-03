@@ -32,6 +32,10 @@ export default {
 		files: {
 			type: Object,
 			default: () => ({})
+		},
+		kirbytags: {
+			type: Object,
+			default: () => ({})
 		}
 	},
 
@@ -229,7 +233,7 @@ export default {
 		 */
 		handleExistingFileTag(context, restoreSelection) {
 			try {
-				const initial = parseKirbyTag(context.tagText);
+				const initial = parseKirbyTag(context.tagText, this.kirbytags);
 
 				if (initial.uuid) {
 					this.findFileByReference(initial.uuid)
@@ -285,7 +289,7 @@ export default {
 
 							if (fieldValues && Object.keys(fieldValues).length > 0) {
 								try {
-									const parsed = parseKirbyTag(content);
+									const parsed = parseKirbyTag(content, this.kirbytags);
 									const { _type, uuid, href, value, ...existingAttributes } = parsed;
 									const plainFieldValues = JSON.parse(JSON.stringify(fieldValues));
 									const filteredFieldValues = Object.fromEntries(

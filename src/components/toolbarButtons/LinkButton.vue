@@ -28,6 +28,10 @@ export default {
 		links: {
 			type: Object,
 			default: () => ({})
+		},
+		kirbytags: {
+			type: Object,
+			default: () => ({})
 		}
 	},
 
@@ -170,7 +174,7 @@ export default {
 		 */
 		parseExistingTag(tagText) {
 			try {
-				const parsed = parseKirbyTag(tagText);
+				const parsed = parseKirbyTag(tagText, this.kirbytags);
 
 				// Normalize href based on tag type
 				if (parsed._type === 'email') {
@@ -231,7 +235,7 @@ export default {
 
 			if (context.replaceRange) {
 				try {
-					const parsed = parseKirbyTag(context.tagText);
+					const parsed = parseKirbyTag(context.tagText, this.kirbytags);
 					const text = parsed.text || '';
 					editor.chain().focus()
 						.deleteRange(context.replaceRange)

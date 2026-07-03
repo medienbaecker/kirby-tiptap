@@ -4,25 +4,48 @@ import type {
 	NavigationTarget,
 	ResolvedKirbyTag,
 	EndpointsConfig,
+	KirbytagsMap,
 } from "../types";
 import type { Panel } from "kirby-types";
 
-const KIRBYTAG_FIELD_BOUNDARY = String.raw`\s+(\w+):(?!\/\/)\s*`;
+const escapeRegex = (value: string): string =>
+	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Regex source matching the next attribute boundary in a tag string.
+ * When the tag's registered attributes are known, only those names split
+ * fields — mirroring PHP's KirbyTag::parse(), which also treats the tag
+ * type itself as an attribute. Falls back to any word otherwise.
+ */
+const fieldBoundarySource = (tagType: string, attrs?: string[]): string => {
+	const names = attrs?.length
+		? [tagType, ...attrs].map(escapeRegex).join("|")
+		: String.raw`\w+`;
+	return String.raw`\s+(${names}):(?!\/\/)\s*`;
+};
 
 /**
  * Parse a Kirby‐tag string like "(tag: value attr1: value1 attr2: value2)"
  * into an object { type, value, attr1, attr2, ... }
+ * Pass the field's kirbytags map (tag name => registered attribute names)
+ * so attribute values containing colons don't split on unregistered words.
  */
-export const parseKirbyTag = (tagString: string): ParsedKirbyTag => {
+export const parseKirbyTag = (
+	tagString: string,
+	tags?: KirbytagsMap
+): ParsedKirbyTag => {
 	// Get tag type
 	const typeMatch = tagString.match(/^\((\w+):/);
-	const tagType = typeMatch ? typeMatch[1] : "";
+	const tagType = typeMatch ? typeMatch[1].toLowerCase() : "";
 	const result: ParsedKirbyTag = {
 		// Store the tag type in a property that won't be used as an attribute
 		_type: tagType,
 	};
 
-	const fieldPattern = new RegExp(KIRBYTAG_FIELD_BOUNDARY, "g");
+	const fieldPattern = new RegExp(
+		fieldBoundarySource(tagType, tags?.[tagType]),
+		"gi"
+	);
 
 	// Find all field positions
 	const matches = [...tagString.matchAll(fieldPattern)];
@@ -45,7 +68,7 @@ export const parseKirbyTag = (tagString: string): ParsedKirbyTag => {
 	// Process each field
 	for (let i = 0; i < matches.length; i++) {
 		const match = matches[i];
-		const fieldName = match[1];
+		const fieldName = match[1].toLowerCase();
 		const startPos = match.index! + match[0].length;
 		const endPos =
 			i < matches.length - 1 ? matches[i + 1].index! : tagString.length - 1;
@@ -319,15 +342,16 @@ export const navigateToKirbyTag = async (
  * Returns null if no reference range can be determined.
  */
 export const findReferenceRange = (
-	tagString: string
+	tagString: string,
+	tags?: KirbytagsMap
 ): [number, number] | null => {
 	const typeMatch = tagString.match(/^\((\w+):\s*/);
 	if (!typeMatch) return null;
 
-	const type = typeMatch[1];
+	const type = typeMatch[1].toLowerCase();
 	const valueStart = typeMatch[0].length;
 
-	const fieldPattern = new RegExp(KIRBYTAG_FIELD_BOUNDARY, "g");
+	const fieldPattern = new RegExp(fieldBoundarySource(type, tags?.[type]), "gi");
 	fieldPattern.lastIndex = valueStart;
 	const nextField = fieldPattern.exec(tagString);
 

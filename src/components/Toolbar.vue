@@ -4,7 +4,7 @@
 		<template v-for="(button, index) in normalizedButtons">
 			<component v-if="!isSeparator(button)" :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
 				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads"
-				:buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
+				:kirbytags="kirbytags" :buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
 			<hr v-else :key="'sep-' + index" />
 		</template>
 	</nav>

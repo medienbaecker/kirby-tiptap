@@ -18,12 +18,17 @@ import { compileRegistry } from "../utils/registry";
 import { buttonRegistry } from "../utils/buttonRegistry";
 import { transformLinksToKirbyTags } from "../utils/pasteTransform";
 import { starterKitOverrides } from "../utils/starterKit";
-import type { TiptapDocument, ButtonItem, EndpointsConfig } from "../types";
+import type {
+	TiptapDocument,
+	ButtonItem,
+	EndpointsConfig,
+	KirbytagsMap,
+} from "../types";
 
 interface EditorProps {
 	buttons: ButtonItem[];
 	inline?: boolean;
-	kirbytags?: string[];
+	kirbytags?: KirbytagsMap;
 	spellcheck?: boolean;
 	endpoints?: EndpointsConfig;
 }

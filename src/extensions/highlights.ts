@@ -2,7 +2,7 @@ import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { EditorView } from "@tiptap/pm/view";
-import type { EndpointsConfig } from "../types";
+import type { EndpointsConfig, KirbytagsMap } from "../types";
 import {
 	findKirbyTagRanges,
 	findReferenceRange,
@@ -14,7 +14,7 @@ import {
 import type { Panel } from "kirby-types";
 
 interface HighlightsOptions {
-	kirbytags?: string[];
+	kirbytags?: KirbytagsMap;
 	endpoints?: EndpointsConfig;
 }
 
@@ -23,7 +23,7 @@ export const Highlights = Extension.create<HighlightsOptions>({
 
 	addOptions() {
 		return {
-			kirbytags: [],
+			kirbytags: {},
 			endpoints: undefined,
 		};
 	},
@@ -32,7 +32,9 @@ export const Highlights = Extension.create<HighlightsOptions>({
 		const { endpoints, kirbytags } = this.options;
 
 		const registeredTags =
-			kirbytags && kirbytags.length ? new Set(kirbytags) : null;
+			kirbytags && Object.keys(kirbytags).length
+				? new Set(Object.keys(kirbytags))
+				: null;
 
 		const resolvedCache = new Map<string, boolean>();
 		const pendingRefs = new Map<string, string>();
@@ -103,7 +105,7 @@ export const Highlights = Extension.create<HighlightsOptions>({
 
 							for (const [start, end] of kirbytagPositions) {
 								const tagText = text.substring(start, end);
-								const parsed = parseKirbyTag(tagText);
+								const parsed = parseKirbyTag(tagText, kirbytags);
 
 								if (
 									registeredTags &&
@@ -126,7 +128,7 @@ export const Highlights = Extension.create<HighlightsOptions>({
 									navTarget &&
 									isResolved(navTarget.reference, navTarget.type)
 								) {
-									const refRange = findReferenceRange(tagText);
+									const refRange = findReferenceRange(tagText, kirbytags);
 									if (refRange) {
 										decorations.push(
 											Decoration.inline(

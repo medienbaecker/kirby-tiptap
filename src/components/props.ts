@@ -6,6 +6,7 @@ import type {
 	EndpointsConfig,
 	UploadsConfig,
 	UuidConfig,
+	KirbytagsMap,
 } from "../types";
 
 export const props = {
@@ -23,7 +24,7 @@ export const props = {
 	size: String,
 	buttons: Array as PropType<ButtonItem[]>,
 	inline: Boolean,
-	kirbytags: Array as PropType<string[]>,
+	kirbytags: Object as PropType<KirbytagsMap>,
 	links: Object as PropType<LinksConfig>,
 	files: Object as PropType<FilesConfig>,
 	endpoints: Object as PropType<EndpointsConfig>,
