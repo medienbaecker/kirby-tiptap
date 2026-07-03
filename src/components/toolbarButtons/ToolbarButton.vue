@@ -207,9 +207,18 @@ export default {
 	display: inline-block;
 }
 
-/* Makes sure nested buttons (like the first heading) are also rounded */
-.tiptap-button:first-child {
+/* Round the toolbar's first/last button, also when nested in a wrapper
+   (headings group, dropdown button). Anchored to the toolbar so a
+   mid-toolbar dropdown button doesn't match via its own wrapper. */
+.tiptap-toolbar > :first-child .tiptap-button:first-child,
+.tiptap-toolbar > .tiptap-button:first-child {
 	border-start-start-radius: var(--rounded);
-	border-end-start-radius: var(--rounded)
+	border-end-start-radius: var(--rounded);
+}
+
+.tiptap-toolbar > :last-child .tiptap-button:last-child,
+.tiptap-toolbar > .tiptap-button:last-child {
+	border-start-end-radius: var(--rounded);
+	border-end-end-radius: var(--rounded);
 }
 </style>
