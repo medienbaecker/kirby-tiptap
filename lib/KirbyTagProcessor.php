@@ -11,32 +11,45 @@ use Kirby\Text\KirbyTags;
 class KirbyTagProcessor
 {
 	/**
-	 * Process content node for KirbyTags
-	 * @param array $node Node to process (passed by reference)
+	 * Process a content node for KirbyTags.
+	 *
+	 * Returns an array of nodes: a text node containing tags expands into a
+	 * sequence of literal text nodes and one kirbyTag node per tag, so block
+	 * detection and paragraph splitting can work per tag.
+	 *
+	 * @param array $node Node to process
 	 * @param object $parent Parent page/model for KirbyTag context
 	 * @param bool $allowHtml Whether to allow raw HTML in literal text
 	 * @param bool $inCodeBlock Whether we're inside a code block
+	 * @return array Replacement node sequence
 	 */
-	public static function processContent(&$node, $parent, $allowHtml = false, $inCodeBlock = false)
+	public static function processContent(array $node, $parent, bool $allowHtml = false, bool $inCodeBlock = false): array
 	{
 		// Track if we're entering a code block context
-		if (isset($node['type']) && $node['type'] === 'codeBlock') {
+		if (($node['type'] ?? '') === 'codeBlock') {
 			$inCodeBlock = true;
 		}
 
-		// Process current node's text if it exists
 		if (isset($node['text'])) {
 			if (static::isCode($node, $inCodeBlock) === false) {
-				$node = static::renderText($node, $parent, $allowHtml);
+				return static::renderText($node, $parent, $allowHtml);
 			}
+			return [$node];
 		}
 
 		// Recursively process nested content
 		if (isset($node['content']) && is_array($node['content'])) {
-			foreach ($node['content'] as &$contentNode) {
-				static::processContent($contentNode, $parent, $allowHtml, $inCodeBlock);
+			$children = [];
+			foreach ($node['content'] as $child) {
+				if (!is_array($child)) {
+					continue;
+				}
+				array_push($children, ...static::processContent($child, $parent, $allowHtml, $inCodeBlock));
 			}
+			$node['content'] = $children;
 		}
+
+		return [$node];
 	}
 
 	/**
@@ -58,8 +71,9 @@ class KirbyTagProcessor
 	}
 
 	/**
-	 * Render a text node, escaping literal text and parsing KirbyTags
-	 * segment by segment so text surrounding a tag cannot inject HTML.
+	 * Render a text node as a node sequence: literal segments stay text
+	 * nodes (escaped later by the text snippet), each parsed KirbyTag
+	 * becomes its own kirbyTag node.
 	 */
 	private static function renderText(array $node, $parent, bool $allowHtml): array
 	{
@@ -72,10 +86,12 @@ class KirbyTagProcessor
 
 		// Plain text without tags: leave as a text node so text.php escapes it.
 		if ($hasTag === false && $allowHtml === false) {
-			return $node;
+			return [$node];
 		}
 
-		$rendered = '';
+		$marks = $node['marks'] ?? null;
+		$nodes = [];
+
 		foreach ($parts === false ? [$text] : $parts as $i => $part) {
 			if ($part === '') {
 				continue;
@@ -84,25 +100,42 @@ class KirbyTagProcessor
 			if ($i % 2 === 1) {
 				$parsed = KirbyTags::parse($part, ['parent' => $parent]);
 				if ($parsed !== $part) {
-					$rendered .= $parsed;
+					$nodes[] = static::tagNode($parsed, $marks);
 					continue;
 				}
 			}
 
-			$rendered .= $allowHtml ? $part : html($part);
+			if ($allowHtml) {
+				$nodes[] = static::tagNode($part, $marks);
+			} else {
+				$literal = ['type' => 'text', 'text' => $part];
+				if ($marks !== null) {
+					$literal['marks'] = $marks;
+				}
+				$nodes[] = $literal;
+			}
 		}
+
+		return $nodes;
+	}
+
+	/**
+	 * Build a kirbyTag node carrying rendered (or raw) HTML.
+	 */
+	private static function tagNode(string $content, ?array $marks): array
+	{
+		$node = [
+			'type' => 'kirbyTag',
+			'attrs' => ['content' => $content],
+		];
 
 		// Don't wrap block-level tag output (e.g. an image's <figure>) in an inline mark
 		if (
-			isset($node['marks']) &&
-			preg_match('/<(figure|video|audio|iframe|table|ul|ol|blockquote|pre|div|hr|h[1-6])\b/i', $rendered)
+			$marks !== null &&
+			!preg_match('/<(figure|video|audio|iframe|table|ul|ol|blockquote|pre|div|hr|h[1-6])\b/i', $content)
 		) {
-			unset($node['marks']);
+			$node['marks'] = $marks;
 		}
-
-		$node['type'] = 'kirbyTag';
-		$node['attrs'] = ['content' => $rendered];
-		unset($node['text']);
 
 		return $node;
 	}

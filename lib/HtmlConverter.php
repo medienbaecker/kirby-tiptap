@@ -91,14 +91,15 @@ class HtmlConverter
 
 		try {
 			// Process nodes for KirbyTags and UUIDs
-			foreach ($json['content'] as &$node) {
+			$content = [];
+			foreach ($json['content'] as $node) {
 				if (!is_array($node)) {
 					continue;
 				}
 
-				KirbyTagProcessor::processContent($node, $parent, $options['allowHtml'], false);
+				array_push($content, ...KirbyTagProcessor::processContent($node, $parent, $options['allowHtml'], false));
 			}
-			unset($node);
+			$json['content'] = $content;
 
 			// Split paragraphs containing block-level kirbyTags
 			$json['content'] = ContentProcessor::splitBlockContent($json['content']);
