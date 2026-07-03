@@ -142,11 +142,11 @@ export const buttonRegistry = {
 				console.warn("[kirby-tiptap] Skipping registry button with no name");
 				continue;
 			}
-			if (button.name in coreButtons) {
-				console.info(`[kirby-tiptap] Registry button "${button.name}" overrides core button`);
-			}
 			if (button.name in registryButtons) {
 				continue;
+			}
+			if (button.name in coreButtons) {
+				console.info(`[kirby-tiptap] Registry button "${button.name}" overrides core button`);
 			}
 			registryButtons[button.name] = {
 				component: () => import('../components/toolbarButtons/RegistryButton.vue'),
