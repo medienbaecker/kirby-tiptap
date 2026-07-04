@@ -5,6 +5,8 @@ import type {
 	ResolvedKirbyTag,
 	EndpointsConfig,
 	KirbytagsMap,
+	TiptapDocument,
+	TiptapNode,
 } from "../types";
 import type { Panel } from "kirby-types";
 
@@ -329,6 +331,69 @@ export const findKirbyTagRanges = (text: string): [number, number][] => {
 	}
 
 	return positions;
+};
+
+/**
+ * Wraps KirbyTag ranges in the kirbytagRaw mark so the markdown
+ * serializer emits them verbatim: Kirby parses tags before any markdown
+ * unescaping, so escaped metacharacters would end up in hrefs/srcs.
+ */
+export const protectKirbyTags = (
+	doc: TiptapDocument,
+	tags?: KirbytagsMap
+): TiptapDocument => {
+	const registered = tags ? new Set(Object.keys(tags)) : null;
+
+	const processText = (node: TiptapNode): TiptapNode[] => {
+		const text = node.text || "";
+		if (node.marks?.some((mark) => mark.type === "code")) {
+			return [node];
+		}
+
+		const ranges = findKirbyTagRanges(text).filter(([start, end]) => {
+			if (!registered) return true;
+			const { _type } = parseKirbyTag(text.substring(start, end), tags);
+			return _type !== undefined && registered.has(_type);
+		});
+
+		if (ranges.length === 0) {
+			return [node];
+		}
+
+		const result: TiptapNode[] = [];
+		let cursor = 0;
+		for (const [start, end] of ranges) {
+			if (start > cursor) {
+				result.push({ ...node, text: text.slice(cursor, start) });
+			}
+			result.push({
+				type: "text",
+				text: text.slice(start, end),
+				marks: [{ type: "kirbytagRaw" }],
+			});
+			cursor = end;
+		}
+		if (cursor < text.length) {
+			result.push({ ...node, text: text.slice(cursor) });
+		}
+		return result;
+	};
+
+	const walk = (node: TiptapNode): TiptapNode => {
+		if (!node.content || node.type === "codeBlock") {
+			return node;
+		}
+		return {
+			...node,
+			content: node.content
+				.map(walk)
+				.flatMap((child) =>
+					child.type === "text" && child.text ? processText(child) : [child]
+				),
+		};
+	};
+
+	return walk(doc as unknown as TiptapNode) as unknown as TiptapDocument;
 };
 
 /**

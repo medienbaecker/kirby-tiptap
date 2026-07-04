@@ -5,6 +5,7 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import InvisibleCharacters from "@tiptap/extension-invisible-characters";
 import { Markdown } from "@tiptap/markdown";
+import { KirbytagRaw } from "../extensions/markdownFormat";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
@@ -196,9 +197,9 @@ export function useEditor(
 			const isMarkdown = props.format === "markdown";
 			if (isMarkdown) {
 				extensions.push(
-					// 4 spaces so nested lists survive Parsedown, which does
-					// not recognize 2-space nesting
-					Markdown.configure({ indentation: { size: 4 } })
+					// Parsedown does not recognize 2-space nesting
+					Markdown.configure({ indentation: { size: 4 } }),
+					KirbytagRaw
 				);
 			}
 

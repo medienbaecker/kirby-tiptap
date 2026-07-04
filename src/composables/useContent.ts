@@ -1,12 +1,14 @@
 import type { Ref } from "vue";
 import type { Editor } from "@tiptap/vue-2";
 import { processPlainTextParagraphs } from "../utils/contentProcessing";
-import type { TiptapDocument, TiptapNode } from "../types";
+import { protectKirbyTags } from "../utils/kirbyTags";
+import type { TiptapDocument, TiptapNode, KirbytagsMap } from "../types";
 
 interface ContentProps {
 	inline?: boolean;
 	pretty?: boolean;
 	format?: "json" | "markdown";
+	kirbytags?: KirbytagsMap;
 }
 
 interface UseContentReturn {
@@ -112,7 +114,7 @@ export function useContent(
 					editorInstance as unknown as {
 						markdown: { serialize: (doc: TiptapDocument) => string };
 					}
-				).markdown.serialize(content);
+				).markdown.serialize(protectKirbyTags(content, props.kirbytags));
 			} else {
 				json = JSON.stringify(
 					{
