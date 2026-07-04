@@ -84,10 +84,18 @@ class HtmlConverter
 				// Markdown value (format: markdown) or legacy plain text:
 				// render with Kirby's own pipeline (KirbyTags + Markdown +
 				// SmartyPants), like a textarea field
-				return kirbytext($json, [
-					'parent' => $parent,
-					'markdown' => ['inline' => $options['inline'] === true],
-				]);
+				try {
+					return kirbytext($json, [
+						'parent' => $parent,
+						'markdown' => ['inline' => $options['inline'] === true],
+					]);
+				} catch (\Throwable $e) {
+					if (option('debug', false) === true) {
+						throw $e;
+					}
+					error_log('kirby-tiptap: render failed: ' . $e->getMessage());
+					return '';
+				}
 			}
 			$json = $decoded;
 		}
