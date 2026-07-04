@@ -159,7 +159,7 @@ Notes:
 
 - Switching the format does **not** convert existing content: fields keep whatever is stored until they are edited and saved again. Don't flip the global option on a site with existing JSON tiptap content.
 - Rendering goes through `kirbytext()`, so Markdown fields behave exactly like textarea fields: literal HTML in the content reaches the frontend unescaped and block-level KirbyTags inside a paragraph keep Kirby's markup. The `allowHtml`, `pretty` and `offsetHeadings` options only apply to JSON fields.
-- Markdown links (`[text](url)`, reference style, autolinks) are converted to KirbyTags when the field is opened, matching how the field handles links everywhere else.
+- Labeled markdown links (`[text](url)` and reference style) are converted to KirbyTags when the field is opened, matching how the field handles links everywhere else. Bare URLs and autolinks stay as they are.
 - Tables are preserved verbatim and shown as raw Markdown in the editor — there is no table editing (yet). Enable Kirby's `markdown.extra` option to render them on the frontend.
 - The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax.
 - Hand-written Markdown is normalized once on the first save: bullet markers become `-`, loose lists become tight, emphasis uses `*`. After that the value is stable.

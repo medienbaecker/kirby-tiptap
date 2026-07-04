@@ -346,7 +346,11 @@ export const protectKirbyTags = (
 
 	const processText = (node: TiptapNode): TiptapNode[] => {
 		const text = node.text || "";
-		if (node.marks?.some((mark) => mark.type === "code")) {
+		if (
+			node.marks?.some(
+				(mark) => mark.type === "code" || mark.type === "kirbytagRaw"
+			)
+		) {
 			return [node];
 		}
 

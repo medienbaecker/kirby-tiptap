@@ -14,12 +14,12 @@ const escapeParens = (value: string): string =>
 /**
  * `code: true` exempts marked text from the markdown serializer's
  * backslash escaping, which would corrupt KirbyTags like
- * (image: my_file.jpg). Never in the live document — protectKirbyTags()
- * injects it just before serialization.
+ * (image: my_file.jpg) or bare URLs with underscores.
  */
 export const KirbytagRaw = Mark.create({
 	name: "kirbytagRaw",
 	code: true,
+	inclusive: false,
 
 	renderHTML() {
 		return ["span", 0];
@@ -109,10 +109,16 @@ export const LinkToKirbytag = Extension.create({
 		const isEmail = href.startsWith("mailto:");
 		const value = isEmail ? href.slice(7) : href;
 
-		let tag = `(${isEmail ? "email" : "link"}: ${value}`;
-		if (text && text !== value && text !== href) {
-			tag += ` text: ${escapeParens(text)}`;
+		// Bare URLs and autolinks keep their source form: a (link:) tag
+		// would change the rendered anchor text (Html::link shortens URL
+		// texts), and escaping the plain text would corrupt the href
+		if (!text || text === value || text === href) {
+			return helpers.applyMark("kirbytagRaw", [
+				helpers.createTextNode(String(token.raw ?? text ?? href)),
+			]);
 		}
+
+		let tag = `(${isEmail ? "email" : "link"}: ${value} text: ${escapeParens(text)}`;
 		if (token.title) {
 			tag += ` title: ${escapeParens(String(token.title))}`;
 		}
