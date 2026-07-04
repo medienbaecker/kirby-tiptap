@@ -91,7 +91,12 @@ class Field
 			'format' => function ($format = null) {
 				// Blueprint value wins over the global config option
 				$format ??= option('medienbaecker.tiptap.format', 'json');
-				return $format === 'markdown' ? 'markdown' : 'json';
+				if (in_array($format, ['json', 'markdown'], true) === false) {
+					throw new \Kirby\Exception\InvalidArgumentException(
+						message: 'Invalid tiptap format "' . $format . '", expected "json" or "markdown"'
+					);
+				}
+				return $format;
 			},
 			'pretty' => function ($pretty = false) {
 				return $pretty;
