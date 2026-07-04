@@ -333,10 +333,13 @@ export const findKirbyTagRanges = (text: string): [number, number][] => {
 	return positions;
 };
 
+const BARE_URL_REGEX = /https?:\/\/[^\s<>]+/g;
+
 /**
- * Wraps KirbyTag ranges in the kirbytagRaw mark so the markdown
- * serializer emits them verbatim: Kirby parses tags before any markdown
- * unescaping, so escaped metacharacters would end up in hrefs/srcs.
+ * Wraps KirbyTag and bare URL ranges in the kirbytagRaw mark so the
+ * markdown serializer emits them verbatim: Kirby parses tags before any
+ * markdown unescaping, so escaped metacharacters would end up in
+ * hrefs/srcs, and escaped bare URLs get corrupted by the autolinker.
  */
 export const protectKirbyTags = (
 	doc: TiptapDocument,
@@ -360,6 +363,18 @@ export const protectKirbyTags = (
 			return _type !== undefined && registered.has(_type);
 		});
 
+		// Bare URLs outside tag ranges, without trailing punctuation
+		BARE_URL_REGEX.lastIndex = 0;
+		let match: RegExpExecArray | null;
+		while ((match = BARE_URL_REGEX.exec(text))) {
+			const start = match.index;
+			const end = start + match[0].replace(/[.,;:!?'"]+$/, "").length;
+			if (!ranges.some(([s, e]) => start < e && end > s)) {
+				ranges.push([start, end]);
+			}
+		}
+		ranges.sort((a, b) => a[0] - b[0]);
+
 		if (ranges.length === 0) {
 			return [node];
 		}
@@ -373,7 +388,7 @@ export const protectKirbyTags = (
 			result.push({
 				type: "text",
 				text: text.slice(start, end),
-				marks: [{ type: "kirbytagRaw" }],
+				marks: [...(node.marks ?? []), { type: "kirbytagRaw" }],
 			});
 			cursor = end;
 		}
