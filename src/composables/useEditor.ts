@@ -195,7 +195,11 @@ export function useEditor(
 
 			const isMarkdown = props.format === "markdown";
 			if (isMarkdown) {
-				extensions.push(Markdown);
+				extensions.push(
+					// 4 spaces so nested lists survive Parsedown, which does
+					// not recognize 2-space nesting
+					Markdown.configure({ indentation: { size: 4 } })
+				);
 			}
 
 			const newEditor = new Editor({
