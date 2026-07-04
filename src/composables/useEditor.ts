@@ -11,6 +11,7 @@ import {
 	LinkToKirbytag,
 	RawMarkdownTable,
 } from "../extensions/markdownFormat";
+import { getExtensionField } from "@tiptap/core";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
@@ -201,6 +202,13 @@ export function useEditor(
 
 			const isMarkdown = props.format === "markdown";
 			if (isMarkdown) {
+				for (const ext of registryExtensions) {
+					if (ext.type === "node" && !getExtensionField(ext, "renderMarkdown")) {
+						console.warn(
+							`[kirby-tiptap] Extension "${ext.name}" has no renderMarkdown; its content will be lost when a markdown field is saved`
+						);
+					}
+				}
 				extensions.push(
 					// Parsedown does not recognize 2-space nesting
 					Markdown.configure({ indentation: { size: 4 } }),
