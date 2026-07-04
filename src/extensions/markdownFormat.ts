@@ -56,6 +56,31 @@ export const KirbytagText = Extension.create({
 });
 
 /**
+ * Parses literal <br> into a hardBreak: the serializer emits <br> for
+ * breaks markdown cannot express (in headings, consecutive breaks), so
+ * the reparse must not leave it as escaped text.
+ */
+export const HtmlBreak = Extension.create({
+	name: "htmlBreak",
+	markdownTokenName: "htmlBreak",
+	markdownTokenizer: {
+		name: "htmlBreak",
+		level: "inline",
+		start: (src: string) => src.search(/<br\s*\/?>/i),
+		tokenize: (src: string) => {
+			const match = src.match(/^<br\s*\/?>/i);
+			if (!match) {
+				return undefined;
+			}
+			return { type: "htmlBreak", raw: match[0] };
+		},
+	},
+	parseMarkdown: (_token: MarkdownToken, helpers: MarkdownParseHelpers) => [
+		helpers.createNode("hardBreak"),
+	],
+});
+
+/**
  * Keeps GFM tables from being silently deleted on save: the schema has
  * no table extension, so the source is stored verbatim and re-emitted
  * on serialize. Kirby needs markdown.extra to render tables.
