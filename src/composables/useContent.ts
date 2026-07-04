@@ -37,8 +37,18 @@ export function useContent(
 			return value;
 		}
 
-		// Markdown values are handled by the editor's markdown extension
+		// Markdown values are handled by the editor's markdown extension.
+		// Stored JSON still loads as a doc, so switching a field's format
+		// converts the content on the next save
 		if (props.format === "markdown") {
+			try {
+				const parsed = JSON.parse(value) as TiptapDocument;
+				if (parsed && parsed.type === "doc") {
+					return parsed;
+				}
+			} catch {
+				// Not JSON, treat as markdown
+			}
 			return value;
 		}
 
