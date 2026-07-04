@@ -210,8 +210,9 @@ export function useEditor(
 					}
 				}
 				extensions.push(
-					// Parsedown does not recognize 2-space nesting
-					Markdown.configure({ indentation: { size: 4 } }),
+					// Default 2-space indentation: with 4, multi-paragraph
+					// list items reparse as code blocks and lose content
+					Markdown,
 					KirbytagRaw,
 					KirbytagText,
 					LinkToKirbytag,

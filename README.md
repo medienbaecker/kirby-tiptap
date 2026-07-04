@@ -162,7 +162,7 @@ Notes:
 - Labeled markdown links (`[text](url)` and reference style) are converted to KirbyTags when the field is opened, matching how the field handles links everywhere else. Bare URLs and autolinks stay as they are.
 - Tables are preserved verbatim and shown as raw Markdown in the editor — there is no table editing (yet). Enable Kirby's `markdown.extra` option to render them on the frontend.
 - The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax.
-- Hand-written Markdown is normalized once on the first save: bullet markers become `-`, loose lists become tight, emphasis uses `*`. After that the value is stable.
+- Hand-written Markdown is normalized on the first save: bullet markers become `-`, loose lists become tight, emphasis uses `*`, nested lists use 2-space indentation. After that the value is stable. Kirby's Markdown parser only nests lists indented by the parent marker's width, so deep nesting under ordered lists can render flat, exactly as it would coming from a textarea.
 - Custom nodes from the Extension API need `renderMarkdown`/`parseMarkdown` in their extension definition to survive in Markdown fields; the Panel console warns about extensions without it.
 
 ### Blocks field
