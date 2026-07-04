@@ -158,10 +158,12 @@ To switch every tiptap field to Markdown, set the format globally (blueprint val
 Notes:
 
 - Switching the format does **not** convert existing content: fields keep whatever is stored until they are edited and saved again. Don't flip the global option on a site with existing JSON tiptap content.
-- The `pretty` and `offsetHeadings` options only apply to JSON fields
-- The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax
-- Custom nodes from the Extension API need Markdown serialization support to survive the round-trip — stick to the standard buttons for Markdown fields
-- Rendering goes through `kirbytext()`, so output details match textarea fields (e.g. block-level KirbyTags inside a paragraph keep Kirby's markup) rather than the JSON pipeline. `scripts/format-compare.sh` diffs the two pipelines case by case.
+- Rendering goes through `kirbytext()`, so Markdown fields behave exactly like textarea fields: literal HTML in the content reaches the frontend unescaped and block-level KirbyTags inside a paragraph keep Kirby's markup. The `allowHtml`, `pretty` and `offsetHeadings` options only apply to JSON fields.
+- Markdown links (`[text](url)`, reference style, autolinks) are converted to KirbyTags when the field is opened, matching how the field handles links everywhere else.
+- Tables are preserved verbatim and shown as raw Markdown in the editor — there is no table editing (yet). Enable Kirby's `markdown.extra` option to render them on the frontend.
+- The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax.
+- Hand-written Markdown is normalized once on the first save: bullet markers become `-`, loose lists become tight, emphasis uses `*`. After that the value is stable.
+- Custom nodes from the Extension API need `renderMarkdown`/`parseMarkdown` in their extension definition to survive in Markdown fields; the Panel console warns about extensions without it.
 
 ### Blocks field
 
