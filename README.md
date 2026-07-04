@@ -161,6 +161,8 @@ Notes:
 - Rendering goes through `kirbytext()`, so Markdown fields behave exactly like textarea fields: literal HTML in the content reaches the frontend unescaped and block-level KirbyTags inside a paragraph keep Kirby's markup. The `allowHtml`, `pretty` and `offsetHeadings` options only apply to JSON fields.
 - Labeled markdown links (`[text](url)` and reference style) are converted to KirbyTags when the field is opened, matching how the field handles links everywhere else. Bare URLs and autolinks stay as they are.
 - Tables are preserved verbatim and shown as raw Markdown in the editor — there is no table editing (yet). Enable Kirby's `markdown.extra` option to render them on the frontend.
+- Bare URLs stay plain text in the stored value; kirbytext links them on the frontend, like in a textarea
+- Breaks that Markdown cannot express (inside headings, consecutive breaks) are stored as literal `<br>`
 - The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax.
 - Hand-written Markdown is normalized on the first save: bullet markers become `-`, loose lists become tight, emphasis uses `*`, nested lists use 2-space indentation. After that the value is stable. Kirby's Markdown parser only nests lists indented by the parent marker's width, so deep nesting under ordered lists can render flat, exactly as it would coming from a textarea.
 - Custom nodes from the Extension API need `renderMarkdown`/`parseMarkdown` in their extension definition to survive in Markdown fields; the Panel console warns about extensions without it.
