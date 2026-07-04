@@ -1,4 +1,4 @@
-import { Extension, Mark } from "@tiptap/core";
+import { Extension, Mark, Node } from "@tiptap/core";
 import type {
 	JSONContent,
 	MarkdownParseHelpers,
@@ -53,6 +53,45 @@ export const KirbytagText = Extension.create({
 	parseMarkdown: (token: MarkdownToken, helpers: MarkdownParseHelpers) => [
 		helpers.createTextNode(String(token.text ?? token.raw ?? "")),
 	],
+});
+
+/**
+ * Keeps GFM tables from being silently deleted on save: the schema has
+ * no table extension, so the source is stored verbatim and re-emitted
+ * on serialize. Kirby needs markdown.extra to render tables.
+ */
+export const RawMarkdownTable = Node.create({
+	name: "rawMarkdownTable",
+	group: "block",
+	atom: true,
+
+	addAttributes() {
+		return { raw: { default: "" } };
+	},
+
+	parseHTML() {
+		return [
+			{
+				tag: "pre[data-raw-markdown-table]",
+				getAttrs: (element) => ({ raw: element.textContent ?? "" }),
+			},
+		];
+	},
+
+	renderHTML({ node }) {
+		return [
+			"pre",
+			{ "data-raw-markdown-table": "" },
+			String(node.attrs.raw),
+		];
+	},
+
+	markdownTokenName: "table",
+	parseMarkdown: (token: MarkdownToken, helpers: MarkdownParseHelpers) =>
+		helpers.createNode("rawMarkdownTable", {
+			raw: String(token.raw ?? "").trimEnd(),
+		}),
+	renderMarkdown: (node: JSONContent) => String(node.attrs?.raw ?? ""),
 });
 
 /**

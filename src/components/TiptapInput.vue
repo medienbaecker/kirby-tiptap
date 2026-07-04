@@ -234,6 +234,17 @@ export default {
 	display: block;
 }
 
+/* Tables preserved as raw markdown */
+.tiptap pre[data-raw-markdown-table] {
+	font-size: var(--code-inline-font-size);
+	font-family: var(--code-font-family);
+	white-space: pre;
+	overflow-x: auto;
+	padding: var(--spacing-1);
+	border: 1px dashed var(--color-gray-400);
+	border-radius: var(--rounded);
+}
+
 /* Blockquote */
 .tiptap blockquote {
 	padding-inline-start: var(--spacing-2);

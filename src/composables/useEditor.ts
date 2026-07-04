@@ -9,6 +9,7 @@ import {
 	KirbytagRaw,
 	KirbytagText,
 	LinkToKirbytag,
+	RawMarkdownTable,
 } from "../extensions/markdownFormat";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
@@ -205,7 +206,8 @@ export function useEditor(
 					Markdown.configure({ indentation: { size: 4 } }),
 					KirbytagRaw,
 					KirbytagText,
-					LinkToKirbytag
+					LinkToKirbytag,
+					RawMarkdownTable
 				);
 			}
 
