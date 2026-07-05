@@ -11,7 +11,7 @@ use Kirby\CLI\CLI;
 use Medienbaecker\Tiptap\Field;
 use Medienbaecker\Tiptap\Validations;
 use Medienbaecker\Tiptap\Api;
-use Medienbaecker\Tiptap\TextareaConverter;
+use Medienbaecker\Tiptap\Converter;
 
 Kirby::plugin('medienbaecker/tiptap', [
 	'options' => [
@@ -51,6 +51,9 @@ Kirby::plugin('medienbaecker/tiptap', [
 				'upload',
 			],
 			'props' => Field::props(),
+			'save' => function ($value = null) {
+				return Field::store($value, $this->format, $this->inline === true, $this->kirby());
+			},
 			'validations' => Validations::rules(),
 			'api' => function () {
 				return Api::endpoints();
@@ -99,7 +102,7 @@ Kirby::plugin('medienbaecker/tiptap', [
 	})(),
 	'commands' => [
 		'tiptap:convert' => [
-			'description' => 'Convert textarea fields to Tiptap JSON format',
+			'description' => 'Convert stored tiptap field content to the format configured in the blueprint',
 			'args' => [
 				'page' => [
 					'longPrefix' => 'page',
@@ -114,7 +117,7 @@ Kirby::plugin('medienbaecker/tiptap', [
 				],
 			],
 			'command' => static function (CLI $cli): void {
-				$converter = new TextareaConverter($cli);
+				$converter = new Converter($cli);
 				$converter->run();
 			}
 		]

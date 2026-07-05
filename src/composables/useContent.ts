@@ -1,7 +1,6 @@
 import type { Ref } from "vue";
 import type { Editor } from "@tiptap/vue-2";
 import { processPlainTextParagraphs } from "../utils/contentProcessing";
-import { prepareDocForMarkdown } from "../utils/markdownDoc";
 import type { TiptapDocument, TiptapNode, KirbytagsMap } from "../types";
 
 interface ContentProps {
@@ -117,27 +116,18 @@ export function useContent(
 
 		const isEmpty = isContentEmpty(content);
 
+		// Markdown fields are converted server-side by the field's save handler
 		let json = "";
 		if (!isEmpty) {
-			if (props.format === "markdown") {
-				json = (
-					editorInstance as unknown as {
-						markdown: { serialize: (doc: TiptapDocument) => string };
-					}
-				).markdown.serialize(
-					prepareDocForMarkdown(content, props.kirbytags, props.inline)
-				);
-			} else {
-				json = JSON.stringify(
-					{
-						type: "doc",
-						content: content.content,
-						inline: props.inline,
-					},
-					null,
-					props.pretty ? 2 : 0
-				);
-			}
+			json = JSON.stringify(
+				{
+					type: "doc",
+					content: content.content,
+					inline: props.inline,
+				},
+				null,
+				props.pretty ? 2 : 0
+			);
 		}
 
 		emit("input", { json });

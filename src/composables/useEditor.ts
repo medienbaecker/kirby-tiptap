@@ -12,7 +12,6 @@ import {
 	LinkToKirbytag,
 	RawMarkdownTable,
 } from "../extensions/markdownFormat";
-import { getExtensionField } from "@tiptap/core";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
@@ -186,8 +185,12 @@ export function useEditor(
 				InsertionGuards,
 			];
 
-			// Add TaskList extensions if taskList button is enabled
-			if (allowedButtons.value.includes("taskList")) {
+			// Markdown fields need the schema nodes even without the button,
+			// so stored JSON task lists load and survive saves
+			if (
+				allowedButtons.value.includes("taskList") ||
+				props.format === "markdown"
+			) {
 				extensions.push(
 					TaskList,
 					TaskItem.configure({
@@ -203,13 +206,6 @@ export function useEditor(
 
 			const isMarkdown = props.format === "markdown";
 			if (isMarkdown) {
-				for (const ext of registryExtensions) {
-					if (ext.type === "node" && !getExtensionField(ext, "renderMarkdown")) {
-						console.warn(
-							`[kirby-tiptap] Extension "${ext.name}" has no renderMarkdown; its content will be lost when a markdown field is saved`
-						);
-					}
-				}
 				extensions.push(
 					// Default 2-space indentation: with 4, multi-paragraph
 					// list items reparse as code blocks and lose content
