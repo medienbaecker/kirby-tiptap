@@ -292,7 +292,7 @@ class MarkdownSerializer
 			if ($registered !== null) {
 				$slice = substr($text, $range[0], $range[1] - $range[0]);
 				if (
-					preg_match('/^\((\w+):/', $slice, $match) !== 1 ||
+					preg_match('/^\(([a-z0-9_-]+):/i', $slice, $match) !== 1 ||
 					isset($registered[strtolower($match[1])]) === false
 				) {
 					continue;
@@ -502,9 +502,6 @@ class MarkdownSerializer
 		}
 		$first = intdiv($num - 1, 26) - 1;
 		$second = ($num - 1) % 26;
-		if ($first < 0) {
-			return $alpha[$second];
-		}
 		return $alpha[$first] . $alpha[$second];
 	}
 

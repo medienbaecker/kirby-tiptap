@@ -14,10 +14,10 @@ class Field
 	 * Save transform for markdown fields: Tiptap JSON becomes markdown.
 	 * Inexpressible docs stay JSON and converge on a later save
 	 */
-	public static function store($value, string $format, bool $inline, \Kirby\Cms\App $kirby): string
+	public static function store($value, string $format, bool $inline, \Kirby\Cms\App $kirby)
 	{
 		if ($format !== 'markdown' || is_string($value) === false || trim($value) === '') {
-			return $value ?? '';
+			return $value;
 		}
 
 		$decoded = json_decode($value, true);

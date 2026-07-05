@@ -69,7 +69,10 @@ class Converter
 			$site = site();
 			yield $site;
 			yield from $site->files();
-			yield from kirby()->users();
+			foreach (kirby()->users() as $user) {
+				yield $user;
+				yield from $user->files();
+			}
 			$pages = $site->index(true);
 		}
 
@@ -119,6 +122,13 @@ class Converter
 
 			foreach ($languages as $language) {
 				$code = $language?->code();
+
+				// Untranslated models fall back to default-language content;
+				// converting would materialize a translation that never existed
+				if ($code !== null && $model->translation($code)->exists() === false) {
+					continue;
+				}
+
 				$updates = [];
 
 				foreach ($entries as $entry) {
@@ -140,7 +150,7 @@ class Converter
 			} else {
 				$this->cli->dim()->out('  No changes needed');
 			}
-		} catch (\Exception $e) {
+		} catch (\Throwable $e) {
 			$this->cli->red()->out('  Error: ' . $e->getMessage());
 			$this->errors++;
 		}

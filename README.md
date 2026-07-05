@@ -166,7 +166,7 @@ Notes:
 - Breaks that Markdown cannot express (inside headings, consecutive breaks) are stored as literal `<br>`
 - The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax.
 - Hand-written Markdown is normalized on the first save: bullet markers become `-`, loose lists become tight, emphasis uses `*`, nested lists use 2-space indentation. After that the value is stable. Kirby's Markdown parser only nests lists indented by the parent marker's width, so deep nesting under ordered lists can render flat, exactly as it would coming from a textarea.
-- Content that Markdown cannot express (task lists, custom nodes from the Extension API) is stored as Tiptap JSON instead. It loads, edits and renders exactly like before and converts to Markdown once it becomes expressible again. Custom extensions don't need any extra configuration for this.
+- Content that Markdown cannot express (task lists, custom nodes from the Extension API) is stored as Tiptap JSON instead. It loads, edits and renders exactly like before and converts to Markdown once it becomes expressible again. Custom extensions don't need any extra configuration for this. Note that this requires rendering with `tiptapText()`: a template calling `kirbytext()` directly would output the raw JSON for such fields.
 
 ### Blocks field
 
