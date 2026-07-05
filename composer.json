@@ -3,7 +3,7 @@
 	"description": "Kirby Tiptap",
 	"license": "MIT",
 	"type": "kirby-plugin",
-	"version": "1.4.0-rc.2",
+	"version": "1.4.0-rc.3",
 	"authors": [
 		{
 			"name": "Thomas Günther",
