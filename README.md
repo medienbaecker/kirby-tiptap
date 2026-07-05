@@ -157,7 +157,8 @@ To switch every tiptap field to Markdown, set the format globally (blueprint val
 
 Notes:
 
-- Switching the format does **not** convert existing content: fields keep whatever is stored until they are edited and saved again. Don't flip the global option on a site with existing JSON tiptap content.
+- The Markdown is generated server-side whenever a field is saved, so the Panel, `$page->update()` and the CLI all produce the same stored format.
+- Switching the format converts each field the next time it is saved. To convert a whole site in one go, use [the CLI command](#converting-existing-fields).
 - Rendering goes through `kirbytext()`, so Markdown fields behave exactly like textarea fields: literal HTML in the content reaches the frontend unescaped and block-level KirbyTags inside a paragraph keep Kirby's markup. The `allowHtml`, `pretty` and `offsetHeadings` options only apply to JSON fields.
 - Labeled markdown links (`[text](url)` and reference style) are converted to KirbyTags when the field is opened, matching how the field handles links everywhere else. Bare URLs and autolinks stay as they are.
 - Tables are preserved verbatim and shown as raw Markdown in the editor — there is no table editing (yet). Enable Kirby's `markdown.extra` option to render them on the frontend.
@@ -165,7 +166,7 @@ Notes:
 - Breaks that Markdown cannot express (inside headings, consecutive breaks) are stored as literal `<br>`
 - The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax.
 - Hand-written Markdown is normalized on the first save: bullet markers become `-`, loose lists become tight, emphasis uses `*`, nested lists use 2-space indentation. After that the value is stable. Kirby's Markdown parser only nests lists indented by the parent marker's width, so deep nesting under ordered lists can render flat, exactly as it would coming from a textarea.
-- Custom nodes from the Extension API need `renderMarkdown`/`parseMarkdown` in their extension definition to survive in Markdown fields; the Panel console warns about extensions without it.
+- Content that Markdown cannot express (task lists, custom nodes from the Extension API) is stored as Tiptap JSON instead. It loads, edits and renders exactly like before and converts to Markdown once it becomes expressible again. Custom extensions don't need any extra configuration for this.
 
 ### Blocks field
 
@@ -430,7 +431,10 @@ $htmlAttrs = attr(array_filter(array_diff_key($attrs ?? [], ['level' => true])))
 
 ### Converting existing fields
 
-To convert existing `textarea` or `markdown` fields to the JSON this field expects, you can use the built-in `tiptap:convert` CLI command:
+The `tiptap:convert` CLI command converts stored content to whatever format the blueprint expects:
+
+- `textarea` and `markdown` fields (and `tiptap` fields with `format: json` still holding plain text) are converted to Tiptap JSON, so you can switch the field type afterwards
+- `tiptap` fields with `format: markdown` that still store JSON are converted to Markdown, including fields inside structure fields and blocks
 
 ```bash
 kirby tiptap:convert
@@ -444,7 +448,9 @@ kirby tiptap:convert --dry-run
 kirby tiptap:convert --page blog
 ```
 
-The command looks at the blueprint to collect the fields and converts their values to HTML using Kirby's `markdown()` method before transforming it to Tiptap's JSON format using the same logic as the field itself. After running the command you can change the field type in your blueprints to `tiptap`.
+The Markdown direction renders both representations and reports fields whose frontend output changes with the format switch (bare URLs become links, deep nesting under ordered lists renders flat, both inherent to kirbytext). Fields containing task lists or custom nodes keep their JSON. Models with unsaved Panel changes are skipped entirely, since publishing the draft later would undo the migration.
+
+Back up or commit your content folder before running the command without `--dry-run`.
 
 ## Ideas for future improvements
 
