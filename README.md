@@ -155,6 +155,33 @@ To switch every tiptap field to Markdown, set the format globally (blueprint val
 'medienbaecker.tiptap.format' => 'markdown',
 ```
 
+##### Choosing a format
+
+Markdown trades fidelity for portability: your content files stay human-readable and usable outside the plugin, but Markdown can express less than the editor and rendering follows textarea rules.
+
+Stay with `format: json` (the default) when you
+
+- use custom nodes, task lists or custom node attributes (a paragraph class, for example)
+- want HTML in the content escaped instead of passed through
+- need the `allowHtml`, `pretty` or `offsetHeadings` options
+
+Choose `format: markdown` when you
+
+- want content files you can read, edit and process with other tools
+- replace existing textarea fields and want their exact frontend behavior
+- want the option to leave the plugin behind without converting anything
+
+|  | `json` | `markdown` |
+| --- | --- | --- |
+| Stored value | Tiptap JSON | Markdown |
+| Rendering | Plugin snippets, HTML escaped | `kirbytext()`, HTML passes through |
+| Task lists | Yes | No (button hidden) |
+| Custom nodes | Yes | Stored as JSON until expressible |
+| Custom node attributes | Yes | Stored as JSON until expressible |
+| Tables | No | Preserved as raw Markdown |
+| Bare URLs | Stay plain text | Autolinked by kirbytext |
+| Nested lists | Exact | Deep nesting can render flat |
+
 Notes:
 
 - The Markdown is generated server-side whenever a field is saved, so the Panel, `$page->update()` and the CLI all produce the same stored format.
@@ -166,7 +193,7 @@ Notes:
 - Breaks that Markdown cannot express (inside headings, consecutive breaks) are stored as literal `<br>`
 - The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax.
 - Hand-written Markdown is normalized on the first save: bullet markers become `-`, loose lists become tight, emphasis uses `*`, nested lists use 2-space indentation. After that the value is stable. Kirby's Markdown parser only nests lists indented by the parent marker's width, so deep nesting under ordered lists can render flat, exactly as it would coming from a textarea.
-- Content that Markdown cannot express (task lists, custom nodes from the Extension API) is stored as Tiptap JSON instead. It loads, edits and renders exactly like before and converts to Markdown once it becomes expressible again. Custom extensions don't need any extra configuration for this. Note that this requires rendering with `tiptapText()`: a template calling `kirbytext()` directly would output the raw JSON for such fields.
+- Content that Markdown cannot express (task lists, custom nodes, custom attributes like a paragraph class) is stored as Tiptap JSON instead. It loads, edits and renders exactly like before and converts to Markdown once it becomes expressible again. Custom extensions don't need any extra configuration for this. Note that this requires rendering with `tiptapText()`: a template calling `kirbytext()` directly would output the raw JSON for such fields.
 
 ### Blocks field
 

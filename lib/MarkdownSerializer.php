@@ -65,6 +65,17 @@ class MarkdownSerializer
 		'link' => true,
 	];
 
+	// Attributes the emitter consumes; any other non-null attribute
+	// (e.g. a paragraph class from a custom extension) cannot be
+	// expressed in markdown and must trigger the JSON fallback
+	private const SUPPORTED_ATTRS = [
+		'heading' => ['level' => true],
+		'orderedList' => ['start' => true, 'type' => true],
+		'codeBlock' => ['language' => true],
+		'rawMarkdownTable' => ['raw' => true],
+		'link' => ['href' => true],
+	];
+
 	private const INDENT = '  ';
 
 	// JavaScript's \s (unicode) for whitespace parity with the Panel
@@ -97,15 +108,28 @@ class MarkdownSerializer
 		$type = $node['type'] ?? '';
 		if (isset(self::SUPPORTED_NODES[$type]) === false) {
 			$found[$type] = true;
+		} else {
+			static::collectUnsupportedAttrs($type, $node['attrs'] ?? [], $found);
 		}
 		foreach ($node['marks'] ?? [] as $mark) {
 			$markType = $mark['type'] ?? '';
 			if (isset(self::SUPPORTED_MARKS[$markType]) === false) {
 				$found['mark:' . $markType] = true;
+			} else {
+				static::collectUnsupportedAttrs($markType, $mark['attrs'] ?? [], $found);
 			}
 		}
 		foreach ($node['content'] ?? [] as $child) {
 			static::collectUnsupported($child, $found);
+		}
+	}
+
+	private static function collectUnsupportedAttrs(string $type, array $attrs, array &$found): void
+	{
+		foreach ($attrs as $key => $value) {
+			if ($value !== null && isset(self::SUPPORTED_ATTRS[$type][$key]) === false) {
+				$found['attr:' . $type . '.' . $key] = true;
+			}
 		}
 	}
 
