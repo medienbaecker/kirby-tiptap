@@ -171,22 +171,21 @@ Choose `format: markdown` when you
 - replace existing textarea fields and want their exact frontend behavior
 - want the option to leave the plugin behind without converting anything
 
-|  | `json` | `markdown` |
-| --- | --- | --- |
-| Stored value | Tiptap JSON | Markdown |
-| Rendering | Plugin snippets, HTML escaped | `kirbytext()`, HTML passes through |
-| Task lists | Yes | No (button hidden) |
-| Custom nodes | Yes | Stored as JSON until expressible |
-| Custom node attributes | Yes | Stored as JSON until expressible |
-| Tables | No | Preserved as raw Markdown |
-| Bare URLs | Stay plain text | Autolinked by kirbytext |
-| Nested lists | Exact | Deep nesting can render flat |
+|                        | `json`                        | `markdown`                         |
+| ---------------------- | ----------------------------- | ---------------------------------- |
+| Stored value           | Tiptap JSON                   | Markdown                           |
+| Rendering              | Plugin snippets, HTML escaped | `kirbytext()`, HTML passes through |
+| Task lists             | Yes                           | No (button hidden)                 |
+| Custom nodes           | Yes                           | Stored as JSON until expressible   |
+| Custom node attributes | Yes                           | Stored as JSON until expressible   |
+| Tables                 | No                            | Preserved as raw Markdown          |
+| Bare URLs              | Stay plain text               | Autolinked by kirbytext            |
+| Nested lists           | Exact                         | Deep nesting can render flat       |
 
 Notes:
 
-- The Markdown is generated server-side whenever a field is saved, so the Panel, `$page->update()` and the CLI all produce the same stored format.
 - Switching the format converts each field the next time it is saved. To convert a whole site in one go, use [the CLI command](#converting-existing-fields).
-- Rendering goes through `kirbytext()`, so Markdown fields behave exactly like textarea fields: literal HTML in the content reaches the frontend unescaped and block-level KirbyTags inside a paragraph keep Kirby's markup. The `allowHtml`, `pretty` and `offsetHeadings` options only apply to JSON fields.
+- Rendering goes through `kirbytext()`, so Markdown fields behave exactly like textarea fields: literal HTML in the content reaches the frontend unescaped and block-level KirbyTags inside a paragraph keep Kirby's markup. The `allowHtml`, `pretty` and `offsetHeadings` options only apply to JSON fields: `pretty` throws on a Markdown field, `allowHtml`/`offsetHeadings` throw in debug mode when used on Markdown values.
 - Labeled markdown links (`[text](url)` and reference style) are converted to KirbyTags when the field is opened, matching how the field handles links everywhere else. Bare URLs and autolinks stay as they are.
 - Tables are preserved verbatim and shown as raw Markdown in the editor — there is no table editing (yet). Enable Kirby's `markdown.extra` option to render them on the frontend.
 - Bare URLs stay plain text in the stored value; kirbytext links them on the frontend, like in a textarea

@@ -62,6 +62,11 @@ class HtmlConverter
 	 */
 	public static function convert($json, $parent, array $options = [])
 	{
+		$jsonOnlyOptions = array_intersect_key($options, [
+			'allowHtml' => true,
+			'offsetHeadings' => true,
+		]);
+
 		// Set default options
 		$options = array_merge([
 			'offsetHeadings' => 0,
@@ -84,6 +89,13 @@ class HtmlConverter
 				// Markdown value (format: markdown) or legacy plain text:
 				// render with Kirby's own pipeline (KirbyTags + Markdown +
 				// SmartyPants), like a textarea field
+				if ($jsonOnlyOptions !== [] && option('debug', false) === true) {
+					throw new \Kirby\Exception\InvalidArgumentException(
+						message: 'The ' . implode(' and ', array_keys($jsonOnlyOptions)) .
+							(count($jsonOnlyOptions) === 1 ? ' option has' : ' options have') .
+							' no effect on markdown values'
+					);
+				}
 				try {
 					return kirbytext($json, [
 						'parent' => $parent,
