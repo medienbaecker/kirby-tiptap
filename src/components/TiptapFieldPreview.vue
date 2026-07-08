@@ -73,6 +73,7 @@ const parseMarkdown = (value) => {
 
 export default {
 	mixins: [FieldPreview],
+	inheritAttrs: false,
 	props: {
 		value: String
 	},

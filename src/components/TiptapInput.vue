@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import { EditorContent } from '@tiptap/vue-2'
+import { EditorContent } from '@tiptap/vue-3'
 import { onMounted, getCurrentInstance, watch, ref } from 'vue'
 import Toolbar from './Toolbar.vue'
 import { props } from './props.js'
@@ -19,6 +19,7 @@ import { createPasteHandler, createDropHandler } from '../utils/eventHandlers'
 export default {
 	components: { EditorContent, Toolbar },
 	props,
+	emits: ['editor', 'input'],
 
 	setup(props, { emit }) {
 		const instance = getCurrentInstance()

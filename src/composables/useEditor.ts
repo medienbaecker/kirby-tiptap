@@ -1,5 +1,5 @@
 import { ref, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
-import { Editor } from "@tiptap/vue-2";
+import { Editor } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";

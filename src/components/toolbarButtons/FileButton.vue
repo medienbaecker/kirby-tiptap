@@ -51,7 +51,7 @@ export default {
 		this.editor.on('update', this.updateEditingFlag);
 	},
 
-	beforeDestroy() {
+	beforeUnmount() {
 		this.editor.off('selectionUpdate', this.updateEditingFlag);
 		this.editor.off('update', this.updateEditingFlag);
 	},
@@ -162,10 +162,12 @@ export default {
 					value: value,
 					fields: this.fileFields,
 					initialFieldValues: processedFieldValues,
-					submitButton: window.panel.$t(isEditing ? 'change' : 'insert')
+					submitButton: window.panel.$t(isEditing ? 'change' : 'insert'),
+					uploads: this.uploads
 				},
 				on: {
 					cancel: restoreSelection,
+					drop: (files) => this.handleUpload(files),
 					submit: (files, fieldValues) => {
 						if (!files?.length) {
 							this.$panel.notification.error(
@@ -264,7 +266,7 @@ export default {
 			return isTagActive(editor, this.isFileTag);
 		},
 
-		handleUpload() {
+		handleUpload(files = null) {
 			if (!this.uploads) {
 				this.$panel.notification.error(this.$t('tiptap.upload.error.disabled'));
 				return;
@@ -281,7 +283,15 @@ export default {
 			});
 
 			try {
-				this.$panel.upload.pick(options);
+				// Files dropped onto the picker are already in hand: upload them
+				// straight away, no OS picker and no confirm dialog. upload.done()
+				// closes the still-open file dialog before insertUploadedFile runs.
+				if (files) {
+					this.$panel.upload.select(files, options);
+					this.$panel.upload.submit();
+				} else {
+					this.$panel.upload.pick(options);
+				}
 			} catch (error) {
 				this.$panel.notification.error(`${this.$t('tiptap.upload.error.dialog')}: ${error.message}`);
 				restoreSelection();

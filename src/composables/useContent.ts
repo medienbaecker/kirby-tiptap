@@ -1,5 +1,5 @@
 import type { Ref } from "vue";
-import type { Editor } from "@tiptap/vue-2";
+import type { Editor } from "@tiptap/vue-3";
 import { processPlainTextParagraphs } from "../utils/contentProcessing";
 import type { TiptapDocument, TiptapNode, KirbytagsMap } from "../types";
 

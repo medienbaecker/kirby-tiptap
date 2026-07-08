@@ -35,7 +35,7 @@ export default {
 	mounted() {
 		this.$el.querySelector('label')?.addEventListener('click', this.focus);
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		this.$el.querySelector('label')?.removeEventListener('click', this.focus);
 	},
 	methods: {

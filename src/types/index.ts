@@ -1,4 +1,4 @@
-import type { Editor } from '@tiptap/vue-2'
+import type { Editor } from '@tiptap/vue-3'
 import type { AnyExtension, Editor as CoreEditor } from '@tiptap/core'
 import type { Component } from 'vue'
 
@@ -170,7 +170,7 @@ export interface TiptapContext {
 			Mark: any
 			mergeAttributes: any
 		}
-		vue2: {
+		vue3: {
 			VueNodeViewRenderer: any
 		}
 	}

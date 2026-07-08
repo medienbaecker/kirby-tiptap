@@ -1,5 +1,6 @@
 <template>
-	<k-dialog v-bind="$props" class="tiptap-file-dialog" @cancel="$emit('cancel')" @submit="submit">
+	<k-dialog v-bind="$props" class="tiptap-file-dialog" v-on="dropListeners" @cancel="$emit('cancel')"
+		@submit="submit">
 		<k-dialog-search v-if="hasSearch" :value="query" @search="query = $event" />
 
 		<k-collection :empty="{
@@ -30,7 +31,6 @@
 <script>
 import Dialog from "@/mixins/dialog.js";
 import Search from "@/mixins/search.js";
-import { set, del } from "vue";
 import DialogFooterWithRemove from "./DialogFooterWithRemove.vue";
 
 export default {
@@ -77,9 +77,13 @@ export default {
 		removable: {
 			type: Boolean,
 			default: false
+		},
+		uploads: {
+			type: [Object, Boolean],
+			default: false
 		}
 	},
-	emits: ["cancel", "fetched", "remove", "submit"],
+	emits: ["cancel", "drop", "fetched", "remove", "submit"],
 	data() {
 		return {
 			models: [],
@@ -93,6 +97,12 @@ export default {
 		};
 	},
 	computed: {
+		// Only wire the drop handler when uploads are enabled, so k-dialog's
+		// dropzone (auto-enabled by the presence of an @drop listener) stays off
+		// for select-only fields.
+		dropListeners() {
+			return this.uploads ? { drop: this.emitDrop } : {};
+		},
 		hasFields() {
 			return this.$helper.object.length(this.fields) > 0;
 		},
@@ -129,7 +139,7 @@ export default {
 				// keeps them across pagination instead of resolving against this page.
 				for (const model of this.models) {
 					if (this.selected[model.id] !== undefined) {
-						set(this.selected, model.id, model);
+						this.selected[model.id] = model;
 					}
 				}
 
@@ -140,6 +150,9 @@ export default {
 			} finally {
 				this.$panel.dialog.isLoading = false;
 			}
+		},
+		emitDrop(files) {
+			this.$emit("drop", files);
 		},
 		isSelected(item) {
 			return this.selected[item.id] !== undefined;
@@ -165,14 +178,15 @@ export default {
 			}
 
 			if (this.isSelected(item)) {
-				return del(this.selected, item.id);
+				delete this.selected[item.id];
+				return;
 			}
 
 			if (this.max && this.max <= this.$helper.object.length(this.selected)) {
 				return;
 			}
 
-			set(this.selected, item.id, item);
+			this.selected[item.id] = item;
 		}
 	}
 };

@@ -9,8 +9,7 @@ use Kirby\Filesystem\F;
 use Kirby\Data\Json;
 use Kirby\CLI\CLI;
 use Medienbaecker\Tiptap\Field;
-use Medienbaecker\Tiptap\Validations;
-use Medienbaecker\Tiptap\Api;
+use Medienbaecker\Tiptap\TiptapField;
 use Medienbaecker\Tiptap\Converter;
 
 Kirby::plugin('medienbaecker/tiptap', [
@@ -45,20 +44,7 @@ Kirby::plugin('medienbaecker/tiptap', [
 		'tiptap/inline' => __DIR__ . '/snippets/tiptap/inline.php',
 	],
 	'fields' => [
-		'tiptap' => [
-			'mixins' => [
-				'filepicker',
-				'upload',
-			],
-			'props' => Field::props(),
-			'save' => function ($value = null) {
-				return Field::store($value, $this->format, $this->inline === true, $this->kirby());
-			},
-			'validations' => Validations::rules(),
-			'api' => function () {
-				return Api::endpoints();
-			}
-		]
+		'tiptap' => TiptapField::class
 	],
 	'fieldMethods' => [
 		'tiptapText' => function ($field, array $options = []) {

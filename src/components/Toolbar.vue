@@ -1,12 +1,13 @@
 <template>
 	<nav class="k-toolbar tiptap-toolbar" role="toolbar" :aria-label="$t('toolbar')" v-if="editor"
 		@keydown="handleKeydown" @focusin="handleFocusIn" @mousedown.prevent>
-		<template v-for="(button, index) in normalizedButtons">
-			<hr v-if="isSeparator(button)" :key="'sep-' + index" />
-			<ToolbarButton v-else-if="getSimple(button)" :key="getKey(button)" :editor="editor"
+		<template v-for="(button, index) in normalizedButtons"
+			:key="isSeparator(button) ? 'sep-' + index : getKey(button)">
+			<hr v-if="isSeparator(button)" />
+			<ToolbarButton v-else-if="getSimple(button)" :editor="editor"
 				:icon="getIcon(button)" :title="$t(getSimple(button).title)" :command="getSimple(button).command"
 				:active-check="getSimple(button).activeCheck" :disabled-check="getSimple(button).disabledCheck" />
-			<component v-else :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
+			<component v-else :is="getComponentType(button)" :editor="editor"
 				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads"
 				:kirbytags="kirbytags" :buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
 		</template>
@@ -14,6 +15,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent, h, resolveComponent } from 'vue'
 import { props } from './props.js'
 import { buttonRegistry } from '../utils/buttonRegistry.js'
 import ToolbarButton from './toolbarButtons/ToolbarButton.vue'
@@ -59,23 +61,20 @@ export default {
 				}
 				// Use cached component or create new one
 				if (!componentCache.has(name)) {
-					componentCache.set(name, () => {
-						return config.component().catch(() => {
-							return {
-								name: `${name}ButtonError`,
-								render(h) {
-									return h('k-button', {
-										props: {
-											icon: 'alert',
-											title: `Error loading ${name} button`,
-											disabled: true
-										},
-										class: 'tiptap-button-error'
-									})
-								}
+					componentCache.set(name, defineAsyncComponent({
+						loader: config.component,
+						errorComponent: {
+							name: `${name}ButtonError`,
+							render() {
+								return h(resolveComponent('k-button'), {
+									icon: 'alert',
+									title: `Error loading ${name} button`,
+									disabled: true,
+									class: 'tiptap-button-error'
+								})
 							}
-						})
-					})
+						}
+					}))
 				}
 				components[name] = componentCache.get(name)
 			}
@@ -175,7 +174,7 @@ export default {
 			if (!this.$el) return []
 			// Toolbar-level buttons only — exclude buttons inside open dropdowns.
 			return Array.from(this.$el.querySelectorAll('button'))
-				.filter(btn => !btn.closest('.k-dropdown-content'))
+				.filter(btn => !btn.closest('.k-dropdown'))
 		},
 
 		initRovingTabindex() {

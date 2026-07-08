@@ -1,5 +1,5 @@
 import type { Ref } from "vue";
-import type { Editor } from "@tiptap/vue-2";
+import type { Editor } from "@tiptap/vue-3";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
 import type { Panel, PanelHelpers } from "kirby-types";

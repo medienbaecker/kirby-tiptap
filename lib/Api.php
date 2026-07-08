@@ -168,7 +168,7 @@ class Api
 	private static function convertPageUuidToId($pageUuid)
 	{
 		try {
-			$page = Uuid::for($pageUuid)?->model();
+			$page = Uuid::from($pageUuid)?->model();
 			return $page ? $page->id() : $pageUuid;
 		} catch (Exception) {
 			// UUID not resolvable — return original reference
@@ -184,7 +184,7 @@ class Api
 	private static function convertFileUuidToFilename($fileUuid)
 	{
 		try {
-			$file = Uuid::for($fileUuid)?->model();
+			$file = Uuid::from($fileUuid)?->model();
 			return $file ? $file->filename() : $fileUuid;
 		} catch (Exception) {
 			// UUID not resolvable — return original reference
@@ -210,7 +210,7 @@ class Api
 		// Page UUID (page://xxx)
 		if (Uuid::is($reference, 'page')) {
 			try {
-				$page = Uuid::for($reference)?->model();
+				$page = Uuid::from($reference)?->model();
 				if ($page) {
 					return ['panelUrl' => $page->panel()->path(), 'type' => 'page'];
 				}
@@ -223,7 +223,7 @@ class Api
 		// File UUID (file://xxx)
 		if (Uuid::is($reference, 'file')) {
 			try {
-				$file = Uuid::for($reference)?->model();
+				$file = Uuid::from($reference)?->model();
 				if ($file) {
 					$parentPath = $file->parent()->panel()->path();
 					return [

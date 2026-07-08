@@ -396,7 +396,7 @@ The `create()` factory receives these modules:
 | `tiptap.core.Node`                | `@tiptap/core`      |
 | `tiptap.core.Mark`                | `@tiptap/core`      |
 | `tiptap.core.mergeAttributes`     | `@tiptap/core`      |
-| `tiptap.vue2.VueNodeViewRenderer` | `@tiptap/vue-2`     |
+| `tiptap.vue3.VueNodeViewRenderer` | `@tiptap/vue-3`     |
 | `pm.state.Plugin`                 | `prosemirror-state` |
 | `pm.state.PluginKey`              | `prosemirror-state` |
 | `pm.view.Decoration`              | `prosemirror-view`  |
