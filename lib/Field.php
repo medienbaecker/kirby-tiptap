@@ -134,13 +134,6 @@ class Field
 				return $format;
 			},
 			'pretty' => function ($pretty = false) {
-				// Markdown storage never pretty-prints; surface the
-				// misconfiguration instead of silently ignoring it
-				if ($pretty === true && $this->format === 'markdown') {
-					throw new \Kirby\Exception\InvalidArgumentException(
-						message: 'The pretty option has no effect with format: markdown'
-					);
-				}
 				return $pretty;
 			},
 			'minlength' => function ($minlength = null) {
