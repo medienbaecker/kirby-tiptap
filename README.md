@@ -157,42 +157,28 @@ To switch every tiptap field to Markdown, set the format globally (blueprint val
 
 ##### Choosing a format
 
-Markdown trades fidelity for portability: your content files stay human-readable and usable outside the plugin, but Markdown can express less than the editor and rendering follows textarea rules.
+Markdown trades fidelity for portability: content files stay readable and usable outside the plugin, but Markdown expresses less than the editor and rendering follows textarea rules.
 
-Stay with `format: json` (the default) when you
+Stay with `json` for custom nodes, task lists, custom attributes or the `allowHtml`/`offsetHeadings` options. Choose `markdown` for content files you can process elsewhere, or an exact textarea replacement.
 
-- use custom nodes, task lists or custom node attributes (a paragraph class, for example)
-- want HTML in the content escaped instead of passed through
-- need the `allowHtml`, `pretty` or `offsetHeadings` options
-
-Choose `format: markdown` when you
-
-- want content files you can read, edit and process with other tools
-- replace existing textarea fields and want their exact frontend behavior
-- want the option to leave the plugin behind without converting anything
-
-|                        | `json`                        | `markdown`                         |
-| ---------------------- | ----------------------------- | ---------------------------------- |
-| Stored value           | Tiptap JSON                   | Markdown                           |
-| Rendering              | Plugin snippets, HTML escaped | `kirbytext()`, HTML passes through |
-| Task lists             | Yes                           | No (button hidden)                 |
-| Custom nodes           | Yes                           | Stored as JSON until expressible   |
-| Custom node attributes | Yes                           | Stored as JSON until expressible   |
-| Tables                 | No                            | Preserved as raw Markdown          |
-| Bare URLs              | Stay plain text               | Autolinked by kirbytext            |
-| Nested lists           | Exact                         | Deep nesting can render flat       |
+|                                         | `json`                        | `markdown`                                     |
+| --------------------------------------- | ----------------------------- | ---------------------------------------------- |
+| Stored value                            | Tiptap JSON                   | Markdown                                       |
+| Rendering                               | Plugin snippets, HTML escaped | `kirbytext()`, HTML passes through             |
+| Task lists                              | Yes                           | No (button hidden)                             |
+| Custom nodes                            | Yes                           | Stored as JSON until expressible               |
+| Custom node attributes                  | Yes                           | Stored as JSON until expressible               |
+| Tables                                  | No                            | Raw Markdown in the editor, `markdown.extra` renders it |
+| Nested lists                            | Exact                         | Deep nesting can render flat                   |
+| `allowHtml`, `offsetHeadings`           | Yes                           | Throw in debug mode                            |
 
 Notes:
 
-- Switching the format converts each field the next time it is saved. To convert a whole site in one go, use [the CLI command](#converting-existing-fields).
-- Rendering goes through `kirbytext()`, so Markdown fields behave exactly like textarea fields: literal HTML in the content reaches the frontend unescaped and block-level KirbyTags inside a paragraph keep Kirby's markup. The `allowHtml`, `pretty` and `offsetHeadings` options only apply to JSON fields: `pretty` throws on a Markdown field, `allowHtml`/`offsetHeadings` throw in debug mode when used on Markdown values.
-- Labeled markdown links (`[text](url)` and reference style) are converted to KirbyTags when the field is opened, matching how the field handles links everywhere else. Bare URLs and autolinks stay as they are.
-- Tables are preserved verbatim and shown as raw Markdown in the editor — there is no table editing (yet). Enable Kirby's `markdown.extra` option to render them on the frontend.
-- Bare URLs stay plain text in the stored value; kirbytext links them on the frontend, like in a textarea
-- Breaks that Markdown cannot express (inside headings, consecutive breaks) are stored as literal `<br>`
-- The `taskList` button is hidden on Markdown fields — Kirby's Markdown parser has no task list syntax.
-- Hand-written Markdown is normalized on the first save: bullet markers become `-`, loose lists become tight, emphasis uses `*`, nested lists use 2-space indentation. After that the value is stable. Kirby's Markdown parser only nests lists indented by the parent marker's width, so deep nesting under ordered lists can render flat, exactly as it would coming from a textarea.
-- Content that Markdown cannot express (task lists, custom nodes, custom attributes like a paragraph class) is stored as Tiptap JSON instead. It loads, edits and renders exactly like before and converts to Markdown once it becomes expressible again. Custom extensions don't need any extra configuration for this. Note that this requires rendering with `tiptapText()`: a template calling `kirbytext()` directly would output the raw JSON for such fields.
+- Switching the format converts each field on its next save. To convert a whole site at once, use [the CLI command](#converting-existing-fields).
+- Hand-written Markdown is normalized on the first save: `-` bullets, tight lists, `*` emphasis, 2-space nesting. After that the value is stable.
+- Content Markdown cannot express is stored as Tiptap JSON and converts back once it becomes expressible. This needs `tiptapText()` — a template calling `kirbytext()` directly would output the raw JSON.
+- Labeled Markdown links (`[text](url)`, reference style) become KirbyTags when the field is opened. Bare URLs and autolinks stay as they are.
+- Breaks Markdown cannot express (inside headings, consecutive breaks) are stored as literal `<br>`.
 
 ### Blocks field
 
