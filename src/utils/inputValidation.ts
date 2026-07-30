@@ -61,6 +61,13 @@ export function generateLinkTag(values: LinkTagValues): string {
 	return generateKirbyTag(type, mainValue, { text, ...attrs });
 }
 
+/**
+ * An anchor a Markdown parser generated from a bare URL. Turning it into a
+ * tag would change the rendered text, because Html::link shortens URLs
+ */
+export const isBareUrlAnchor = (href: string, text: string): boolean =>
+	/^https?:\/\//i.test(href) && text === href;
+
 export function buildLinkTag(
 	href: string,
 	text: string,

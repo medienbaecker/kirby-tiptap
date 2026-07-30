@@ -65,6 +65,12 @@ class HtmlLinkConverter
 			$anchor->textContent
 		));
 
+		// An anchor the Markdown parser generated from a bare URL. A tag would
+		// change the rendered text, because Html::link shortens URLs
+		if ($text === $href && preg_match('/^https?:\/\//i', $href) === 1) {
+			return null;
+		}
+
 		return MarkdownSerializer::linkTag($href, $text);
 	}
 

@@ -1,4 +1,4 @@
-import { buildLinkTag } from "./inputValidation";
+import { buildLinkTag, isBareUrlAnchor } from "./inputValidation";
 
 /**
  * Replaces <a> elements in HTML with KirbyTag text equivalents.
@@ -13,7 +13,12 @@ export function transformLinksToKirbyTags(html: string): string {
 		// Newlines inside a tag split it across text nodes and break detection
 		const text = (anchor.textContent || "").replace(/\s+/g, " ").trim();
 
-		if (!href || href === "#" || /^(javascript|data):/i.test(href)) {
+		if (
+			!href ||
+			href === "#" ||
+			/^(javascript|data):/i.test(href) ||
+			isBareUrlAnchor(href, text)
+		) {
 			continue;
 		}
 

@@ -6,7 +6,7 @@ import type {
 	MarkdownToken,
 } from "@tiptap/core";
 import { escapeParens, findKirbyTagRanges } from "../utils/kirbyTags";
-import { buildLinkTag } from "../utils/inputValidation";
+import { buildLinkTag, isBareUrlAnchor } from "../utils/inputValidation";
 
 /**
  * `code: true` exempts marked text from the markdown serializer's
@@ -153,7 +153,12 @@ export const HtmlLinkToKirbytag = Extension.create({
 		const href = String(token.href ?? "");
 		const text = String(token.text ?? "");
 
-		if (!href || href === "#" || /^(javascript|data):/i.test(href)) {
+		if (
+			!href ||
+			href === "#" ||
+			/^(javascript|data):/i.test(href) ||
+			isBareUrlAnchor(href, text)
+		) {
 			return [helpers.createTextNode(text)];
 		}
 
