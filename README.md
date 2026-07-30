@@ -459,7 +459,7 @@ $htmlAttrs = attr(array_filter(array_diff_key($attrs ?? [], ['level' => true])))
 
 The `tiptap:convert` CLI command converts stored content to whatever format the blueprint expects:
 
-- `textarea` and `markdown` fields (and `tiptap` fields with `format: json` still holding plain text) are converted to Tiptap JSON, so you can switch the field type afterwards
+- `textarea`, `markdown` and `writer` fields (and `tiptap` fields with `format: json` still holding plain text) are converted to Tiptap JSON, so you can switch the field type afterwards
 - `tiptap` fields with `format: markdown` that still store JSON are converted to Markdown, including fields inside structure fields and blocks
 
 ```bash

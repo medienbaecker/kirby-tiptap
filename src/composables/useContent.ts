@@ -1,6 +1,10 @@
 import type { Ref } from "vue";
 import type { Editor } from "@tiptap/vue-2";
 import { processPlainTextParagraphs } from "../utils/contentProcessing";
+import {
+	containsAnchor,
+	transformLinksToKirbyTags,
+} from "../utils/pasteTransform";
 import type { TiptapDocument, TiptapNode, KirbytagsMap } from "../types";
 
 interface ContentProps {
@@ -55,14 +59,19 @@ export function useContent(
 		try {
 			return JSON.parse(value) as TiptapDocument;
 		} catch {
-			// Not JSON - handle plain text with double line breaks
+			// Not JSON - handle plain text with double line breaks.
+			// Runs on the raw value: the transform returns serialized HTML,
+			// which this would turn into literal entities in a text node
 			const processedContent = processPlainTextParagraphs(value);
 			if (processedContent) {
 				return processedContent;
 			}
 
-			// Return raw value for single line text or HTML
-			return value;
+			// The schema has no link mark, so anchors must become KirbyTags
+			// before ProseMirror parses them or their hrefs are dropped
+			return containsAnchor(value)
+				? transformLinksToKirbyTags(value)
+				: value;
 		}
 	};
 

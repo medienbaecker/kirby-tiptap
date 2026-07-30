@@ -5,11 +5,8 @@ import type {
 	MarkdownRendererHelpers,
 	MarkdownToken,
 } from "@tiptap/core";
-import { findKirbyTagRanges } from "../utils/kirbyTags";
-
-// Kirby reads unescaped parens as the tag boundary
-const escapeParens = (value: string): string =>
-	value.replace(/[()]/g, "\\$&");
+import { escapeParens, findKirbyTagRanges } from "../utils/kirbyTags";
+import { buildLinkTag } from "../utils/inputValidation";
 
 /**
  * `code: true` exempts marked text from the markdown serializer's
@@ -80,6 +77,90 @@ export const HtmlBreak = Extension.create({
 	],
 });
 
+// Attribute values may contain > and the href must be its own attribute, or
+// data-href fabricates a link and a later > truncates the text
+const ATTRS = String.raw`(?:"[^"]*"|'[^']*'|[^>"'])`;
+const HTML_ANCHOR = new RegExp(
+	`^<a${ATTRS}*?\\shref\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)${ATTRS}*>([\\s\\S]*?)</a\\s*>`,
+	"i"
+);
+
+const ENTITIES: Record<string, string> = {
+	amp: "&",
+	lt: "<",
+	gt: ">",
+	quot: '"',
+	apos: "'",
+	nbsp: " ",
+};
+
+/**
+ * The DOM knows all ~2000 named entities; the table only covers node, where
+ * the dev scripts run. An undecoded entity is visible corruption, because
+ * Kirby escapes the & when it renders the tag text.
+ */
+const decodeEntities = (value: string): string => {
+	if (value.includes("&") === false) {
+		return value;
+	}
+
+	if (typeof DOMParser !== "undefined") {
+		const doc = new DOMParser().parseFromString(value, "text/html");
+		return doc.documentElement.textContent ?? value;
+	}
+
+	return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (raw, body: string) => {
+		if (body[0] === "#") {
+			const code = Number(
+				body[1] === "x" || body[1] === "X"
+					? `0x${body.slice(2)}`
+					: body.slice(1)
+			);
+			return Number.isFinite(code) && code > 0 ? String.fromCodePoint(code) : raw;
+		}
+		return ENTITIES[body.toLowerCase()] ?? raw;
+	});
+};
+
+// Inline html tokens never reach the token registry, so an inline tokenizer
+// is the only hook that beats marked's own tag rule to a raw <a>
+
+export const HtmlLinkToKirbytag = Extension.create({
+	name: "htmlLinkToKirbytag",
+	markdownTokenName: "htmlLink",
+	markdownTokenizer: {
+		name: "htmlLink",
+		level: "inline",
+		start: (src: string) => src.search(/<a[\s>]/i),
+		tokenize: (src: string) => {
+			const match = src.match(HTML_ANCHOR);
+			if (!match) {
+				return undefined;
+			}
+			return {
+				type: "htmlLink",
+				raw: match[0],
+				href: decodeEntities(match[1].replace(/^["']|["']$/g, "")),
+				text: decodeEntities(
+					match[2].replace(/<\/?[a-zA-Z][^>]*>/g, "")
+				)
+					.replace(/\s+/g, " ")
+					.trim(),
+			};
+		},
+	},
+	parseMarkdown: (token: MarkdownToken, helpers: MarkdownParseHelpers) => {
+		const href = String(token.href ?? "");
+		const text = String(token.text ?? "");
+
+		if (!href || href === "#" || /^(javascript|data):/i.test(href)) {
+			return [helpers.createTextNode(text)];
+		}
+
+		return [helpers.createTextNode(buildLinkTag(href, text))];
+	},
+});
+
 /**
  * Keeps GFM tables from being silently deleted on save: the schema has
  * no table extension, so the source is stored verbatim and re-emitted
@@ -143,12 +224,14 @@ export const LinkToKirbytag = Extension.create({
 			]);
 		}
 
-		let tag = `(${isEmail ? "email" : "link"}: ${value} text: ${escapeParens(text)}`;
-		if (token.title) {
-			tag += ` title: ${escapeParens(String(token.title))}`;
-		}
-		tag += ")";
-
-		return [helpers.createTextNode(tag)];
+		return [
+			helpers.createTextNode(
+				buildLinkTag(href, text, {
+					title: token.title
+						? escapeParens(String(token.title))
+						: undefined,
+				})
+			),
+		];
 	},
 });

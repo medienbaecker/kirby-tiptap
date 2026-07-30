@@ -229,13 +229,7 @@ class MarkdownSerializer
 					$text .= $nodes[$i + 1]['text'] ?? '';
 					$i++;
 				}
-				$isEmail = str_starts_with($href, 'mailto:');
-				$value = $isEmail ? substr($href, 7) : $href;
-				$name = $isEmail ? 'email' : 'link';
-				$tag = ($text === '' || $text === $value || $text === $href)
-					? "({$name}: {$value})"
-					: "({$name}: {$value} text: " . preg_replace('/[()]/', '\\\\$0', $text) . ')';
-				$result[] = static::rawText($tag);
+				$result[] = static::rawText(static::linkTag($href, $text));
 				continue;
 			}
 
@@ -258,6 +252,40 @@ class MarkdownSerializer
 			'text' => $text,
 			'marks' => [['type' => 'kirbytagRaw']],
 		];
+	}
+
+	/**
+	 * Mirrors generateLinkTag() in src/utils/inputValidation.ts
+	 */
+	public static function linkTag(string $href, string $text): string
+	{
+		if (str_starts_with($href, 'mailto:')) {
+			$name = 'email';
+			$value = substr($href, 7);
+		} elseif (str_starts_with($href, 'tel:')) {
+			$name = 'tel';
+			$value = substr($href, 4);
+		} else {
+			$name = 'link';
+			$value = $href;
+		}
+
+		if ($text === '' || $text === $value || $text === $href) {
+			return "({$name}: {$value})";
+		}
+
+		return "({$name}: {$value} text: " . preg_replace('/[()]/', '\\\\$0', $text) . ')';
+	}
+
+	// Writer stores /@/page/<uuid>, but only the scheme form resolves inline:
+	// the (link:) tag gates on Uuid::is(), which does not match the permalink path
+	public static function normalizeHref(string $href): string
+	{
+		return preg_replace(
+			'!^/(?:[a-z]{2}(?:-[a-z]{2})?/)?@/(page|file)/!i',
+			'$1://',
+			$href
+		);
 	}
 
 	private static function linkMarkOf(array $node): ?array

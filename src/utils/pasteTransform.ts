@@ -1,7 +1,7 @@
-import { generateLinkTag } from "./inputValidation";
+import { buildLinkTag } from "./inputValidation";
 
 /**
- * Replaces <a> elements in pasted HTML with KirbyTag text equivalents.
+ * Replaces <a> elements in HTML with KirbyTag text equivalents.
  * E.g. <a href="https://example.com">click here</a>
  *    → (link: https://example.com text: click here)
  */
@@ -10,19 +10,17 @@ export function transformLinksToKirbyTags(html: string): string {
 
 	for (const anchor of Array.from(doc.querySelectorAll("a[href]"))) {
 		const href = anchor.getAttribute("href") || "";
-		const text = anchor.textContent || "";
+		// Newlines inside a tag split it across text nodes and break detection
+		const text = (anchor.textContent || "").replace(/\s+/g, " ").trim();
 
 		if (!href || href === "#" || /^(javascript|data):/i.test(href)) {
 			continue;
 		}
 
-		const mainValue = href.replace(/^(mailto:|tel:)/, "");
-		const kirbyTag = generateLinkTag({
-			href,
-			text: text && text !== href && text !== mainValue ? text : undefined,
-		});
-		anchor.replaceWith(doc.createTextNode(kirbyTag));
+		anchor.replaceWith(doc.createTextNode(buildLinkTag(href, text)));
 	}
 
 	return doc.body.innerHTML;
 }
+
+export const containsAnchor = (value: string): boolean => /<a[\s>]/i.test(value);

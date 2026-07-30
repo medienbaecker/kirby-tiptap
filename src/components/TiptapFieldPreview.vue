@@ -14,7 +14,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { findKirbyTagRanges } from '../utils/kirbyTags';
-import { HtmlBreak, KirbytagRaw, KirbytagText, LinkToKirbytag, RawMarkdownTable } from '../extensions/markdownFormat';
+import { HtmlBreak, HtmlLinkToKirbytag, KirbytagRaw, KirbytagText, LinkToKirbytag, RawMarkdownTable } from '../extensions/markdownFormat';
 import { compileRegistry } from '../utils/registry';
 import { starterKitOverrides } from '../utils/starterKit';
 
@@ -65,7 +65,13 @@ let markdownManager = null;
 const parseMarkdown = (value) => {
 	if (!markdownManager) {
 		markdownManager = new MarkdownManager({
-			extensions: [...getPreviewExtensions(), HtmlBreak, KirbytagText, LinkToKirbytag],
+			extensions: [
+				...getPreviewExtensions(),
+				HtmlBreak,
+				HtmlLinkToKirbytag,
+				KirbytagText,
+				LinkToKirbytag,
+			],
 		});
 	}
 	return markdownManager.parse(value);

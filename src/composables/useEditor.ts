@@ -7,6 +7,7 @@ import InvisibleCharacters from "@tiptap/extension-invisible-characters";
 import { Markdown } from "@tiptap/markdown";
 import {
 	HtmlBreak,
+	HtmlLinkToKirbytag,
 	KirbytagRaw,
 	KirbytagText,
 	LinkToKirbytag,
@@ -211,6 +212,7 @@ export function useEditor(
 					// list items reparse as code blocks and lose content
 					Markdown,
 					HtmlBreak,
+					HtmlLinkToKirbytag,
 					KirbytagRaw,
 					KirbytagText,
 					LinkToKirbytag,

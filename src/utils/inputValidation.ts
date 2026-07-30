@@ -1,4 +1,4 @@
-import { generateKirbyTag } from "./kirbyTags";
+import { escapeParens, generateKirbyTag, normalizeHref } from "./kirbyTags";
 import type { ValidationResult } from "../types";
 
 /**
@@ -59,4 +59,20 @@ export function generateLinkTag(values: LinkTagValues): string {
 	}
 
 	return generateKirbyTag(type, mainValue, { text, ...attrs });
+}
+
+export function buildLinkTag(
+	href: string,
+	text: string,
+	attrs: Record<string, unknown> = {}
+): string {
+	const normalized = normalizeHref(href);
+	const mainValue = normalized.replace(/^(mailto:|tel:)/, "");
+	const labelled = text !== "" && text !== normalized && text !== mainValue;
+
+	return generateLinkTag({
+		...attrs,
+		href: normalized,
+		text: labelled ? escapeParens(text) : undefined,
+	});
 }
