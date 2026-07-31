@@ -96,7 +96,8 @@ export default {
 				}
 			}
 			try {
-				const doc = json.inline === true ? flattenInline(json) : json;
+				const inline = this.field.inline ?? json.inline;
+				const doc = inline === true ? flattenInline(json) : json;
 				return decorateKirbyTags(
 					generateHTML(doc, getPreviewExtensions())
 				);
