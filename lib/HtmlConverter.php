@@ -117,8 +117,8 @@ class HtmlConverter
 			return '';
 		}
 
-		// Check if inline mode is active
-		$isInline = $json['inline'] ?? false;
+		// Not ??: letting an explicit false win would change existing renders
+		$isInline = ($json['inline'] ?? false) || $options['inline'] === true;
 
 		// Clean list items to remove unnecessary paragraph wrappers
 		$json = ContentProcessor::cleanListItemContent($json);

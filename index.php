@@ -72,6 +72,9 @@ Kirby::plugin('medienbaecker/tiptap', [
 				$field->parent(),
 				$options
 			));
+		},
+		'tiptapTextInline' => function ($field, array $options = []) {
+			return $field->tiptapText([...$options, 'inline' => true]);
 		}
 	],
 	'translations' => (function () {

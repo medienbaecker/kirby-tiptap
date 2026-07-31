@@ -26,7 +26,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 - 🤓 **Smart text handling** with intuitive soft hyphen `(-)` and non-breaking space `(_)` replacements, and visible special characters
 - 🔧 **Configurable buttons** with customizable heading levels
 - 🛼 **Inline mode** for paragraph-free content with buttons being disabled automatically
-- 🧠 **One method to rule them all** with `tiptapText()` handling [UUID resolution](https://getkirby.com/docs/reference/templates/field-methods/permalinks-to-urls), [smartypants](https://getkirby.com/docs/reference/system/options/smartypants), automatic [inline mode](https://getkirby.com/docs/reference/templates/helpers/kirbytextinline) and more
+- 🧠 **One method to rule them all** with `tiptapText()` handling [UUID resolution](https://getkirby.com/docs/reference/templates/field-methods/permalinks-to-urls), [smartypants](https://getkirby.com/docs/reference/system/options/smartypants) and more, plus `tiptapTextInline()` mirroring [`kirbytextInline()`](https://getkirby.com/docs/reference/templates/helpers/kirbytextinline)
 - ✨ **Intuitive drag & drop support** for pages and files with intelligent spacing
 - 📋 **Smart paste** converts HTML links to KirbyTags automatically
 - 👀 **Custom field preview** showing formatted text in structure/object fields
@@ -88,7 +88,7 @@ tiptap:
 fields:
   text:
     type: tiptap
-    inline: true # remove block elements like paragraphs
+    inline: true # remove block elements like paragraphs (render with tiptapTextInline())
     counter: false # disable character counter
     format: markdown # store Markdown instead of Tiptap JSON (see below)
     size: small # small, medium, large, huge or the default auto
@@ -146,7 +146,7 @@ fields:
     format: markdown
 ```
 
-`tiptapText()` renders Markdown values through Kirby's own `kirbytext()` pipeline (KirbyTags, Markdown, SmartyPants), so templates work unchanged. For inline rendering pass `['inline' => true]`.
+`tiptapText()` renders Markdown values through Kirby's own `kirbytext()` pipeline (KirbyTags, Markdown, SmartyPants), so templates work unchanged. A Markdown value has nowhere to record the field's `inline: true`, so `inline` fields render with `tiptapTextInline()`.
 
 To switch every tiptap field to Markdown, set the format globally (blueprint values still win):
 
@@ -207,6 +207,9 @@ echo $page->text()->tiptapText([
   'offsetHeadings' => 1,
   'allowHtml' => true
 ]);
+
+// Inline, like kirbytextInline()
+echo $page->headline()->tiptapTextInline();
 ```
 
 ### Configuration
