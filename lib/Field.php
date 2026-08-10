@@ -14,7 +14,7 @@ class Field
 	 * Save transform for markdown fields: Tiptap JSON becomes markdown.
 	 * Inexpressible docs stay JSON and converge on a later save
 	 */
-	public static function store($value, string $format, bool $inline, \Kirby\Cms\App $kirby)
+	public static function store(mixed $value, string $format, bool $inline, \Kirby\Cms\App $kirby)
 	{
 		if ($format !== 'markdown' || is_string($value) === false || trim($value) === '') {
 			return $value;
@@ -158,6 +158,7 @@ class Field
 				return $buttons;
 			},
 			'kirbytags' => function () {
+				/** @var \Kirby\Form\Field $this */
 				return Field::kirbytags($this->kirby());
 			},
 			'links' => function ($links = []) {
