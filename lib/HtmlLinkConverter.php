@@ -47,7 +47,7 @@ class HtmlLinkConverter
 			}
 		}
 
-		return static::innerHtml($dom);
+		return static::innerHtml($dom, $html);
 	}
 
 	private static function tagFor(DOMElement $anchor): ?string
@@ -74,13 +74,13 @@ class HtmlLinkConverter
 		return MarkdownSerializer::linkTag($href, $text);
 	}
 
-	private static function innerHtml(DOMDocument $dom): string
+	private static function innerHtml(DOMDocument $dom, string $original): string
 	{
 		// Returning '' here would let the caller overwrite the field with an
 		// empty document
 		$body = $dom->getElementsByTagName('body')->item(0);
 		if ($body === null) {
-			return $html;
+			return $original;
 		}
 
 		$html = '';
