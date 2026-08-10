@@ -863,7 +863,7 @@ class MarkdownSerializer
 		return true;
 	}
 
-	private static function attrsEqual($a, $b): bool
+	private static function attrsEqual(mixed $a, mixed $b): bool
 	{
 		if ($a === $b) {
 			return true;
