@@ -1,5 +1,6 @@
 <?php
 
+use Kirby\Cms\App as Kirby;
 use Kirby\Text\KirbyTag;
 use Kirby\Toolkit\Str;
 

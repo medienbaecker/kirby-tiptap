@@ -1,5 +1,7 @@
 <?php
 
+use Kirby\Cms\App as Kirby;
+
 // Note: if kirby-tiptap loads after this plugin alphabetically
 // and overwrites the snippet, move it to site/snippets/tiptap/codeBlock.php instead.
 

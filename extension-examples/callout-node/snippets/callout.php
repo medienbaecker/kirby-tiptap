@@ -1,4 +1,8 @@
-<?php $htmlAttrs = attr(array_filter($attrs ?? [])); ?>
+<?php
+/** @var string $content */
+/** @var array $attrs */
+$htmlAttrs = attr(array_filter($attrs ?? []));
+?>
 <div data-callout<?= $htmlAttrs ? ' ' . $htmlAttrs : '' ?>>
 	<?= $content ?>
 </div>
