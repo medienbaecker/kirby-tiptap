@@ -8,6 +8,7 @@ use Kirby\Filesystem\Dir;
 use Kirby\Filesystem\F;
 use Kirby\Data\Json;
 use Kirby\CLI\CLI;
+use Kirby\Content\Field as ContentField;
 use Medienbaecker\Tiptap\Field;
 use Medienbaecker\Tiptap\Validations;
 use Medienbaecker\Tiptap\Api;
@@ -126,3 +127,6 @@ Kirby::plugin('medienbaecker/tiptap', [
 		]
 	]
 ]);
+
+ContentField::$aliases['tiptap'] = 'tiptapText';
+ContentField::$aliases['tiptapinline'] = 'tiptapTextInline';

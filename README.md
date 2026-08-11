@@ -210,6 +210,10 @@ echo $page->text()->tiptapText([
 
 // Inline, like kirbytextInline()
 echo $page->headline()->tiptapTextInline();
+
+// Shorthands
+echo $page->text()->tiptap();
+echo $page->headline()->tiptapInline();
 ```
 
 ### Configuration
