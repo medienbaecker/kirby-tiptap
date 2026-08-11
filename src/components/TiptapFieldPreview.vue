@@ -7,7 +7,8 @@
 </template>
 
 <script>
-import { generateHTML } from '@tiptap/core';
+import { getHTMLFromFragment, getSchema } from '@tiptap/core';
+import { Node } from '@tiptap/pm/model';
 import { MarkdownManager } from '@tiptap/markdown';
 import StarterKit from '@tiptap/starter-kit';
 import TaskList from '@tiptap/extension-task-list';
@@ -61,6 +62,15 @@ const getPreviewExtensions = () => {
 	return previewExtensions;
 };
 
+let previewSchema = null;
+const renderDoc = (doc) => {
+	previewSchema ??= getSchema(getPreviewExtensions());
+	return getHTMLFromFragment(
+		Node.fromJSON(previewSchema, doc).content,
+		previewSchema
+	);
+};
+
 let markdownManager = null;
 const parseMarkdown = (value) => {
 	if (!markdownManager) {
@@ -82,28 +92,38 @@ export default {
 	props: {
 		value: String
 	},
-	computed: {
-		html() {
+	data() {
+		return { html: "" };
+	},
+	watch: {
+		value: {
+			immediate: true,
+			handler(value) {
+				this.html = this.render(value);
+			}
+		}
+	},
+	methods: {
+		// Calling the markdown parser from a computed makes it re-evaluate forever
+		render(value) {
 			let json;
 			try {
-				json = JSON.parse(this.value);
+				json = JSON.parse(value);
 			} catch {
 				// Markdown (format: markdown) or legacy plain-text value
 				try {
-					json = parseMarkdown(this.value);
+					json = parseMarkdown(value);
 				} catch {
-					return this.value;
+					return value;
 				}
 			}
 			try {
 				const inline = this.field.inline ?? json.inline;
 				const doc = inline === true ? flattenInline(json) : json;
-				return decorateKirbyTags(
-					generateHTML(doc, getPreviewExtensions())
-				);
+				return decorateKirbyTags(renderDoc(doc));
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.
-				return this.value;
+				return value;
 			}
 		}
 	}
