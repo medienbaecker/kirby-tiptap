@@ -2,7 +2,7 @@
 	<div class="k-tiptap-input-wrapper">
 		<toolbar v-if="editor && !disabled && allowedButtons.length" v-bind="$props" :editor="editor"
 			:buttons="allowedButtons" />
-		<editor-content :editor="editor" class="k-tiptap-editor-container" :data-empty="!editor || editor.isEmpty"
+		<editor-content :editor="editor" class="k-tiptap-editor-container" :data-empty="isEmpty"
 			:data-placeholder="placeholder" />
 	</div>
 </template>
@@ -23,6 +23,7 @@ export default {
 	setup(props, { emit }) {
 		const instance = getCurrentInstance()
 		const lastEmittedJson = ref('')
+		const isEmpty = ref(true)
 
 		const { parseContent, emitContent } = useContent(
 			props,
@@ -32,8 +33,14 @@ export default {
 
 		const { editor, allowedButtons, createEditor } = useEditor(
 			props,
-			(editor) => emitContent(editor),
-			(editor) => emit('editor', editor)
+			(editor) => {
+				isEmpty.value = editor.isEmpty
+				emitContent(editor)
+			},
+			(editor) => {
+				isEmpty.value = editor.isEmpty
+				emit('editor', editor)
+			}
 		)
 
 		// Watch for external value changes
@@ -45,6 +52,7 @@ export default {
 						emitUpdate: false,
 						...(props.format === 'markdown' ? { contentType: 'markdown' } : {})
 					})
+					isEmpty.value = editor.value.isEmpty
 				}
 			}
 		})
@@ -65,6 +73,7 @@ export default {
 
 		return {
 			editor,
+			isEmpty,
 			allowedButtons,
 			focus
 		}

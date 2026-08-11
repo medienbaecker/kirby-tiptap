@@ -3,13 +3,14 @@
 		:counter="counterOptions">
 		<k-input-element>
 			<div :data-disabled="disabled" :data-size="size" :data-inline="inline" class="k-input k-tiptap-input">
-				<TiptapInput ref="input" v-bind="$props" @input="handleInput" @editor="editor = $event" />
+				<TiptapInput ref="input" v-bind="$props" @input="handleInput" @editor="setEditor" />
 			</div>
 		</k-input-element>
 	</k-field>
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import TiptapInput from './TiptapInput.vue'
 import { props } from './props.js'
 import { getVisibleText } from '../utils/kirbyTags'
@@ -20,7 +21,8 @@ export default {
 	components: { TiptapInput },
 	data() {
 		return {
-			editor: null
+			editor: null,
+			text: ''
 		}
 	},
 
@@ -28,7 +30,7 @@ export default {
 		counterValue() {
 			// Count reader-visible text so the counter matches the
 			// server-side min/maxlength validation.
-			return getVisibleText(this.editor?.getText() || '', this.kirbytags);
+			return getVisibleText(this.text, this.kirbytags);
 		}
 	},
 
@@ -46,8 +48,19 @@ export default {
 	},
 	beforeDestroy() {
 		this.$el.querySelector('label')?.removeEventListener('click', this.focus);
+		this.editor?.off('update', this.readText);
 	},
 	methods: {
+		// Without markRaw, Vue observes the editor's parser internals and any
+		// computed that parses re-runs forever
+		setEditor(editor) {
+			this.editor = markRaw(editor);
+			this.readText();
+			editor.on('update', this.readText);
+		},
+		readText() {
+			this.text = this.editor?.getText() ?? '';
+		},
 		focus() {
 			this.$refs.input.focus();
 		},

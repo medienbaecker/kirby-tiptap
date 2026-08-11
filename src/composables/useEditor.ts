@@ -1,4 +1,4 @@
-import { ref, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
+import { ref, shallowRef, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
 import { Editor } from "@tiptap/vue-2";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
@@ -75,7 +75,7 @@ export function useEditor(
 	onEditorCreate: (editor: Editor) => void
 ): UseEditorReturn {
 	// Use any for the ref to avoid deep type instantiation issues with Tiptap
-	const editor = ref<Editor | null>(null) as Ref<Editor | null>;
+	const editor = shallowRef<Editor | null>(null) as Ref<Editor | null>;
 
 	/**
 	 * Returns filtered buttons based on inline mode

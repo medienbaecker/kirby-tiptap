@@ -92,29 +92,17 @@ export default {
 	props: {
 		value: String
 	},
-	data() {
-		return { html: "" };
-	},
-	watch: {
-		value: {
-			immediate: true,
-			handler(value) {
-				this.html = this.render(value);
-			}
-		}
-	},
-	methods: {
-		// Calling the markdown parser from a computed makes it re-evaluate forever
-		render(value) {
+	computed: {
+		html() {
 			let json;
 			try {
-				json = JSON.parse(value);
+				json = JSON.parse(this.value);
 			} catch {
 				// Markdown (format: markdown) or legacy plain-text value
 				try {
-					json = parseMarkdown(value);
+					json = parseMarkdown(this.value);
 				} catch {
-					return value;
+					return this.value;
 				}
 			}
 			try {
@@ -123,7 +111,7 @@ export default {
 				return decorateKirbyTags(renderDoc(doc));
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.
-				return value;
+				return this.value;
 			}
 		}
 	}
