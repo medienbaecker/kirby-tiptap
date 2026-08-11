@@ -83,7 +83,14 @@ class MarkdownSerializer
 		'orderedList' => ['start' => true, 'type' => true],
 		'codeBlock' => ['language' => true],
 		'rawMarkdownTable' => ['raw' => true],
-		'link' => ['href' => true],
+	];
+
+	// Per tag, because an attribute the tag does not register gets folded into
+	// the preceding attribute's value by KirbyTag::parse
+	private const LINK_TAG_ATTRS = [
+		'link' => ['class', 'lang', 'rel', 'role', 'target', 'title'],
+		'email' => ['class', 'rel', 'target', 'title'],
+		'tel' => ['class', 'rel', 'title'],
 	];
 
 	private const INDENT = '  ';
@@ -125,12 +132,25 @@ class MarkdownSerializer
 			$markType = $mark['type'] ?? '';
 			if (isset(self::SUPPORTED_MARKS[$markType]) === false) {
 				$found['mark:' . $markType] = true;
+			} elseif ($markType === 'link') {
+				static::collectUnsupportedLinkAttrs($mark['attrs'] ?? [], $found);
 			} else {
 				static::collectUnsupportedAttrs($markType, $mark['attrs'] ?? [], $found);
 			}
 		}
 		foreach ($node['content'] ?? [] as $child) {
 			static::collectUnsupported($child, $found);
+		}
+	}
+
+	private static function collectUnsupportedLinkAttrs(array $attrs, array &$found): void
+	{
+		$allowed = self::LINK_TAG_ATTRS[static::linkTagName((string)($attrs['href'] ?? ''))];
+
+		foreach ($attrs as $key => $value) {
+			if ($value !== null && $key !== 'href' && in_array($key, $allowed, true) === false) {
+				$found['attr:link.' . $key] = true;
+			}
 		}
 	}
 
@@ -239,7 +259,7 @@ class MarkdownSerializer
 					$text .= $nodes[$i + 1]['text'] ?? '';
 					$i++;
 				}
-				$result[] = static::rawText(static::linkTag($href, $text));
+				$result[] = static::rawText(static::linkTag($href, $text, $link['attrs'] ?? []));
 				continue;
 			}
 
@@ -264,27 +284,40 @@ class MarkdownSerializer
 		];
 	}
 
+	private static function linkTagName(string $href): string
+	{
+		if (str_starts_with($href, 'mailto:')) {
+			return 'email';
+		}
+		return str_starts_with($href, 'tel:') ? 'tel' : 'link';
+	}
+
 	/**
 	 * Mirrors generateLinkTag() in src/utils/inputValidation.ts
 	 */
-	public static function linkTag(string $href, string $text): string
+	public static function linkTag(string $href, string $text, array $attrs = []): string
 	{
-		if (str_starts_with($href, 'mailto:')) {
-			$name = 'email';
-			$value = substr($href, 7);
-		} elseif (str_starts_with($href, 'tel:')) {
-			$name = 'tel';
-			$value = substr($href, 4);
-		} else {
-			$name = 'link';
-			$value = $href;
+		$name = static::linkTagName($href);
+		$value = match ($name) {
+			'email' => substr($href, 7),
+			'tel' => substr($href, 4),
+			default => $href,
+		};
+
+		$tag = "({$name}: {$value}";
+
+		if ($text !== '' && $text !== $value && $text !== $href) {
+			$tag .= ' text: ' . preg_replace('/[()]/', '\\\\$0', $text);
 		}
 
-		if ($text === '' || $text === $value || $text === $href) {
-			return "({$name}: {$value})";
+		foreach ($attrs as $key => $attr) {
+			if ($key === 'href' || $attr === null || $attr === '' || $attr === false || $attr === []) {
+				continue;
+			}
+			$tag .= ' ' . $key . ': ' . (is_array($attr) ? implode(' ', $attr) : $attr);
 		}
 
-		return "({$name}: {$value} text: " . preg_replace('/[()]/', '\\\\$0', $text) . ')';
+		return $tag . ')';
 	}
 
 	// Writer stores /@/page/<uuid>, but only the scheme form resolves inline:
