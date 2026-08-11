@@ -40,6 +40,16 @@ class MarkdownSerializer
 		'kirbytagRaw' => true,
 	];
 
+	private const HTML_ATTRS = '(?:\s(?:"[^"]*"|\'[^\']*\'|[^<>"\'])*)?';
+
+	// A whole element, not just its tags: the parser hands the element back as
+	// one literal token, so escaping its contents compounds on every save
+	private const HTML_RAW =
+		'<!--[\s\S]*?-->' .
+		'|<([a-zA-Z][a-zA-Z0-9-]*)' . self::HTML_ATTRS . '>[\s\S]*?<\/\s*\1\s*>' .
+		'|<\/?[a-zA-Z][a-zA-Z0-9-]*' . self::HTML_ATTRS . '\/?>' .
+		'|&(?:[a-zA-Z][a-zA-Z0-9]{1,31}|#\d{1,7}|#[xX][0-9a-fA-F]{1,6});';
+
 	private const SUPPORTED_NODES = [
 		'doc' => true,
 		'paragraph' => true,
@@ -340,6 +350,11 @@ class MarkdownSerializer
 		}
 
 		$ranges = [];
+		preg_match_all('/' . self::HTML_RAW . '/', $text, $html, PREG_OFFSET_CAPTURE);
+		foreach ($html[0] as [$raw, $start]) {
+			$ranges[] = [$start, $start + strlen($raw)];
+		}
+
 		foreach (static::findKirbyTagRanges($text) as $range) {
 			if ($registered !== null) {
 				$slice = substr($text, $range[0], $range[1] - $range[0]);
@@ -350,7 +365,9 @@ class MarkdownSerializer
 					continue;
 				}
 			}
-			$ranges[] = $range;
+			if (static::overlaps($ranges, $range[0], $range[1]) === false) {
+				$ranges[] = $range;
+			}
 		}
 
 		preg_match_all(
@@ -361,14 +378,7 @@ class MarkdownSerializer
 		);
 		foreach ($matches[0] as [$url, $start]) {
 			$end = $start + strlen(preg_replace('/[.,;:!?\'"]+$/', '', $url));
-			$overlaps = false;
-			foreach ($ranges as [$s, $e]) {
-				if ($start < $e && $end > $s) {
-					$overlaps = true;
-					break;
-				}
-			}
-			if ($overlaps === false) {
+			if (static::overlaps($ranges, $start, $end) === false) {
 				$ranges[] = [$start, $end];
 			}
 		}
@@ -401,6 +411,16 @@ class MarkdownSerializer
 		}
 
 		return $result;
+	}
+
+	private static function overlaps(array $ranges, int $start, int $end): bool
+	{
+		foreach ($ranges as [$s, $e]) {
+			if ($start < $e && $end > $s) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static function findKirbyTagRanges(string $text): array
