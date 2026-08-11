@@ -6,6 +6,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import InvisibleCharacters from "@tiptap/extension-invisible-characters";
 import { Markdown } from "@tiptap/markdown";
 import {
+	HtmlBlock,
 	HtmlBreak,
 	HtmlLinkToKirbytag,
 	KirbytagRaw,
@@ -211,6 +212,7 @@ export function useEditor(
 					// Default 2-space indentation: with 4, multi-paragraph
 					// list items reparse as code blocks and lose content
 					Markdown,
+					HtmlBlock,
 					HtmlBreak,
 					HtmlLinkToKirbytag,
 					KirbytagRaw,

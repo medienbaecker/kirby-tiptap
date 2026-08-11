@@ -304,6 +304,12 @@ export default {
 	}
 }
 
+.tiptap .html-raw {
+	font-family: var(--code-font-family);
+	font-size: var(--code-inline-font-size);
+	color: var(--color-text-dimmed);
+}
+
 .tiptap .kirbytag+.kirbytag {
 	border-start-start-radius: 0;
 	border-end-start-radius: 0;

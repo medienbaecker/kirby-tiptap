@@ -11,6 +11,7 @@ import {
 	navigateToKirbyTag,
 	checkKirbyTagReferences,
 } from "../utils/kirbyTags";
+import { HTML_RAW } from "./markdownFormat";
 import type { Panel } from "kirby-types";
 
 interface HighlightsOptions {
@@ -101,6 +102,19 @@ export const Highlights = Extension.create<HighlightsOptions>({
 							if (!node.isText) return;
 
 							const text = node.text || "";
+
+							HTML_RAW.lastIndex = 0;
+							let html: RegExpExecArray | null;
+							while ((html = HTML_RAW.exec(text))) {
+								decorations.push(
+									Decoration.inline(
+										pos + html.index,
+										pos + html.index + html[0].length,
+										{ class: "html-raw" }
+									)
+								);
+							}
+
 							const kirbytagPositions = findKirbyTagRanges(text);
 
 							for (const [start, end] of kirbytagPositions) {

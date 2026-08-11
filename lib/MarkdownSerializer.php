@@ -383,7 +383,7 @@ class MarkdownSerializer
 		}
 
 		$ranges = [];
-		preg_match_all('/' . self::HTML_RAW . '/', $text, $html, PREG_OFFSET_CAPTURE);
+		preg_match_all('/' . self::HTML_RAW . '/i', $text, $html, PREG_OFFSET_CAPTURE);
 		foreach ($html[0] as [$raw, $start]) {
 			$ranges[] = [$start, $start + strlen($raw)];
 		}

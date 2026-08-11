@@ -77,6 +77,53 @@ export const HtmlBreak = Extension.create({
 	],
 });
 
+const HTML_BLOCK_ATTRS = String.raw`(?:\s(?:"[^"]*"|'[^']*'|[^<>"'])*)?`;
+
+/** Markup the serializer stores verbatim, for highlighting it in the editor */
+export const HTML_RAW = new RegExp(
+	String.raw`<!--[\s\S]*?-->` +
+		String.raw`|<([a-zA-Z][a-zA-Z0-9-]*)${HTML_BLOCK_ATTRS}>[\s\S]*?<\/\s*\1\s*>` +
+		String.raw`|<\/?[a-zA-Z][a-zA-Z0-9-]*${HTML_BLOCK_ATTRS}\/?>`,
+	"gi"
+);
+const HTML_BLOCK_ELEMENT = new RegExp(
+	String.raw`^<([a-zA-Z][a-zA-Z0-9-]*)${HTML_BLOCK_ATTRS}>[\s\S]*?<\/\s*\1\s*>`,
+	"i"
+);
+const HTML_BLOCK_VOID = new RegExp(
+	String.raw`^<[a-zA-Z][a-zA-Z0-9-]*${HTML_BLOCK_ATTRS}\/?>`,
+	"i"
+);
+
+/**
+ * Keeps a raw HTML block as literal text. Without this the browser's parser
+ * and the editor schema get hold of it, and anything with no matching node
+ * (an iframe, a script) is dropped and lost on the next save.
+ */
+export const HtmlBlock = Extension.create({
+	name: "htmlBlock",
+	markdownTokenName: "htmlBlock",
+	markdownTokenizer: {
+		name: "htmlBlock",
+		level: "block",
+		// The lookahead must match tokenize(), or marked splits the paragraph
+		// at a position that then declines to produce a token
+		start: (src: string) => src.search(/^<(?!br\s*\/?>)[a-zA-Z]/m),
+		tokenize: (src: string) => {
+			const match = src.match(HTML_BLOCK_ELEMENT) ?? src.match(HTML_BLOCK_VOID);
+			if (!match || /^<br\s*\/?>/i.test(match[0])) {
+				return undefined;
+			}
+			return { type: "htmlBlock", raw: match[0], text: match[0] };
+		},
+	},
+	parseMarkdown: (token: MarkdownToken, helpers: MarkdownParseHelpers) => [
+		helpers.createNode("paragraph", {}, [
+			helpers.createTextNode(String(token.text ?? token.raw ?? "")),
+		]),
+	],
+});
+
 // Attribute values may contain > and the href must be its own attribute, or
 // data-href fabricates a link and a later > truncates the text
 const ATTRS = String.raw`(?:"[^"]*"|'[^']*'|[^>"'])`;
