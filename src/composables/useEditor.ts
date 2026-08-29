@@ -6,13 +6,12 @@ import TaskItem from "@tiptap/extension-task-item";
 import InvisibleCharacters from "@tiptap/extension-invisible-characters";
 import { Markdown } from "@tiptap/markdown";
 import {
-	HtmlBlock,
-	HtmlBreak,
-	HtmlLinkToKirbytag,
 	KirbytagRaw,
-	KirbytagText,
-	LinkToKirbytag,
 	RawMarkdownTable,
+	digitOnlyOrderedList,
+	isolatedMarked,
+	markdownFallbacks,
+	markdownParseExtensions,
 } from "../extensions/markdownFormat";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
@@ -164,11 +163,17 @@ export function useEditor(
 				buttonRegistry.registerRegistryButtons(registryButtons);
 			}
 
+			const isMarkdown = props.format === "markdown";
+
 			// Disable StarterKit extensions that registry extensions replace
-			const skConfig = starterKitOverrides(
+			const overrides = starterKitOverrides(
 				starterKitConfig.value,
 				registryExtensions
 			);
+			const { starterKit: skConfig, extensions: markdownListExtras } =
+				isMarkdown
+					? digitOnlyOrderedList(overrides)
+					: { starterKit: overrides, extensions: [] as AnyExtension[] };
 
 			const extensions: AnyExtension[] = [
 				StarterKit.configure(skConfig),
@@ -206,19 +211,18 @@ export function useEditor(
 				extensions.push(...registryExtensions);
 			}
 
-			const isMarkdown = props.format === "markdown";
 			if (isMarkdown) {
 				extensions.push(
 					// Default 2-space indentation: with 4, multi-paragraph
 					// list items reparse as code blocks and lose content
-					Markdown,
-					HtmlBlock,
-					HtmlBreak,
-					HtmlLinkToKirbytag,
+					Markdown.configure({ marked: isolatedMarked() }),
+					...markdownParseExtensions,
 					KirbytagRaw,
-					KirbytagText,
-					LinkToKirbytag,
-					RawMarkdownTable
+					RawMarkdownTable,
+					// Not skConfig: it marks registry-replaced extensions
+					// false, and those replacements parse their own markdown
+					...markdownFallbacks(starterKitConfig.value),
+					...markdownListExtras
 				);
 			}
 

@@ -177,6 +177,7 @@ Notes:
 - Switching the format converts each field on its next save. To convert a whole site at once, use [the CLI command](#converting-existing-fields).
 - Hand-written Markdown is normalized on the first save: `-` bullets, tight lists, `*` emphasis, 2-space nesting. After that the value is stable.
 - Content Markdown cannot express is stored as Tiptap JSON and converts back once it becomes expressible. This needs `tiptapText()` — a template calling `kirbytext()` directly would output the raw JSON.
+- Markdown without a matching button (a code block when the toolbar has no `codeBlock`, for example) stays raw Markdown in the editor, like tables, and is stored back untouched.
 - Labeled Markdown links (`[text](url)`, reference style) become KirbyTags when the field is opened. Bare URLs and autolinks stay as they are.
 - Breaks Markdown cannot express (inside headings, consecutive breaks) are stored as literal `<br>`.
 

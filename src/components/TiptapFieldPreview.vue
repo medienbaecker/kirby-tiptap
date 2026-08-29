@@ -15,7 +15,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { findKirbyTagRanges } from '../utils/kirbyTags';
-import { HtmlBlock, HtmlBreak, HtmlLinkToKirbytag, KirbytagRaw, KirbytagText, LinkToKirbytag, RawMarkdownTable } from '../extensions/markdownFormat';
+import { KirbytagRaw, RawMarkdownTable, digitOnlyOrderedList, isolatedMarked, markdownParseExtensions } from '../extensions/markdownFormat';
 import { compileRegistry } from '../utils/registry';
 import { starterKitOverrides } from '../utils/starterKit';
 
@@ -54,10 +54,18 @@ const getPreviewExtensions = () => {
 		const { extensions } = compileRegistry();
 		// link: false matches the editor schema, so KirbyTags containing
 		// URLs stay plain text instead of being autolinked
-		const starterKit = StarterKit.configure(
+		const { starterKit, extensions: listExtras } = digitOnlyOrderedList(
 			starterKitOverrides({ link: false }, extensions)
 		);
-		previewExtensions = [starterKit, TaskList, TaskItem, KirbytagRaw, RawMarkdownTable, ...extensions];
+		previewExtensions = [
+			StarterKit.configure(starterKit),
+			TaskList,
+			TaskItem,
+			KirbytagRaw,
+			RawMarkdownTable,
+			...listExtras,
+			...extensions
+		];
 	}
 	return previewExtensions;
 };
@@ -75,14 +83,8 @@ let markdownManager = null;
 const parseMarkdown = (value) => {
 	if (!markdownManager) {
 		markdownManager = new MarkdownManager({
-			extensions: [
-				...getPreviewExtensions(),
-				HtmlBlock,
-				HtmlBreak,
-				HtmlLinkToKirbytag,
-				KirbytagText,
-				LinkToKirbytag,
-			],
+			marked: isolatedMarked(),
+			extensions: [...getPreviewExtensions(), ...markdownParseExtensions],
 		});
 	}
 	return markdownManager.parse(value);

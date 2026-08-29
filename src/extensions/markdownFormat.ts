@@ -1,12 +1,27 @@
 import { Extension, Mark, Node } from "@tiptap/core";
 import type {
+	AnyExtension,
 	JSONContent,
 	MarkdownParseHelpers,
 	MarkdownRendererHelpers,
 	MarkdownToken,
 } from "@tiptap/core";
+import { OrderedList } from "@tiptap/extension-list";
+import { Marked, marked } from "marked";
 import { escapeParens, findKirbyTagRanges } from "../utils/kirbyTags";
 import { buildLinkTag, isBareUrlAnchor } from "../utils/inputValidation";
+
+/**
+ * A manager's default is marked's module singleton, so tokenizers
+ * registered there leak into every other manager on the page.
+ */
+export const isolatedMarked = (): typeof marked =>
+	new Marked().use({
+		// Without this, anything the block tokenizer declines reaches marked's
+		// own HTML rule, which parses it through the DOM and drops what the
+		// schema cannot represent
+		tokenizer: { html: () => undefined },
+	}) as unknown as typeof marked;
 
 /**
  * `code: true` exempts marked text from the markdown serializer's
@@ -77,23 +92,77 @@ export const HtmlBreak = Extension.create({
 	],
 });
 
-const HTML_BLOCK_ATTRS = String.raw`(?:\s(?:"[^"]*"|'[^']*'|[^<>"'])*)?`;
+const HTML_ATTRS = String.raw`(?:\s(?:"[^"]*"|'[^']*'|[^<>"'])*)?`;
 
 /** Markup the serializer stores verbatim, for highlighting it in the editor */
 export const HTML_RAW = new RegExp(
 	String.raw`<!--[\s\S]*?-->` +
-		String.raw`|<([a-zA-Z][a-zA-Z0-9-]*)${HTML_BLOCK_ATTRS}>[\s\S]*?<\/\s*\1\s*>` +
-		String.raw`|<\/?[a-zA-Z][a-zA-Z0-9-]*${HTML_BLOCK_ATTRS}\/?>`,
+		String.raw`|<([a-zA-Z][a-zA-Z0-9-]*)${HTML_ATTRS}>[\s\S]*?<\/\s*\1\s*>` +
+		String.raw`|<\/?[a-zA-Z][a-zA-Z0-9-]*${HTML_ATTRS}\/?>`,
 	"gi"
 );
-const HTML_BLOCK_ELEMENT = new RegExp(
-	String.raw`^<([a-zA-Z][a-zA-Z0-9-]*)${HTML_BLOCK_ATTRS}>[\s\S]*?<\/\s*\1\s*>`,
+const HTML_BLOCK_START = /^(?:<!--|<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s|\/?>))/;
+const HTML_BR = /^<\/?br\s*\/?>/i;
+// Fresh instance, or HTML_RAW's g flag carries lastIndex between calls
+const HTML_BLOCK_ELEMENT = new RegExp(`^(?:${HTML_RAW.source})`, "i");
+// a becomes a KirbyTag, so it keeps its own handler too
+const HTML_INLINE_TAG = new RegExp(
+	String.raw`^(?:<!--[\s\S]*?-->` +
+		String.raw`|<\/?(?!(?:br|a)\b)[a-zA-Z][a-zA-Z0-9-]*${HTML_ATTRS}\/?>)`,
 	"i"
 );
-const HTML_BLOCK_VOID = new RegExp(
-	String.raw`^<[a-zA-Z][a-zA-Z0-9-]*${HTML_BLOCK_ATTRS}\/?>`,
-	"i"
-);
+
+/**
+ * Keeps a single inline tag as literal text, so the browser's HTML parser
+ * cannot turn it into a real node and restructure the line around it.
+ * Registered after the <br> and <a href> handlers, which claim theirs first.
+ */
+export const HtmlInline = Extension.create({
+	name: "htmlInline",
+	markdownTokenName: "htmlInline",
+	markdownTokenizer: {
+		name: "htmlInline",
+		level: "inline",
+		start: (src: string) => {
+			for (let at = src.indexOf("<"); at !== -1; at = src.indexOf("<", at + 1)) {
+				if (HTML_INLINE_TAG.test(src.slice(at))) {
+					return at;
+				}
+			}
+			return -1;
+		},
+		tokenize: (src: string) => {
+			const match = src.match(HTML_INLINE_TAG);
+			return match ? { type: "htmlInline", raw: match[0] } : undefined;
+		},
+	},
+	parseMarkdown: (token: MarkdownToken, helpers: MarkdownParseHelpers) => [
+		helpers.createTextNode(String(token.raw ?? "")),
+	],
+});
+
+// Bounding at the element keeps the following lines out of the raw text node,
+// where they would be escaped again on every save. Everything else keeps the
+// whole block, because returning null hands it to marked's DOM path.
+const matchHtmlBlock = (src: string): string | null => {
+	if (!HTML_BLOCK_START.test(src)) {
+		return null;
+	}
+	const element = src.match(HTML_BLOCK_ELEMENT);
+	if (element) {
+		// An element sharing its line goes to the inline tokenizers, which keep
+		// the tags raw and leave the rest of the line real markdown
+		const after = src.slice(element[0].length);
+		return after === "" || after.startsWith("\n") ? element[0] : null;
+	}
+	// A br sharing its line has to reach the inline tokenizers, and marked
+	// leaves that line a paragraph rather than claiming it as HTML
+	if (HTML_BR.test(src)) {
+		return null;
+	}
+	const end = src.indexOf("\n\n");
+	return end === -1 ? src : src.slice(0, end);
+};
 
 /**
  * Keeps a raw HTML block as literal text. Without this the browser's parser
@@ -106,15 +175,25 @@ export const HtmlBlock = Extension.create({
 	markdownTokenizer: {
 		name: "htmlBlock",
 		level: "block",
-		// The lookahead must match tokenize(), or marked splits the paragraph
-		// at a position that then declines to produce a token
-		start: (src: string) => src.search(/^<(?!br\s*\/?>)[a-zA-Z]/m),
-		tokenize: (src: string) => {
-			const match = src.match(HTML_BLOCK_ELEMENT) ?? src.match(HTML_BLOCK_VOID);
-			if (!match || /^<br\s*\/?>/i.test(match[0])) {
-				return undefined;
+		// Never wider than tokenize(), or marked ends the paragraph at a
+		// position that then declines to produce a token. Narrower is safe, and
+		// a br has to stay inline in the paragraph it interrupts
+		start: (src: string) => {
+			const candidates = /(?:^|\n)</g;
+			let found: RegExpExecArray | null;
+			while ((found = candidates.exec(src))) {
+				const at = found.index + found[0].length - 1;
+				const rest = src.slice(at);
+				if (!HTML_BR.test(rest) && matchHtmlBlock(rest)) {
+					return at;
+				}
 			}
-			return { type: "htmlBlock", raw: match[0], text: match[0] };
+			return -1;
+		},
+		// text, because marked appends a following lone newline to raw
+		tokenize: (src: string) => {
+			const raw = matchHtmlBlock(src);
+			return raw ? { type: "htmlBlock", raw, text: raw } : undefined;
 		},
 	},
 	parseMarkdown: (token: MarkdownToken, helpers: MarkdownParseHelpers) => [
@@ -213,6 +292,16 @@ export const HtmlLinkToKirbytag = Extension.create({
 	},
 });
 
+const rawBlock = (token: MarkdownToken, helpers: MarkdownParseHelpers) =>
+	helpers.createNode("rawMarkdownTable", {
+		raw: String(token.raw ?? "").trimEnd(),
+	});
+
+const rawInline = (token: MarkdownToken, helpers: MarkdownParseHelpers) =>
+	helpers.applyMark("kirbytagRaw", [
+		helpers.createTextNode(String(token.raw ?? "")),
+	]);
+
 /**
  * Keeps GFM tables from being silently deleted on save: the schema has
  * no table extension, so the source is stored verbatim and re-emitted
@@ -245,12 +334,114 @@ export const RawMarkdownTable = Node.create({
 	},
 
 	markdownTokenName: "table",
-	parseMarkdown: (token: MarkdownToken, helpers: MarkdownParseHelpers) =>
-		helpers.createNode("rawMarkdownTable", {
-			raw: String(token.raw ?? "").trimEnd(),
-		}),
+	parseMarkdown: rawBlock,
 	renderMarkdown: (node: JSONContent) => String(node.attrs?.raw ?? ""),
 });
+
+const listTokenize = OrderedList.config.markdownTokenizer?.tokenize;
+const DIGIT_LIST_START = /^\s*\d+[.)]\s+/;
+
+/**
+ * Kirby's markdown parser knows only digit list markers, but the upstream
+ * tokenizer also claims alpha and roman ones. start() never interrupts a
+ * paragraph, so prose that opens with a marker stays one block.
+ */
+export const DigitOnlyOrderedList = OrderedList.extend({
+	markdownTokenizer: {
+		name: "orderedList",
+		level: "block",
+		start: () => -1,
+		tokenize: (src, tokens, lexer) =>
+			DIGIT_LIST_START.test(src)
+				? listTokenize?.(src, tokens, lexer)
+				: undefined,
+	},
+});
+
+/**
+ * An orderedList already marked false stays false: either the button is
+ * off (the list fallback keeps sources raw) or a registry replacement
+ * parses its own markdown.
+ */
+export const digitOnlyOrderedList = (
+	config: Record<string, unknown>
+): { starterKit: Record<string, unknown>; extensions: AnyExtension[] } =>
+	config.orderedList === false
+		? { starterKit: config, extensions: [] }
+		: {
+				starterKit: { ...config, orderedList: false },
+				extensions: [DigitOnlyOrderedList],
+			};
+
+const RAW_BLOCK_TOKENS = {
+	code: "codeBlock",
+	blockquote: "blockquote",
+	hr: "horizontalRule",
+	heading: "heading",
+};
+
+const RAW_INLINE_TOKENS = {
+	codespan: "code",
+	del: "strike",
+	strong: "bold",
+	em: "italic",
+};
+
+/**
+ * Constructs whose extension the buttons leave out of the schema would
+ * otherwise be deleted (code, hr) or lose their markers (blockquote,
+ * emphasis) on the next save. Reusing rawMarkdownTable and kirbytagRaw
+ * keeps the PHP serializer unchanged.
+ */
+export const markdownFallbacks = (
+	config: Record<string, unknown>
+): AnyExtension[] => {
+	const off = (name: string) => config[name] === false;
+	const fallbacks: AnyExtension[] = [];
+
+	for (const [token, extension] of Object.entries(RAW_BLOCK_TOKENS)) {
+		if (off(extension)) {
+			fallbacks.push(
+				Extension.create({
+					name: `${token}Fallback`,
+					markdownTokenName: token,
+					parseMarkdown: rawBlock,
+				})
+			);
+		}
+	}
+
+	for (const [token, extension] of Object.entries(RAW_INLINE_TOKENS)) {
+		if (off(extension)) {
+			fallbacks.push(
+				Extension.create({
+					name: `${token}Fallback`,
+					markdownTokenName: token,
+					parseMarkdown: rawInline,
+				})
+			);
+		}
+	}
+
+	if (off("bulletList") || off("orderedList")) {
+		fallbacks.push(
+			Extension.create({
+				name: "listFallback",
+				markdownTokenName: "list",
+				// [] declines the token, deferring to the loaded list extension
+				parseMarkdown: (
+					token: MarkdownToken,
+					helpers: MarkdownParseHelpers
+				) =>
+					(token.ordered ? off("orderedList") : off("bulletList"))
+						? rawBlock(token, helpers)
+						: [],
+			})
+		);
+	}
+
+	return fallbacks;
+};
 
 /**
  * Converts markdown links to KirbyTags on parse. Without this, hrefs are
@@ -287,3 +478,14 @@ export const LinkToKirbytag = Extension.create({
 		];
 	},
 });
+
+// HtmlInline last: HtmlBreak and HtmlLinkToKirbytag claim <br> and
+// <a href> before it keeps any other tag literal
+export const markdownParseExtensions: AnyExtension[] = [
+	HtmlBlock,
+	HtmlBreak,
+	HtmlLinkToKirbytag,
+	HtmlInline,
+	KirbytagText,
+	LinkToKirbytag,
+];
