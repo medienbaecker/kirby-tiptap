@@ -257,7 +257,7 @@ export default {
 	display: block;
 }
 
-/* Tables preserved as raw markdown */
+/* Blocks preserved as raw markdown */
 .tiptap pre[data-raw-markdown-table] {
 	font-size: var(--code-inline-font-size);
 	font-family: var(--code-font-family);

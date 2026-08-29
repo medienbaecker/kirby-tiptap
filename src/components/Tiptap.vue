@@ -1,11 +1,9 @@
 <template>
 	<k-field class="k-tiptap-field" data-theme="field" :name="name" type="tiptap" v-bind="$props"
 		:counter="counterOptions">
-		<k-input-element>
-			<div :data-disabled="disabled" :data-size="size" :data-inline="inline" class="k-input k-tiptap-input">
-				<TiptapInput ref="input" v-bind="$props" @input="handleInput" @editor="setEditor" />
-			</div>
-		</k-input-element>
+		<div :data-disabled="disabled" :data-size="size" :data-inline="inline" class="k-input k-tiptap-input">
+			<TiptapInput ref="input" v-bind="$props" @input="handleInput" @editor="setEditor" />
+		</div>
 	</k-field>
 </template>
 
