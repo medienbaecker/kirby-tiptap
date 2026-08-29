@@ -15,6 +15,7 @@
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { keydownHandler } from '@tiptap/pm/keymap'
 import { getShortcut } from '../../utils/shortcuts.js'
+import { rawHtmlDisabledCheck } from '../../extensions/insertionGuards'
 
 export default {
 	props: {
@@ -96,9 +97,9 @@ export default {
 							? this.editor.isActive(this.activeCheck)
 							: false
 
-					this.disabled = typeof this.disabledCheck === 'function'
-						? this.disabledCheck(this.editor) && !this.active
-						: false
+					this.disabled = (rawHtmlDisabledCheck(this.editor) ||
+						(typeof this.disabledCheck === 'function' && this.disabledCheck(this.editor))) &&
+						!this.active
 				}
 
 				// Initial state

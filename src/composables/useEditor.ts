@@ -189,7 +189,7 @@ export function useEditor(
 					],
 				}),
 				Replacements,
-				InsertionGuards,
+				InsertionGuards.configure({ format: props.format }),
 			];
 
 			// Markdown fields need the schema nodes even without the button,

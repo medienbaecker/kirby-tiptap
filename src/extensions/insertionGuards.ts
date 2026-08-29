@@ -2,10 +2,42 @@ import { Extension } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorState } from "@tiptap/pm/state";
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type {
+	Node as ProseMirrorNode,
+	ResolvedPos,
+} from "@tiptap/pm/model";
 import { findKirbyTagRanges } from "../utils/kirbyTags";
+import { HTML_RAW } from "./markdownFormat";
 
 const FORMATTING_MARKS = new Set(["bold", "italic", "strike"]);
+
+interface InsertionGuardsOptions {
+	format?: "json" | "markdown";
+}
+
+// Plugin state is the only carrier the guards can read from a bare EditorState
+const guardsKey = new PluginKey<boolean>("insertionGuards");
+
+const isMarkdownField = (state: EditorState): boolean =>
+	guardsKey.getState(state) === true;
+
+function touchesRawHtml($from: ResolvedPos, $to: ResolvedPos = $from): boolean {
+	if ($from.parent !== $to.parent) return false;
+
+	const text = $from.parent.textContent;
+	if (!text.includes("<")) return false;
+
+	const from = posToCharIndex($from.parent, $from.parentOffset);
+	const to = posToCharIndex($to.parent, $to.parentOffset);
+
+	for (const match of text.matchAll(HTML_RAW)) {
+		const start = match.index as number;
+		const end = start + match[0].length;
+		if (from < end && to > start) return true;
+	}
+
+	return false;
+}
 
 function charIndexToPos(
 	block: ProseMirrorNode,
@@ -33,6 +65,17 @@ function charIndexToPos(
 	return pos;
 }
 
+function posToCharIndex(block: ProseMirrorNode, parentOffset: number): number {
+	let chars = 0;
+
+	block.forEach((child, offset) => {
+		if (!child.isText || offset >= parentOffset) return;
+		chars += Math.min(child.nodeSize, parentOffset - offset);
+	});
+
+	return chars;
+}
+
 /**
  * Checks whether a KirbyTag can be inserted at the given position.
  */
@@ -41,6 +84,8 @@ export function canInsertKirbyTag(state: EditorState, pos?: number): boolean {
 
 	// No KirbyTags in code contexts
 	if ($pos.parent.type.spec.code) return false;
+
+	if (isMarkdownField(state) && touchesRawHtml($pos)) return false;
 
 	// No nested KirbyTags
 	const parent = $pos.parent;
@@ -79,13 +124,27 @@ export const formattingDisabledCheck = (editor: Editor): boolean => {
 	return inCodeBlock || inInlineCode;
 };
 
-export const InsertionGuards = Extension.create({
+export const rawHtmlDisabledCheck = (editor: Editor): boolean =>
+	isMarkdownField(editor.state) &&
+	touchesRawHtml(editor.state.selection.$from, editor.state.selection.$to);
+
+export const InsertionGuards = Extension.create<InsertionGuardsOptions>({
 	name: "insertionGuards",
 
+	addOptions() {
+		return { format: undefined };
+	},
+
 	addProseMirrorPlugins() {
+		const markdown = this.options.format === "markdown";
+
 		return [
 			new Plugin({
-				key: new PluginKey("kirbytagMarkStrip"),
+				key: guardsKey,
+				state: {
+					init: () => markdown,
+					apply: (_tr, value) => value,
+				},
 				appendTransaction(transactions, _oldState, newState) {
 					if (!transactions.some((tr) => tr.docChanged)) return null;
 
