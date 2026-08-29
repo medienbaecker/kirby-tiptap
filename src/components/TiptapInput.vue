@@ -43,11 +43,25 @@ export default {
 			}
 		)
 
+		// A markdown field emits JSON but gets markdown back, so the guard above
+		// never matches its own save and every save would reset the cursor
+		const isCurrentContent = (markdown) => {
+			try {
+				const incoming = editor.value.markdown?.parse(markdown)
+				if (!incoming) return false
+				return editor.value.state.doc.eq(
+					editor.value.schema.nodeFromJSON(incoming)
+				)
+			} catch {
+				return false
+			}
+		}
+
 		// Watch for external value changes
 		watch(() => props.value, (newValue, oldValue) => {
 			if (newValue !== oldValue && newValue !== lastEmittedJson.value) {
 				const newContent = parseContent(newValue)
-				if (editor.value) {
+				if (editor.value && !(props.format === 'markdown' && isCurrentContent(newContent))) {
 					editor.value.commands.setContent(newContent, {
 						emitUpdate: false,
 						...(props.format === 'markdown' ? { contentType: 'markdown' } : {})
