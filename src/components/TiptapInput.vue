@@ -43,8 +43,8 @@ export default {
 			}
 		)
 
-		// A markdown field emits JSON but gets markdown back, so the guard above
-		// never matches its own save and every save would reset the cursor
+		// A markdown field emits JSON but gets markdown back, so the lastEmittedJson
+		// check below never matches its own save and every save would reset the cursor
 		const isCurrentContent = (markdown) => {
 			try {
 				const incoming = editor.value.markdown?.parse(markdown)

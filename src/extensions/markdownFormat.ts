@@ -141,9 +141,9 @@ export const HtmlInline = Extension.create({
 	],
 });
 
-// Bounding at the element keeps the following lines out of the raw text node,
-// where they would be escaped again on every save. Everything else keeps the
-// whole block, because returning null hands it to marked's DOM path.
+// The serializer keeps text verbatim only where it matches HTML_RAW, so a
+// wider match gets its trailing prose escaped again on every save. Markup with
+// no element to stop at takes the whole block to stay verbatim.
 const matchHtmlBlock = (src: string): string | null => {
 	if (!HTML_BLOCK_START.test(src)) {
 		return null;
@@ -154,11 +154,6 @@ const matchHtmlBlock = (src: string): string | null => {
 		// the tags raw and leave the rest of the line real markdown
 		const after = src.slice(element[0].length);
 		return after === "" || after.startsWith("\n") ? element[0] : null;
-	}
-	// A br sharing its line has to reach the inline tokenizers, and marked
-	// leaves that line a paragraph rather than claiming it as HTML
-	if (HTML_BR.test(src)) {
-		return null;
 	}
 	const end = src.indexOf("\n\n");
 	return end === -1 ? src : src.slice(0, end);
@@ -479,8 +474,8 @@ export const LinkToKirbytag = Extension.create({
 	},
 });
 
-// HtmlInline last: HtmlBreak and HtmlLinkToKirbytag claim <br> and
-// <a href> before it keeps any other tag literal
+// HtmlInline comes after HtmlBreak and HtmlLinkToKirbytag: those claim <br>
+// and <a href>, and it keeps every remaining tag literal
 export const markdownParseExtensions: AnyExtension[] = [
 	HtmlBlock,
 	HtmlBreak,
