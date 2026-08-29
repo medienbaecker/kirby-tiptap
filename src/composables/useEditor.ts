@@ -66,6 +66,14 @@ interface UseEditorReturn {
 	) => void;
 }
 
+// Object buttons configure a core button, so they must count as that button
+const buttonName = (btn: ButtonItem): string | null =>
+	typeof btn === "string"
+		? btn
+		: typeof btn === "object" && btn !== null && "type" in btn
+			? btn.type
+			: null;
+
 /**
  * Composable for Tiptap editor configuration and management
  */
@@ -85,7 +93,7 @@ export function useEditor(
 		// would produce content that renders as literal "[x]" on the frontend
 		const buttons =
 			props.format === "markdown"
-				? props.buttons.filter((btn) => btn !== "taskList")
+				? props.buttons.filter((btn) => buttonName(btn) !== "taskList")
 				: props.buttons;
 
 		if (!props.inline) {
@@ -104,14 +112,11 @@ export function useEditor(
 
 		return buttons
 			.filter((btn) => {
-				// Handle object buttons (headings, paragraphClass, etc.)
-				if (typeof btn === "object") {
-					if ("headings" in btn) {
-						return false;
-					}
+				if (typeof btn === "object" && "headings" in btn) {
+					return false;
 				}
-				// Handle string buttons
-				return typeof btn !== "string" || !blockElements.includes(btn);
+				const name = buttonName(btn);
+				return !name || !blockElements.includes(name);
 			})
 			.filter((btn, i, arr) => {
 				// Remove separators at beginning or end
@@ -124,7 +129,8 @@ export function useEditor(
 	 */
 	const starterKitConfig = computed(() => {
 		const buttons = allowedButtons.value;
-		const has = (name: string) => buttons.includes(name);
+		const has = (name: string) =>
+			buttons.some((btn) => buttonName(btn) === name);
 		const hasHeadings = buttons.some(
 			(btn) => typeof btn === "object" && btn !== null && "headings" in btn
 		);
@@ -195,7 +201,7 @@ export function useEditor(
 			// Markdown fields need the schema nodes even without the button,
 			// so stored JSON task lists load and survive saves
 			if (
-				allowedButtons.value.includes("taskList") ||
+				allowedButtons.value.some((btn) => buttonName(btn) === "taskList") ||
 				props.format === "markdown"
 			) {
 				extensions.push(

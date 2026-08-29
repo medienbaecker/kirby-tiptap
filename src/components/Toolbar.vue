@@ -4,7 +4,7 @@
 		<template v-for="(button, index) in normalizedButtons">
 			<hr v-if="isSeparator(button)" :key="'sep-' + index" />
 			<ToolbarButton v-else-if="getSimple(button)" :key="getKey(button)" :editor="editor"
-				:icon="getIcon(button)" :title="$t(getSimple(button).title)" :command="getSimple(button).command"
+				:icon="getIcon(button)" :title="getTitle(button)" :command="getSimple(button).command"
 				:active-check="getSimple(button).activeCheck" :disabled-check="getSimple(button).disabledCheck" />
 			<component v-else :is="getComponentType(button)" :key="getKey(button)" :editor="editor"
 				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads"
@@ -128,7 +128,12 @@ export default {
 		},
 
 		getIcon(button) {
-			return buttonRegistry.getButton(button.type)?.meta.icon
+			return button.icon || buttonRegistry.getButton(button.type)?.meta.icon
+		},
+
+		// A blueprint title is the author's own string, not a translation key
+		getTitle(button) {
+			return button.title ?? this.$t(this.getSimple(button).title)
 		},
 
 		getComponentType(button) {
