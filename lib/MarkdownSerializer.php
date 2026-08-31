@@ -93,8 +93,6 @@ class MarkdownSerializer
 		'tel' => ['class', 'rel', 'title'],
 	];
 
-	private const INDENT = '  ';
-
 	// JavaScript's \s (unicode) for whitespace parity with the Panel
 	private const WS_CHARS = ' \t\n\r\f\x0B\x{00a0}\x{1680}\x{2000}-\x{200a}\x{2028}\x{2029}\x{202f}\x{205f}\x{3000}\x{feff}';
 	private const WS = '[' . self::WS_CHARS . ']';
@@ -575,10 +573,18 @@ class MarkdownSerializer
 		$first = array_shift($children);
 		$output = $prefix . ($first === null ? '' : static::renderInline([$first], $node, ''));
 
+		// Kirby's parser nests by the marker's own width, so "1. " needs three.
+		// Paragraphs keep two: marked re-reads a continuation paragraph with a
+		// fixed two-space dedent, so a wider one leaves a space that grows on
+		// every save.
+		$width = str_repeat(' ', strlen($prefix));
+
 		foreach (array_values($children) as $i => $child) {
+			$isParagraph = ($child['type'] ?? null) === 'paragraph';
+			$pad = $isParagraph ? '  ' : $width;
 			$childContent = static::renderNode($child, $node, $i + 1);
 			$indented = implode("\n", array_map(
-				fn ($line) => self::INDENT . $line,
+				fn ($line) => $pad . $line,
 				explode("\n", $childContent)
 			));
 			$output .= (($child['type'] ?? null) === 'paragraph' ? "\n\n" : "\n") . $indented;

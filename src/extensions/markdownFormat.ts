@@ -515,6 +515,59 @@ export const LinkToKirbytag = Extension.create({
 	},
 });
 
+// No button can add an image node, so the source is the only representation
+export const ImageRaw = Extension.create({
+	name: "imageRaw",
+	markdownTokenName: "image",
+	parseMarkdown: rawInline,
+});
+
+// Upstream promotes a lone image to a block node, where the raw mark is lost
+export const LoneImageParagraph = Extension.create({
+	name: "loneImageParagraph",
+	// Above Paragraph's own 1000, or its promotion runs first
+	priority: 1001,
+	markdownTokenName: "paragraph",
+	// [] declines the token, deferring to the paragraph extension
+	parseMarkdown: (token: MarkdownToken, helpers: MarkdownParseHelpers) => {
+		const tokens = token.tokens ?? [];
+		return tokens.length === 1 && tokens[0].type === "image"
+			? helpers.createNode("paragraph", undefined, helpers.parseInline(tokens))
+			: [];
+	},
+});
+
+const CODESPAN = /^(`+)([^]*?)\1(?!`)/;
+// The serializer always writes one backtick, which cannot delimit either one
+const UNSAFE_CODESPAN = /`|^\s*$/;
+
+// Claimed at tokenizer level, not by token name: an inline handler is the only
+// one consulted, so a name-based one could not hand safe spans back
+export const UnsafeCodespanRaw = Extension.create({
+	name: "unsafeCodespanRaw",
+	markdownTokenName: "unsafeCodespan",
+	markdownTokenizer: {
+		name: "unsafeCodespan",
+		level: "inline",
+		start: (src: string) => src.indexOf("`"),
+		tokenize: (src: string) => {
+			const match = CODESPAN.exec(src);
+			if (match === null) {
+				return undefined;
+			}
+			const body = match[2];
+			const text =
+				body.startsWith(" ") && body.endsWith(" ") && body.trim() !== ""
+					? body.slice(1, -1)
+					: body;
+			return UNSAFE_CODESPAN.test(text)
+				? { type: "unsafeCodespan", raw: match[0], text }
+				: undefined;
+		},
+	},
+	parseMarkdown: rawInline,
+});
+
 // HtmlInline comes after HtmlBreak and HtmlLinkToKirbytag: those claim <br>
 // and <a href>, and it keeps every remaining tag literal
 export const markdownParseExtensions: AnyExtension[] = [
@@ -524,4 +577,7 @@ export const markdownParseExtensions: AnyExtension[] = [
 	HtmlInline,
 	KirbytagText,
 	LinkToKirbytag,
+	ImageRaw,
+	LoneImageParagraph,
+	UnsafeCodespanRaw,
 ];
