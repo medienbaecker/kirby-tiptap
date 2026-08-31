@@ -7,9 +7,15 @@ import type {
 	MarkdownToken,
 } from "@tiptap/core";
 import { OrderedList } from "@tiptap/extension-list";
-import { Marked, marked } from "marked";
+import { Marked, marked, Tokenizer } from "marked";
 import { escapeParens, findKirbyTagRanges } from "../utils/kirbyTags";
 import { buildLinkTag, isBareUrlAnchor } from "../utils/inputValidation";
+
+// Kirby renders markdown fields with Parsedown, which has no CommonMark
+// flanking rules, so marked alone cannot read back a mark between letters
+// like Mitarbeiter**\***innen. These are Parsedown's own patterns.
+const PARSEDOWN_STRONG = /^\*\*((?:\\\*|[^*]|\*[^*]*\*)+?)\*\*(?!\*)/;
+const PARSEDOWN_EM = /^\*((?:\\\*|[^*]|\*\*[^*]*\*\*)+?)\*(?!\*)/;
 
 /**
  * A manager's default is marked's module singleton, so tokenizers
@@ -17,10 +23,45 @@ import { buildLinkTag, isBareUrlAnchor } from "../utils/inputValidation";
  */
 export const isolatedMarked = (): typeof marked =>
 	new Marked().use({
-		// Without this, anything the block tokenizer declines reaches marked's
-		// own HTML rule, which parses it through the DOM and drops what the
-		// schema cannot represent
-		tokenizer: { html: () => undefined },
+		tokenizer: {
+			// Without this, anything the block tokenizer declines reaches marked's
+			// own HTML rule, which parses it through the DOM and drops what the
+			// schema cannot represent
+			html: () => undefined,
+			emStrong(src, maskedSrc, prevChar) {
+				const standard = Tokenizer.prototype.emStrong.call(
+					this,
+					src,
+					maskedSrc,
+					prevChar
+				);
+				if (standard) {
+					return standard;
+				}
+
+				const strong = PARSEDOWN_STRONG.exec(src);
+				if (strong) {
+					return {
+						type: "strong",
+						raw: strong[0],
+						text: strong[1],
+						tokens: this.lexer.inlineTokens(strong[1]),
+					};
+				}
+
+				const em = PARSEDOWN_EM.exec(src);
+				if (em) {
+					return {
+						type: "em",
+						raw: em[0],
+						text: em[1],
+						tokens: this.lexer.inlineTokens(em[1]),
+					};
+				}
+
+				return false;
+			},
+		},
 	}) as unknown as typeof marked;
 
 /**
