@@ -108,6 +108,8 @@ export default {
 /* Base styles for the editor */
 .tiptap {
 	grid-area: content;
+	/* min-width: auto would let a wide source block stretch the field */
+	min-width: 0;
 	padding: .5rem;
 	outline: none;
 	width: 100%;
