@@ -11,7 +11,7 @@ import {
 	navigateToKirbyTag,
 	checkKirbyTagReferences,
 } from "../utils/kirbyTags";
-import { HTML_RAW } from "./markdownFormat";
+import { HTML_RAW } from "./rawSource";
 import type { Panel } from "kirby-types";
 
 interface HighlightsOptions {

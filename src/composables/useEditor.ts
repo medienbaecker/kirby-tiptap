@@ -4,15 +4,10 @@ import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import InvisibleCharacters from "@tiptap/extension-invisible-characters";
-import { Markdown } from "@tiptap/markdown";
 import {
 	KirbytagRaw,
 	RawMarkdownTable,
-	digitOnlyOrderedList,
-	isolatedMarked,
-	markdownFallbacks,
-	markdownParseExtensions,
-} from "../extensions/markdownFormat";
+} from "../extensions/rawSource";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
@@ -172,14 +167,10 @@ export function useEditor(
 			const isMarkdown = props.format === "markdown";
 
 			// Disable StarterKit extensions that registry extensions replace
-			const overrides = starterKitOverrides(
+			const skConfig = starterKitOverrides(
 				starterKitConfig.value,
 				registryExtensions
 			);
-			const { starterKit: skConfig, extensions: markdownListExtras } =
-				isMarkdown
-					? digitOnlyOrderedList(overrides)
-					: { starterKit: overrides, extensions: [] as AnyExtension[] };
 
 			const extensions: AnyExtension[] = [
 				StarterKit.configure(skConfig),
@@ -218,18 +209,7 @@ export function useEditor(
 			}
 
 			if (isMarkdown) {
-				extensions.push(
-					// Default 2-space indentation: with 4, multi-paragraph
-					// list items reparse as code blocks and lose content
-					Markdown.configure({ marked: isolatedMarked() }),
-					...markdownParseExtensions,
-					KirbytagRaw,
-					RawMarkdownTable,
-					// Not skConfig: it marks registry-replaced extensions
-					// false, and those replacements parse their own markdown
-					...markdownFallbacks(starterKitConfig.value),
-					...markdownListExtras
-				);
+				extensions.push(KirbytagRaw, RawMarkdownTable);
 			}
 
 			const newEditor = new Editor({

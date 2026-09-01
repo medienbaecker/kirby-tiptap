@@ -10,6 +10,19 @@ use Kirby\Toolkit\Str;
  */
 class Field
 {
+	public const DEFAULT_BUTTONS = [
+		['headings' => [1, 2, 3]],
+		'|',
+		'bold',
+		'italic',
+		'|',
+		'link',
+		'file',
+		'|',
+		'bulletList',
+		'orderedList',
+	];
+
 	/**
 	 * Save transform for markdown fields: Tiptap JSON becomes markdown.
 	 * Inexpressible docs stay JSON and converge on a later save
@@ -30,6 +43,57 @@ class Field
 		}
 
 		return MarkdownSerializer::serialize($decoded, static::kirbytags($kirby), $inline);
+	}
+
+	/**
+	 * Load transform for markdown fields: the mirror of store()
+	 */
+	public static function load(mixed $value, string $format, array $buttons, \Kirby\Cms\App $kirby): mixed
+	{
+		if (is_string($value) === false || trim($value) === '') {
+			return $value;
+		}
+
+		$decoded = json_decode($value, true);
+		if (is_array($decoded) === true && ($decoded['type'] ?? null) === 'doc') {
+			return static::rename($decoded, $value);
+		}
+
+		if ($format !== 'markdown') {
+			return $value;
+		}
+
+		return json_encode(MarkdownParser::parse($value, $buttons, [
+			'breaks' => $kirby->option('markdown.breaks', true),
+			'extra' => $kirby->option('markdown.extra', false),
+			'safe' => $kirby->option('markdown.safe', false),
+		]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	}
+
+	/**
+	 * The editor drops a node type it does not know, so a document stored under
+	 * the old name would lose its content
+	 */
+	private static function rename(array $doc, string $original): string
+	{
+		$renamed = false;
+
+		$walk = function (array $node) use (&$walk, &$renamed): array {
+			if (($node['type'] ?? null) === 'rawMarkdownTable') {
+				$node['type'] = 'rawSource';
+				$renamed = true;
+			}
+			if (isset($node['content']) && is_array($node['content'])) {
+				$node['content'] = array_map($walk, $node['content']);
+			}
+			return $node;
+		};
+
+		$doc = $walk($doc);
+
+		return $renamed
+			? json_encode($doc, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+			: $original;
 	}
 
 	/**
@@ -183,6 +247,16 @@ class Field
 			},
 			'uuid' => function () {
 				return Field::getUuidConfig();
+			},
+			// Applied before the props above resolve, hence $this->attrs
+			'value' => function ($value = null) {
+				/** @var \Kirby\Form\Field $this */
+				$format = $this->format
+					?? $this->attrs['format']
+					?? option('medienbaecker.tiptap.format', 'json');
+				$buttons = $this->buttons ?? $this->attrs['buttons'] ?? Field::DEFAULT_BUTTONS;
+
+				return Field::load($value, (string)$format, $buttons === false ? [] : $buttons, $this->kirby());
 			},
 		];
 	}

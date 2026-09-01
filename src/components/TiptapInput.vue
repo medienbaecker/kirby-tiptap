@@ -43,15 +43,13 @@ export default {
 			}
 		)
 
-		// A markdown field emits JSON but gets markdown back, so the lastEmittedJson
-		// check below never matches its own save and every save would reset the cursor
-		const isCurrentContent = (markdown) => {
+		// The server's re-parse never matches lastEmittedJson, so every save
+		// would otherwise reset the cursor
+		const isCurrentContent = (value) => {
 			try {
-				const incoming = editor.value.markdown?.parse(markdown)
-				if (!incoming) return false
-				return editor.value.state.doc.eq(
-					editor.value.schema.nodeFromJSON(incoming)
-				)
+				const doc = typeof value === 'string' ? JSON.parse(value) : value
+				if (doc?.type !== 'doc' || !editor.value) return false
+				return editor.value.state.doc.eq(editor.value.schema.nodeFromJSON(doc))
 			} catch {
 				return false
 			}
@@ -59,16 +57,16 @@ export default {
 
 		// Watch for external value changes
 		watch(() => props.value, (newValue, oldValue) => {
-			if (newValue !== oldValue && newValue !== lastEmittedJson.value) {
-				const newContent = parseContent(newValue)
-				if (editor.value && !(props.format === 'markdown' && isCurrentContent(newContent))) {
-					editor.value.commands.setContent(newContent, {
-						emitUpdate: false,
-						...(props.format === 'markdown' ? { contentType: 'markdown' } : {})
-					})
-					isEmpty.value = editor.value.isEmpty
-				}
-			}
+			if (newValue === oldValue || newValue === lastEmittedJson.value) return
+			if (!editor.value) return
+			if (props.format === 'markdown' && isCurrentContent(newValue)) return
+
+			const newContent = parseContent(newValue)
+			editor.value.commands.setContent(newContent, {
+				emitUpdate: false,
+				...(typeof newContent === 'string' ? { contentType: 'markdown' } : {})
+			})
+			isEmpty.value = editor.value.isEmpty
 		})
 
 		onMounted(() => {
@@ -257,17 +255,6 @@ export default {
 	display: block;
 }
 
-/* Blocks preserved as raw markdown */
-.tiptap pre[data-raw-markdown-table] {
-	font-size: var(--code-inline-font-size);
-	font-family: var(--code-font-family);
-	white-space: pre;
-	overflow-x: auto;
-	padding: var(--spacing-1);
-	border: 1px dashed var(--color-gray-400);
-	border-radius: var(--rounded);
-}
-
 /* Blockquote */
 .tiptap blockquote {
 	padding-inline-start: var(--spacing-2);
@@ -318,7 +305,8 @@ export default {
 	}
 }
 
-.tiptap .html-raw {
+.tiptap .html-raw,
+.tiptap pre[data-raw-source] {
 	font-family: var(--code-font-family);
 	font-size: var(--code-inline-font-size);
 	color: var(--color-text-dimmed);
