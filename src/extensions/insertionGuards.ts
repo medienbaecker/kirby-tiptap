@@ -1,15 +1,17 @@
 import { Extension } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { AddMarkStep, ReplaceAroundStep } from "@tiptap/pm/transform";
 import type { EditorState } from "@tiptap/pm/state";
 import type {
 	Node as ProseMirrorNode,
 	ResolvedPos,
 } from "@tiptap/pm/model";
 import { findKirbyTagRanges } from "../utils/kirbyTags";
-import { HTML_RAW } from "./markdownFormat";
+import { HTML_RAW } from "./rawSource";
 
 const FORMATTING_MARKS = new Set(["bold", "italic", "strike"]);
+const GUARDED_MARKS = new Set([...FORMATTING_MARKS, "code"]);
 
 interface InsertionGuardsOptions {
 	format?: "json" | "markdown";
@@ -20,6 +22,12 @@ const guardsKey = new PluginKey<boolean>("insertionGuards");
 
 const isMarkdownField = (state: EditorState): boolean =>
 	guardsKey.getState(state) === true;
+
+// HTML_RAW carries the g flag, so lastIndex has to be cleared before a test
+function containsRawHtml(text: string): boolean {
+	HTML_RAW.lastIndex = 0;
+	return HTML_RAW.test(text);
+}
 
 function touchesRawHtml($from: ResolvedPos, $to: ResolvedPos = $from): boolean {
 	if ($from.parent !== $to.parent) return false;
@@ -144,6 +152,46 @@ export const InsertionGuards = Extension.create<InsertionGuardsOptions>({
 				state: {
 					init: () => markdown,
 					apply: (_tr, value) => value,
+				},
+				// A shortcut, an input rule or a paste never asks the toolbar.
+				// Only additions are blocked, so a mark can still be toggled off
+				filterTransaction(tr, state) {
+					if (isMarkdownField(state) === false) return true;
+
+					return tr.steps.every((step) => {
+						if (step instanceof AddMarkStep) {
+							if (GUARDED_MARKS.has(step.mark.type.name) === false) return true;
+
+							return touchesRawHtml(
+								state.doc.resolve(step.from),
+								state.doc.resolve(step.to)
+							) === false;
+						}
+
+						if (step instanceof ReplaceAroundStep) {
+							const size = state.doc.content.size;
+							const touched: ProseMirrorNode[] = [];
+
+							state.doc.nodesBetween(
+								Math.min(step.from, size),
+								Math.min(step.to, size),
+								(node) => {
+									touched.push(node);
+								}
+							);
+
+							if (
+								touched.some(
+									(node) =>
+										node.isTextblock && containsRawHtml(node.textContent)
+								)
+							) {
+								return false;
+							}
+						}
+
+						return true;
+					});
 				},
 				appendTransaction(transactions, _oldState, newState) {
 					if (!transactions.some((tr) => tr.docChanged)) return null;
