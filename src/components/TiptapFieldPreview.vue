@@ -9,13 +9,12 @@
 <script>
 import { getHTMLFromFragment, getSchema } from '@tiptap/core';
 import { Node } from '@tiptap/pm/model';
-import { MarkdownManager } from '@tiptap/markdown';
 import StarterKit from '@tiptap/starter-kit';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { findKirbyTagRanges } from '../utils/kirbyTags';
-import { KirbytagRaw, RawMarkdownTable, digitOnlyOrderedList, isolatedMarked, markdownParseExtensions } from '../extensions/markdownFormat';
+import { KirbytagRaw, RawMarkdownTable } from '../extensions/rawSource';
 import { compileRegistry } from '../utils/registry';
 import { starterKitOverrides } from '../utils/starterKit';
 
@@ -54,16 +53,12 @@ const getPreviewExtensions = () => {
 		const { extensions } = compileRegistry();
 		// link: false matches the editor schema, so KirbyTags containing
 		// URLs stay plain text instead of being autolinked
-		const { starterKit, extensions: listExtras } = digitOnlyOrderedList(
-			starterKitOverrides({ link: false }, extensions)
-		);
 		previewExtensions = [
-			StarterKit.configure(starterKit),
+			StarterKit.configure(starterKitOverrides({ link: false }, extensions)),
 			TaskList,
 			TaskItem,
 			KirbytagRaw,
 			RawMarkdownTable,
-			...listExtras,
 			...extensions
 		];
 	}
@@ -79,16 +74,25 @@ const renderDoc = (doc) => {
 	);
 };
 
-let markdownManager = null;
-const parseMarkdown = (value) => {
-	if (!markdownManager) {
-		markdownManager = new MarkdownManager({
-			marked: isolatedMarked(),
-			extensions: [...getPreviewExtensions(), ...markdownParseExtensions],
-		});
-	}
-	return markdownManager.parse(value);
-};
+const escapeHtml = (text) =>
+	text.replace(/[&<>]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[char]);
+
+// A cell is one truncated line; a parser here would only be a second chance
+// to disagree with the one the site renders with
+const excerpt = (markdown) =>
+	escapeHtml(
+		markdown
+			.replace(/^```[\s\S]*?^```/gm, ' ')
+			.replace(/^\s{0,3}(#{1,6}\s+|>\s?|[-*+]\s+|\d+[.)]\s+)/gm, '')
+			.replace(/^\s*([-*_])(\s*\1){2,}\s*$/gm, ' ')
+			.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+			.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+			.replace(/(\*\*|__|~~|`)(.+?)\1/g, '$2')
+			.replace(/(^|[^\\])[*_]([^*_]+)[*_]/g, '$1$2')
+			.replace(/\\([\\`*_[\]~])/g, '$1')
+			.replace(/\s+/g, ' ')
+			.trim()
+	);
 
 export default {
 	mixins: [FieldPreview],
@@ -102,11 +106,7 @@ export default {
 				json = JSON.parse(this.value);
 			} catch {
 				// Markdown (format: markdown) or legacy plain-text value
-				try {
-					json = parseMarkdown(this.value);
-				} catch {
-					return this.value;
-				}
+				return decorateKirbyTags(excerpt(this.value ?? ''));
 			}
 			try {
 				const inline = this.field.inline ?? json.inline;
