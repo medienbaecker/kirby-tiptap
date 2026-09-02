@@ -1006,7 +1006,10 @@ class MarkdownSerializer
 			return $text;
 		}
 
-		$text = str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $text);
+		// Only an entity-shaped "&" needs escaping; Parsedown passes those
+		// through and escapes every other ampersand itself
+		$text = preg_replace('/&(?=#?+[0-9a-zA-Z]++;)/', '&amp;', $text);
+		$text = str_replace(['<', '>'], ['&lt;', '&gt;'], $text);
 		return preg_replace('/([\\\\`*_\[\]~])/', '\\\\$1', $text);
 	}
 
