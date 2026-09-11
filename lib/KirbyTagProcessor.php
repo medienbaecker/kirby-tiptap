@@ -100,7 +100,9 @@ class KirbyTagProcessor
 			if ($i % 2 === 1) {
 				$parsed = KirbyTags::parse($part, ['parent' => $parent]);
 				if ($parsed !== $part) {
-					$nodes[] = static::tagNode($parsed, $marks);
+					// Kirby's file tag escapes underscores in the filename for a
+					// Markdown pass that only happens on markdown values
+					$nodes[] = static::tagNode(str_replace('\_', '_', $parsed), $marks);
 					continue;
 				}
 			}
