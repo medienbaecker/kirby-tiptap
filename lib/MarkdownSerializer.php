@@ -33,6 +33,12 @@ class MarkdownSerializer
 		'kirbytagRaw' => 22,
 	];
 
+	private const VERBATIM_NODES = [
+		'codeBlock' => true,
+		'rawSource' => true,
+		'rawMarkdownTable' => true,
+	];
+
 	// code: true extensions; their text bypasses escaping
 	private const CODE_TYPES = [
 		'code' => true,
@@ -62,6 +68,7 @@ class MarkdownSerializer
 		'blockquote' => true,
 		'codeBlock' => true,
 		'horizontalRule' => true,
+		'rawSource' => true,
 		'rawMarkdownTable' => true,
 	];
 
@@ -82,6 +89,7 @@ class MarkdownSerializer
 		'heading' => ['level' => true],
 		'orderedList' => ['start' => true, 'type' => true],
 		'codeBlock' => ['language' => true],
+		'rawSource' => ['raw' => true],
 		'rawMarkdownTable' => ['raw' => true],
 	];
 
@@ -92,8 +100,6 @@ class MarkdownSerializer
 		'email' => ['class', 'rel', 'target', 'title'],
 		'tel' => ['class', 'rel', 'title'],
 	];
-
-	private const INDENT = '  ';
 
 	// JavaScript's \s (unicode) for whitespace parity with the Panel
 	private const WS_CHARS = ' \t\n\r\f\x0B\x{00a0}\x{1680}\x{2000}-\x{200a}\x{2028}\x{2029}\x{202f}\x{205f}\x{3000}\x{feff}';
@@ -197,7 +203,7 @@ class MarkdownSerializer
 
 	private static function transform(array $node): array
 	{
-		if (isset($node['content']) === false || ($node['type'] ?? null) === 'codeBlock') {
+		if (isset($node['content']) === false || isset(self::VERBATIM_NODES[$node['type'] ?? ''])) {
 			return $node;
 		}
 
@@ -354,7 +360,7 @@ class MarkdownSerializer
 	 */
 	private static function protect(array $node, ?array $registered): array
 	{
-		if (isset($node['content']) === false || ($node['type'] ?? null) === 'codeBlock') {
+		if (isset($node['content']) === false || isset(self::VERBATIM_NODES[$node['type'] ?? ''])) {
 			return $node;
 		}
 
@@ -383,7 +389,7 @@ class MarkdownSerializer
 		}
 
 		$ranges = [];
-		preg_match_all('/' . self::HTML_RAW . '/', $text, $html, PREG_OFFSET_CAPTURE);
+		preg_match_all('/' . self::HTML_RAW . '/i', $text, $html, PREG_OFFSET_CAPTURE);
 		foreach ($html[0] as [$raw, $start]) {
 			$ranges[] = [$start, $start + strlen($raw)];
 		}
@@ -510,7 +516,7 @@ class MarkdownSerializer
 					// &nbsp; keeps runs of empty paragraphs alive across reparses
 					return $previousEmpty ? '&nbsp;' : '';
 				}
-				return static::renderInline($content, $node, '');
+				return static::escapeBlockStart(static::renderInline($content, $node, ''));
 
 			case 'heading':
 				if (isset($node['content']) === false) {
@@ -554,11 +560,47 @@ class MarkdownSerializer
 			case 'listItem':
 				return static::renderListItem($node, $parent, $index);
 
+			case 'rawSource':
 			case 'rawMarkdownTable':
-				return (string)($node['attrs']['raw'] ?? '');
+				$raw = '';
+				foreach ($node['content'] ?? [] as $child) {
+					$raw .= $child['text'] ?? '';
+				}
+				return $raw !== '' ? $raw : (string)($node['attrs']['raw'] ?? '');
 		}
 
 		return '';
+	}
+
+	/**
+	 * A bare "-" straight after the parent item's text reads as a setext
+	 * underline and turns that text into a heading. Nothing claims "*"
+	 */
+	private static function escapeNestedEmptyItem(array $child, string $rendered): string
+	{
+		if (($child['type'] ?? null) !== 'bulletList' || str_starts_with($rendered, '- ') === false) {
+			return $rendered;
+		}
+
+		$firstLine = strtok($rendered, "\n");
+		return rtrim((string)$firstLine) === '-' ? '* ' . substr($rendered, 2) : $rendered;
+	}
+
+	/**
+	 * A paragraph opening with a block marker is read back as that block:
+	 * "#tag" becomes a heading, "- x" a list
+	 */
+	private static function escapeBlockStart(string $markdown): string
+	{
+		if (preg_match('/^(?:#|[-+](?=\s))/', $markdown) === 1) {
+			return '\\' . $markdown;
+		}
+
+		if (preg_match('/^(\d+)(?=[.)]\s)/', $markdown, $match) === 1) {
+			return $match[1] . '\\' . substr($markdown, strlen($match[1]));
+		}
+
+		return $markdown;
 	}
 
 	private static function renderListItem(array $node, ?array $parent, int $index): string
@@ -575,10 +617,19 @@ class MarkdownSerializer
 		$first = array_shift($children);
 		$output = $prefix . ($first === null ? '' : static::renderInline([$first], $node, ''));
 
+		// Kirby's parser nests by the marker's own width, so "1. " needs three.
+		// Paragraphs keep two: marked re-reads a continuation paragraph with a
+		// fixed two-space dedent, so a wider one leaves a space that grows on
+		// every save.
+		$width = str_repeat(' ', strlen($prefix));
+
 		foreach (array_values($children) as $i => $child) {
+			$isParagraph = ($child['type'] ?? null) === 'paragraph';
+			$pad = $isParagraph ? '  ' : $width;
 			$childContent = static::renderNode($child, $node, $i + 1);
+			$childContent = static::escapeNestedEmptyItem($child, $childContent);
 			$indented = implode("\n", array_map(
-				fn ($line) => self::INDENT . $line,
+				fn ($line) => $pad . $line,
 				explode("\n", $childContent)
 			));
 			$output .= (($child['type'] ?? null) === 'paragraph' ? "\n\n" : "\n") . $indented;
@@ -731,6 +782,11 @@ class MarkdownSerializer
 
 			foreach ($marksToOpen as $entry) {
 				$mode = isset($reopenHtml[$entry['type']]) ? 'html' : 'markdown';
+				if ($mode === 'markdown' && $entry['type'] === 'italic'
+					&& static::italicTouchesBold($nodes, $i, $result)
+				) {
+					$mode = 'underscore';
+				}
 				$text = static::markOpening($entry['type'], $mode) . $text;
 				$openingModes[$entry['type']] = $mode;
 				unset($reopenHtml[$entry['type']]);
@@ -950,14 +1006,55 @@ class MarkdownSerializer
 			return $text;
 		}
 
-		$text = str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $text);
+		// Only an entity-shaped "&" needs escaping; Parsedown passes those
+		// through and escapes every other ampersand itself
+		$text = preg_replace('/&(?=#?+[0-9a-zA-Z]++;)/', '&amp;', $text);
+		$text = str_replace(['<', '>'], ['&lt;', '&gt;'], $text);
 		return preg_replace('/([\\\\`*_\[\]~])/', '\\\\$1', $text);
+	}
+
+	private static function hasMark(array $node, string $type): bool
+	{
+		foreach ($node['marks'] ?? [] as $mark) {
+			if (($mark['type'] ?? null) === $type) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Against bold, italic asterisks make a run of three no parser can split.
+	 * An underscore is safe here: its neighbour is punctuation
+	 */
+	private static function italicTouchesBold(array $nodes, int $index, array $result): bool
+	{
+		$before = $result === [] ? '' : (string)end($result);
+		if ($before !== '' && str_ends_with($before, '*')) {
+			return true;
+		}
+
+		$count = count($nodes);
+		$at = $index;
+		while ($at < $count && static::hasMark($nodes[$at], 'italic')) {
+			$at++;
+		}
+
+		$after = $nodes[$at] ?? null;
+		if ($after === null || static::hasMark($after, 'bold') === false) {
+			return false;
+		}
+
+		return preg_match('/^' . self::WS . '/u', (string)($after['text'] ?? '')) !== 1;
 	}
 
 	private static function markOpening(string $markType, string $mode): string
 	{
 		if ($mode === 'html') {
 			return self::HTML_REOPEN[$markType][0] ?? '';
+		}
+		if ($mode === 'underscore') {
+			return '_';
 		}
 		return self::MARK_DELIMITER[$markType] ?? '';
 	}
@@ -966,6 +1063,9 @@ class MarkdownSerializer
 	{
 		if ($mode === 'html') {
 			return self::HTML_REOPEN[$markType][1] ?? '';
+		}
+		if ($mode === 'underscore') {
+			return '_';
 		}
 		return self::MARK_DELIMITER[$markType] ?? '';
 	}

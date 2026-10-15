@@ -4,15 +4,10 @@ import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import InvisibleCharacters from "@tiptap/extension-invisible-characters";
-import { Markdown } from "@tiptap/markdown";
 import {
-	HtmlBreak,
-	HtmlLinkToKirbytag,
 	KirbytagRaw,
-	KirbytagText,
-	LinkToKirbytag,
 	RawMarkdownTable,
-} from "../extensions/markdownFormat";
+} from "../extensions/rawSource";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
@@ -66,6 +61,14 @@ interface UseEditorReturn {
 	) => void;
 }
 
+// Object buttons configure a core button, so they must count as that button
+const buttonName = (btn: ButtonItem): string | null =>
+	typeof btn === "string"
+		? btn
+		: typeof btn === "object" && btn !== null && "type" in btn
+			? btn.type
+			: null;
+
 /**
  * Composable for Tiptap editor configuration and management
  */
@@ -85,7 +88,7 @@ export function useEditor(
 		// would produce content that renders as literal "[x]" on the frontend
 		const buttons =
 			props.format === "markdown"
-				? props.buttons.filter((btn) => btn !== "taskList")
+				? props.buttons.filter((btn) => buttonName(btn) !== "taskList")
 				: props.buttons;
 
 		if (!props.inline) {
@@ -104,14 +107,11 @@ export function useEditor(
 
 		return buttons
 			.filter((btn) => {
-				// Handle object buttons (headings, paragraphClass, etc.)
-				if (typeof btn === "object") {
-					if ("headings" in btn) {
-						return false;
-					}
+				if (typeof btn === "object" && "headings" in btn) {
+					return false;
 				}
-				// Handle string buttons
-				return typeof btn !== "string" || !blockElements.includes(btn);
+				const name = buttonName(btn);
+				return !name || !blockElements.includes(name);
 			})
 			.filter((btn, i, arr) => {
 				// Remove separators at beginning or end
@@ -124,7 +124,8 @@ export function useEditor(
 	 */
 	const starterKitConfig = computed(() => {
 		const buttons = allowedButtons.value;
-		const has = (name: string) => buttons.includes(name);
+		const has = (name: string) =>
+			buttons.some((btn) => buttonName(btn) === name);
 		const hasHeadings = buttons.some(
 			(btn) => typeof btn === "object" && btn !== null && "headings" in btn
 		);
@@ -163,6 +164,8 @@ export function useEditor(
 				buttonRegistry.registerRegistryButtons(registryButtons);
 			}
 
+			const isMarkdown = props.format === "markdown";
+
 			// Disable StarterKit extensions that registry extensions replace
 			const skConfig = starterKitOverrides(
 				starterKitConfig.value,
@@ -183,13 +186,13 @@ export function useEditor(
 					],
 				}),
 				Replacements,
-				InsertionGuards,
+				InsertionGuards.configure({ format: props.format }),
 			];
 
 			// Markdown fields need the schema nodes even without the button,
 			// so stored JSON task lists load and survive saves
 			if (
-				allowedButtons.value.includes("taskList") ||
+				allowedButtons.value.some((btn) => buttonName(btn) === "taskList") ||
 				props.format === "markdown"
 			) {
 				extensions.push(
@@ -205,19 +208,8 @@ export function useEditor(
 				extensions.push(...registryExtensions);
 			}
 
-			const isMarkdown = props.format === "markdown";
 			if (isMarkdown) {
-				extensions.push(
-					// Default 2-space indentation: with 4, multi-paragraph
-					// list items reparse as code blocks and lose content
-					Markdown,
-					HtmlBreak,
-					HtmlLinkToKirbytag,
-					KirbytagRaw,
-					KirbytagText,
-					LinkToKirbytag,
-					RawMarkdownTable
-				);
+				extensions.push(KirbytagRaw, RawMarkdownTable);
 			}
 
 			const newEditor = new Editor({

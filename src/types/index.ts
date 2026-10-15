@@ -63,11 +63,19 @@ export interface ButtonRegistryEntry {
 
 // Button item types for field configuration
 export type ButtonItem =
-	| string           // Core buttons: 'bold', 'italic', '|', etc.
-	| HeadingsButton   // { headings: [1, 2, 3] }
+	| string             // Core buttons: 'bold', 'italic', '|', etc.
+	| HeadingsButton     // { headings: [1, 2, 3] }
+	| ConfigurableButton // { type: 'bold', icon: 'pen', title: 'Fancy' }
 
 export interface HeadingsButton {
 	headings: number[]
+}
+
+export interface ConfigurableButton {
+	type: string
+	icon?: string
+	title?: string
+	className?: string
 }
 
 // Tiptap document structure

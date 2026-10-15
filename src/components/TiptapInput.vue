@@ -44,18 +44,30 @@ export default {
 			}
 		)
 
+		// The server's re-parse never matches lastEmittedJson, so every save
+		// would otherwise reset the cursor
+		const isCurrentContent = (value) => {
+			try {
+				const doc = typeof value === 'string' ? JSON.parse(value) : value
+				if (doc?.type !== 'doc' || !editor.value) return false
+				return editor.value.state.doc.eq(editor.value.schema.nodeFromJSON(doc))
+			} catch {
+				return false
+			}
+		}
+
 		// Watch for external value changes
 		watch(() => props.value, (newValue, oldValue) => {
-			if (newValue !== oldValue && newValue !== lastEmittedJson.value) {
-				const newContent = parseContent(newValue)
-				if (editor.value) {
-					editor.value.commands.setContent(newContent, {
-						emitUpdate: false,
-						...(props.format === 'markdown' ? { contentType: 'markdown' } : {})
-					})
-					isEmpty.value = editor.value.isEmpty
-				}
-			}
+			if (newValue === oldValue || newValue === lastEmittedJson.value) return
+			if (!editor.value) return
+			if (props.format === 'markdown' && isCurrentContent(newValue)) return
+
+			const newContent = parseContent(newValue)
+			editor.value.commands.setContent(newContent, {
+				emitUpdate: false,
+				...(typeof newContent === 'string' ? { contentType: 'markdown' } : {})
+			})
+			isEmpty.value = editor.value.isEmpty
 		})
 
 		onMounted(() => {
@@ -97,6 +109,8 @@ export default {
 /* Base styles for the editor */
 .tiptap {
 	grid-area: content;
+	/* min-width: auto would let a wide source block stretch the field */
+	min-width: 0;
 	padding: .5rem;
 	outline: none;
 	width: 100%;
@@ -244,17 +258,6 @@ export default {
 	display: block;
 }
 
-/* Tables preserved as raw markdown */
-.tiptap pre[data-raw-markdown-table] {
-	font-size: var(--code-inline-font-size);
-	font-family: var(--code-font-family);
-	white-space: pre;
-	overflow-x: auto;
-	padding: var(--spacing-1);
-	border: 1px dashed var(--color-gray-400);
-	border-radius: var(--rounded);
-}
-
 /* Blockquote */
 .tiptap blockquote {
 	padding-inline-start: var(--spacing-2);
@@ -303,6 +306,13 @@ export default {
 		background: var(--color-yellow-800);
 		color: inherit;
 	}
+}
+
+.tiptap .html-raw,
+.tiptap pre[data-raw-source] {
+	font-family: var(--code-font-family);
+	font-size: var(--code-inline-font-size);
+	color: var(--color-text-dimmed);
 }
 
 .tiptap .kirbytag+.kirbytag {

@@ -52,18 +52,14 @@ class TiptapField extends StringField
 			return $this->buttons;
 		}
 
-		return [
-			['headings' => [1, 2, 3]],
-			'|',
-			'bold',
-			'italic',
-			'|',
-			'link',
-			'file',
-			'|',
-			'bulletList',
-			'orderedList'
-		];
+		return Field::DEFAULT_BUTTONS;
+	}
+
+	public function fill(mixed $value): static
+	{
+		return parent::fill(
+			Field::load($value, $this->format(), $this->buttons(), $this->kirby())
+		);
 	}
 
 	public function files(): array
