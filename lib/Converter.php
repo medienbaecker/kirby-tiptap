@@ -170,12 +170,14 @@ class Converter
 		switch ($entry['kind']) {
 			case 'legacy':
 			case 'top-json':
-				$result = $this->textToJson($value, $fieldName);
+				$links = 0;
+				$result = $this->textToJson($value, $fieldName, $entry['html'] ?? false, $links);
 				if ($result !== null) {
 					$updates[$fieldName] = $result;
 					$this->toJson++;
 					$this->cli->green()->out(
 						'  ✓ ' . $this->fieldLabel($fieldName, $code) . ': converted ' . strlen($value) . ' characters'
+						. ($links > 0 ? ', ' . $links . ' link' . ($links === 1 ? '' : 's') . ' to KirbyTags' : '')
 					);
 				}
 				break;
@@ -334,8 +336,12 @@ class Converter
 		return $code ? $path . ' (' . $code . ')' : $path;
 	}
 
-	private function textToJson(string $text, string $fieldName): ?string
-	{
+	private function textToJson(
+		string $text,
+		string $fieldName,
+		bool $isHtml = false,
+		?int &$links = null
+	): ?string {
 		// Skip content that's already Tiptap JSON
 		$decoded = json_decode($text, true);
 		if (is_array($decoded) && ($decoded['type'] ?? null) === 'doc') {
@@ -343,8 +349,9 @@ class Converter
 		}
 
 		try {
-			$markdown = new Markdown();
-			$html = $markdown->parse($text);
+			// Writer values are already HTML; everything else is markdown
+			$html = $isHtml ? $text : (new Markdown())->parse($text);
+			$html = HtmlLinkConverter::convert($html, $links);
 
 			$editor = new Editor();
 			$editor->setContent($html);
@@ -414,6 +421,11 @@ class Converter
 
 			if ($type === 'textarea' || $type === 'markdown') {
 				$entries[] = ['kind' => 'legacy', 'field' => $name];
+				continue;
+			}
+
+			if ($type === 'writer') {
+				$entries[] = ['kind' => 'legacy', 'field' => $name, 'html' => true];
 				continue;
 			}
 

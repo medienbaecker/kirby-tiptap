@@ -7,14 +7,15 @@
 </template>
 
 <script>
-import { generateHTML } from '@tiptap/core';
+import { getHTMLFromFragment, getSchema } from '@tiptap/core';
+import { Node } from '@tiptap/pm/model';
 import { MarkdownManager } from '@tiptap/markdown';
 import StarterKit from '@tiptap/starter-kit';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { findKirbyTagRanges } from '../utils/kirbyTags';
-import { HtmlBreak, KirbytagRaw, KirbytagText, LinkToKirbytag, RawMarkdownTable } from '../extensions/markdownFormat';
+import { HtmlBreak, HtmlLinkToKirbytag, KirbytagRaw, KirbytagText, LinkToKirbytag, RawMarkdownTable } from '../extensions/markdownFormat';
 import { compileRegistry } from '../utils/registry';
 import { starterKitOverrides } from '../utils/starterKit';
 
@@ -61,11 +62,26 @@ const getPreviewExtensions = () => {
 	return previewExtensions;
 };
 
+let previewSchema = null;
+const renderDoc = (doc) => {
+	previewSchema ??= getSchema(getPreviewExtensions());
+	return getHTMLFromFragment(
+		Node.fromJSON(previewSchema, doc).content,
+		previewSchema
+	);
+};
+
 let markdownManager = null;
 const parseMarkdown = (value) => {
 	if (!markdownManager) {
 		markdownManager = new MarkdownManager({
-			extensions: [...getPreviewExtensions(), HtmlBreak, KirbytagText, LinkToKirbytag],
+			extensions: [
+				...getPreviewExtensions(),
+				HtmlBreak,
+				HtmlLinkToKirbytag,
+				KirbytagText,
+				LinkToKirbytag,
+			],
 		});
 	}
 	return markdownManager.parse(value);
@@ -91,10 +107,9 @@ export default {
 				}
 			}
 			try {
-				const doc = json.inline === true ? flattenInline(json) : json;
-				return decorateKirbyTags(
-					generateHTML(doc, getPreviewExtensions())
-				);
+				const inline = this.field.inline ?? json.inline;
+				const doc = inline === true ? flattenInline(json) : json;
+				return decorateKirbyTags(renderDoc(doc));
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.
 				return this.value;

@@ -1,4 +1,4 @@
-import { ref, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
+import { ref, shallowRef, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
 import { Editor } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
@@ -7,6 +7,7 @@ import InvisibleCharacters from "@tiptap/extension-invisible-characters";
 import { Markdown } from "@tiptap/markdown";
 import {
 	HtmlBreak,
+	HtmlLinkToKirbytag,
 	KirbytagRaw,
 	KirbytagText,
 	LinkToKirbytag,
@@ -74,7 +75,7 @@ export function useEditor(
 	onEditorCreate: (editor: Editor) => void
 ): UseEditorReturn {
 	// Use any for the ref to avoid deep type instantiation issues with Tiptap
-	const editor = ref<Editor | null>(null) as Ref<Editor | null>;
+	const editor = shallowRef<Editor | null>(null) as Ref<Editor | null>;
 
 	/**
 	 * Returns filtered buttons based on inline mode
@@ -211,6 +212,7 @@ export function useEditor(
 					// list items reparse as code blocks and lose content
 					Markdown,
 					HtmlBreak,
+					HtmlLinkToKirbytag,
 					KirbytagRaw,
 					KirbytagText,
 					LinkToKirbytag,

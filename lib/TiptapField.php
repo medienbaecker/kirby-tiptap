@@ -136,14 +136,6 @@ class TiptapField extends StringField
 
 	public function pretty(): bool
 	{
-		// Markdown storage never pretty-prints; surface the
-		// misconfiguration instead of silently ignoring it
-		if ($this->pretty === true && $this->format() === 'markdown') {
-			throw new InvalidArgumentException(
-				message: 'The pretty option has no effect with format: markdown'
-			);
-		}
-
 		return $this->pretty;
 	}
 

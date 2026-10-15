@@ -84,9 +84,9 @@ class KirbyTagProcessor
 		$parts = preg_split($regex, $text, -1, PREG_SPLIT_DELIM_CAPTURE);
 		$hasTag = $parts !== false && count($parts) > 1;
 
-		// Plain text without tags: leave as a text node so text.php escapes it.
+		// Plain text without tags or URLs: leave as a text node so text.php escapes it.
 		if ($hasTag === false && $allowHtml === false) {
-			return [$node];
+			return static::linkUrls($text, $node['marks'] ?? null);
 		}
 
 		$marks = $node['marks'] ?? null;
@@ -106,17 +106,57 @@ class KirbyTagProcessor
 			}
 
 			if ($allowHtml) {
+				// No autolinking here: the text may already contain an
+				// <a href="https://…">, and linkifying inside the href
+				// would corrupt it
 				$nodes[] = static::tagNode($part, $marks);
 			} else {
-				$literal = ['type' => 'text', 'text' => $part];
-				if ($marks !== null) {
-					$literal['marks'] = $marks;
-				}
-				$nodes[] = $literal;
+				array_push($nodes, ...static::linkUrls($part, $marks));
 			}
 		}
 
 		return $nodes;
+	}
+
+	/**
+	 * Splits bare URLs out of literal text into anchors, so JSON fields
+	 * autolink the way kirbytext does on Markdown fields. Parsedown's own
+	 * pattern, so both formats agree on what counts as a bare URL.
+	 */
+	private static function linkUrls(string $text, ?array $marks): array
+	{
+		$parts = preg_split(
+			'/(\bhttps?+:[\/]{2}[^\s<]+\b\/*+)/ui',
+			$text,
+			-1,
+			PREG_SPLIT_DELIM_CAPTURE
+		);
+
+		if ($parts === false || count($parts) === 1) {
+			return [static::textNode($text, $marks)];
+		}
+
+		$nodes = [];
+		foreach ($parts as $i => $part) {
+			if ($part === '') {
+				continue;
+			}
+
+			$nodes[] = $i % 2 === 1
+				? static::tagNode('<a href="' . html($part) . '">' . html($part) . '</a>', $marks)
+				: static::textNode($part, $marks);
+		}
+
+		return $nodes;
+	}
+
+	private static function textNode(string $text, ?array $marks): array
+	{
+		$node = ['type' => 'text', 'text' => $text];
+		if ($marks !== null) {
+			$node['marks'] = $marks;
+		}
+		return $node;
 	}
 
 	/**

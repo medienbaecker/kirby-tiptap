@@ -13,6 +13,17 @@ import type { Panel } from "kirby-types";
 const escapeRegex = (value: string): string =>
 	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Kirby reads unescaped parens as the tag boundary
+export const escapeParens = (value: string): string =>
+	value.replace(/[()]/g, "\\$&");
+
+// Writer stores /@/page/<uuid>, but only the scheme form resolves inline:
+// the (link:) tag gates on Uuid::is(), which does not match the permalink path
+const PERMALINK = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?@\/(page|file)\//i;
+
+export const normalizeHref = (href: string): string =>
+	href.replace(PERMALINK, "$1://");
+
 /**
  * Regex source matching the next attribute boundary in a tag string.
  * When the tag's registered attributes are known, only those names split

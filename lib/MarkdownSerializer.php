@@ -40,6 +40,16 @@ class MarkdownSerializer
 		'kirbytagRaw' => true,
 	];
 
+	private const HTML_ATTRS = '(?:\s(?:"[^"]*"|\'[^\']*\'|[^<>"\'])*)?';
+
+	// A whole element, not just its tags: the parser hands the element back as
+	// one literal token, so escaping its contents compounds on every save
+	private const HTML_RAW =
+		'<!--[\s\S]*?-->' .
+		'|<([a-zA-Z][a-zA-Z0-9-]*)' . self::HTML_ATTRS . '>[\s\S]*?<\/\s*\1\s*>' .
+		'|<\/?[a-zA-Z][a-zA-Z0-9-]*' . self::HTML_ATTRS . '\/?>' .
+		'|&(?:[a-zA-Z][a-zA-Z0-9]{1,31}|#\d{1,7}|#[xX][0-9a-fA-F]{1,6});';
+
 	private const SUPPORTED_NODES = [
 		'doc' => true,
 		'paragraph' => true,
@@ -73,7 +83,14 @@ class MarkdownSerializer
 		'orderedList' => ['start' => true, 'type' => true],
 		'codeBlock' => ['language' => true],
 		'rawMarkdownTable' => ['raw' => true],
-		'link' => ['href' => true],
+	];
+
+	// Per tag, because an attribute the tag does not register gets folded into
+	// the preceding attribute's value by KirbyTag::parse
+	private const LINK_TAG_ATTRS = [
+		'link' => ['class', 'lang', 'rel', 'role', 'target', 'title'],
+		'email' => ['class', 'rel', 'target', 'title'],
+		'tel' => ['class', 'rel', 'title'],
 	];
 
 	private const INDENT = '  ';
@@ -115,12 +132,25 @@ class MarkdownSerializer
 			$markType = $mark['type'] ?? '';
 			if (isset(self::SUPPORTED_MARKS[$markType]) === false) {
 				$found['mark:' . $markType] = true;
+			} elseif ($markType === 'link') {
+				static::collectUnsupportedLinkAttrs($mark['attrs'] ?? [], $found);
 			} else {
 				static::collectUnsupportedAttrs($markType, $mark['attrs'] ?? [], $found);
 			}
 		}
 		foreach ($node['content'] ?? [] as $child) {
 			static::collectUnsupported($child, $found);
+		}
+	}
+
+	private static function collectUnsupportedLinkAttrs(array $attrs, array &$found): void
+	{
+		$allowed = self::LINK_TAG_ATTRS[static::linkTagName((string)($attrs['href'] ?? ''))];
+
+		foreach ($attrs as $key => $value) {
+			if ($value !== null && $key !== 'href' && in_array($key, $allowed, true) === false) {
+				$found['attr:link.' . $key] = true;
+			}
 		}
 	}
 
@@ -229,13 +259,7 @@ class MarkdownSerializer
 					$text .= $nodes[$i + 1]['text'] ?? '';
 					$i++;
 				}
-				$isEmail = str_starts_with($href, 'mailto:');
-				$value = $isEmail ? substr($href, 7) : $href;
-				$name = $isEmail ? 'email' : 'link';
-				$tag = ($text === '' || $text === $value || $text === $href)
-					? "({$name}: {$value})"
-					: "({$name}: {$value} text: " . preg_replace('/[()]/', '\\\\$0', $text) . ')';
-				$result[] = static::rawText($tag);
+				$result[] = static::rawText(static::linkTag($href, $text, $link['attrs'] ?? []));
 				continue;
 			}
 
@@ -258,6 +282,53 @@ class MarkdownSerializer
 			'text' => $text,
 			'marks' => [['type' => 'kirbytagRaw']],
 		];
+	}
+
+	private static function linkTagName(string $href): string
+	{
+		if (str_starts_with($href, 'mailto:')) {
+			return 'email';
+		}
+		return str_starts_with($href, 'tel:') ? 'tel' : 'link';
+	}
+
+	/**
+	 * Mirrors generateLinkTag() in src/utils/inputValidation.ts
+	 */
+	public static function linkTag(string $href, string $text, array $attrs = []): string
+	{
+		$name = static::linkTagName($href);
+		$value = match ($name) {
+			'email' => substr($href, 7),
+			'tel' => substr($href, 4),
+			default => $href,
+		};
+
+		$tag = "({$name}: {$value}";
+
+		if ($text !== '' && $text !== $value && $text !== $href) {
+			$tag .= ' text: ' . preg_replace('/[()]/', '\\\\$0', $text);
+		}
+
+		foreach ($attrs as $key => $attr) {
+			if ($key === 'href' || $attr === null || $attr === '' || $attr === false || $attr === []) {
+				continue;
+			}
+			$tag .= ' ' . $key . ': ' . (is_array($attr) ? implode(' ', $attr) : $attr);
+		}
+
+		return $tag . ')';
+	}
+
+	// Writer stores /@/page/<uuid>, but only the scheme form resolves inline:
+	// the (link:) tag gates on Uuid::is(), which does not match the permalink path
+	public static function normalizeHref(string $href): string
+	{
+		return preg_replace(
+			'!^/(?:[a-z]{2}(?:-[a-z]{2})?/)?@/(page|file)/!i',
+			'$1://',
+			$href
+		);
 	}
 
 	private static function linkMarkOf(array $node): ?array
@@ -312,6 +383,11 @@ class MarkdownSerializer
 		}
 
 		$ranges = [];
+		preg_match_all('/' . self::HTML_RAW . '/', $text, $html, PREG_OFFSET_CAPTURE);
+		foreach ($html[0] as [$raw, $start]) {
+			$ranges[] = [$start, $start + strlen($raw)];
+		}
+
 		foreach (static::findKirbyTagRanges($text) as $range) {
 			if ($registered !== null) {
 				$slice = substr($text, $range[0], $range[1] - $range[0]);
@@ -322,7 +398,9 @@ class MarkdownSerializer
 					continue;
 				}
 			}
-			$ranges[] = $range;
+			if (static::overlaps($ranges, $range[0], $range[1]) === false) {
+				$ranges[] = $range;
+			}
 		}
 
 		preg_match_all(
@@ -333,14 +411,7 @@ class MarkdownSerializer
 		);
 		foreach ($matches[0] as [$url, $start]) {
 			$end = $start + strlen(preg_replace('/[.,;:!?\'"]+$/', '', $url));
-			$overlaps = false;
-			foreach ($ranges as [$s, $e]) {
-				if ($start < $e && $end > $s) {
-					$overlaps = true;
-					break;
-				}
-			}
-			if ($overlaps === false) {
+			if (static::overlaps($ranges, $start, $end) === false) {
 				$ranges[] = [$start, $end];
 			}
 		}
@@ -373,6 +444,16 @@ class MarkdownSerializer
 		}
 
 		return $result;
+	}
+
+	private static function overlaps(array $ranges, int $start, int $end): bool
+	{
+		foreach ($ranges as [$s, $e]) {
+			if ($start < $e && $end > $s) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static function findKirbyTagRanges(string $text): array
@@ -835,7 +916,7 @@ class MarkdownSerializer
 		return true;
 	}
 
-	private static function attrsEqual($a, $b): bool
+	private static function attrsEqual(mixed $a, mixed $b): bool
 	{
 		if ($a === $b) {
 			return true;
