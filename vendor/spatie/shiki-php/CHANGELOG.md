@@ -2,6 +2,26 @@
 
 All notable changes to `shiki-php` will be documented in this file.
 
+## 2.3.3 - 2026-02-01
+
+### What's Changed
+
+* Fix: Support large code blocks by passing input via stdin instead of command-line arguments (#36) by @drewrichards
+
+This fixes the `proc_open(): posix_spawn() failed: Argument list too long` error that occurred when highlighting large code blocks.
+
+## 2.3.2 - 2025-02-21
+
+### What's Changed
+
+* Removed PHP ^7.4 from requirements by @timoisik in https://github.com/spatie/shiki-php/pull/30
+
+### New Contributors
+
+* @timoisik made their first contribution in https://github.com/spatie/shiki-php/pull/30
+
+**Full Changelog**: https://github.com/spatie/shiki-php/compare/2.3.1...2.3.2
+
 ## 2.3.1 - 2025-02-18
 
 ### What's Changed

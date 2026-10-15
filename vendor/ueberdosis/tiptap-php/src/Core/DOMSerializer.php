@@ -127,15 +127,22 @@ class DOMSerializer
             $html[] = $this->renderClosingTag($markExtension->renderHTML($mark));
 
             # check if the last closed tag is overlapping and has to be reopened
-            if (count(array_filter($markTagsToClose, function ($markToClose) use ($markExtension, $mark) {
-                return $markExtension == $markToClose[0] && $mark == $markToClose[1];
-            })) == 0) {
+            # find the first matching mark to close
+            $foundIndex = null;
+            foreach ($markTagsToClose as $index => $markToClose) {
+                if ($markExtension == $markToClose[0] && $mark == $markToClose[1]) {
+                    $foundIndex = $index;
+
+                    break;
+                }
+            }
+
+            if ($foundIndex === null) {
                 $markTagsToReopen[] = $markTag;
             } else {
-                # mark tag does not have to be reopened, but deleted from the 'to close' list
-                $markTagsToClose = array_udiff($markTagsToClose, [$markTag], function ($a1, $a2) {
-                    return strcmp($a1[1]->type, $a2[1]->type);
-                });
+                # specific mark tag does not have to be reopened, but deleted from the 'to close' list
+                unset($markTagsToClose[$foundIndex]);
+                $markTagsToClose = array_values($markTagsToClose); // Re-index array
             }
         }
 
