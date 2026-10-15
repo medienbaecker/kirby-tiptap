@@ -33,6 +33,10 @@ class Link extends Mark
             return true;
         }
 
+        if (! is_string($uri)) {
+            return false;
+        }
+
         $sanitised = preg_replace(self::ATTR_WHITESPACE, '', $uri);
 
         $pattern = '/^(?:(?:' . implode('|', array_map('preg_quote', $this->options['allowedProtocols']))
@@ -80,9 +84,19 @@ class Link extends Mark
             $HTMLAttributes['href'] = '';
         }
 
+        $attributes = HTML::mergeAttributes($this->options['HTMLAttributes'], $HTMLAttributes);
+
+        if (isset($mark->attrs)) {
+            foreach ((array) $mark->attrs as $key => $value) {
+                if ($value === null) {
+                    unset($attributes[$key]);
+                }
+            }
+        }
+
         return [
             'a',
-            HTML::mergeAttributes($this->options['HTMLAttributes'], $HTMLAttributes),
+            $attributes,
             0,
         ];
     }
