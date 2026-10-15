@@ -12,6 +12,7 @@ import { buildUploadOptions } from '../../utils/upload';
 import { kirbyTagDisabledCheck } from '../../extensions/insertionGuards';
 
 export default {
+	inheritAttrs: false,
 	components: {
 		ToolbarButton
 	},
@@ -266,7 +267,7 @@ export default {
 			return isTagActive(editor, this.isFileTag);
 		},
 
-		handleUpload(files = null) {
+		async handleUpload(files = null) {
 			if (!this.uploads) {
 				this.$panel.notification.error(this.$t('tiptap.upload.error.disabled'));
 				return;
@@ -277,7 +278,8 @@ export default {
 				cancel: () => restoreSelection(),
 				error: (error) => {
 					restoreSelection();
-					this.$panel.notification.error(`${this.$t('tiptap.upload.error.failed')}: ${error.message ?? ''}`);
+					const failed = this.$t('tiptap.upload.error.failed');
+					this.$panel.notification.error(error.message ? `${failed}: ${error.message}` : failed);
 				},
 				done: (file) => restoreSelection(() => this.insertUploadedFile(file)),
 			});
@@ -288,7 +290,13 @@ export default {
 				// closes the still-open file dialog before insertUploadedFile runs.
 				if (files) {
 					this.$panel.upload.select(files, options);
-					this.$panel.upload.submit();
+					await this.$panel.upload.submit();
+
+					const failed = this.$panel.upload.files.find((file) => !file.completed);
+					if (failed) {
+						this.$panel.upload.reset();
+						options.on.error(new Error(failed.error ?? ''));
+					}
 				} else {
 					this.$panel.upload.pick(options);
 				}
