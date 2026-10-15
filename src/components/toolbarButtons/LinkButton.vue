@@ -12,6 +12,7 @@ import { processKirbyTagApi } from '../../utils/eventHandlers';
 import { kirbyTagDisabledCheck } from '../../extensions/insertionGuards';
 
 export default {
+	inheritAttrs: false,
 	components: {
 		ToolbarButton
 	},

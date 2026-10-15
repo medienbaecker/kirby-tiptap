@@ -10,6 +10,7 @@
 import ToolbarButton from './ToolbarButton.vue'
 
 export default {
+	inheritAttrs: false,
 	components: {
 		ToolbarButton
 	},
