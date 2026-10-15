@@ -1,7 +1,7 @@
 <template>
 	<div :class="['k-tiptap-field-preview', $options.class, $attrs.class]" :style="$attrs.style">
 		{{ column.before }}
-		<k-text :html="html" />
+		<k-text :text="$h(html)" />
 		{{ column.after }}
 	</div>
 </template>

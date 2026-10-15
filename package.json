@@ -1,13 +1,14 @@
 {
 	"name": "kirby-tiptap",
+	"type": "module",
 	"scripts": {
 		"dev": "kirbyup serve src/index.ts",
 		"build": "kirbyup src/index.ts",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"kirby-types": "^1.4.7",
-		"kirbyup": "^4.0.0-alpha.8",
+		"kirby-types": "^2.0.0-beta.2",
+		"kirbyup": "^4.0.0-beta.1",
 		"typescript": "^5.9.0"
 	},
 	"dependencies": {

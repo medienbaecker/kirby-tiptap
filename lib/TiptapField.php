@@ -4,74 +4,38 @@ namespace Medienbaecker\Tiptap;
 
 use Kirby\Blueprint\Blueprint;
 use Kirby\Exception\InvalidArgumentException;
-use Kirby\Form\Field\InputField;
+use Kirby\Form\Field\StringField;
 use Kirby\Form\Mixin;
 use Kirby\Panel\Collector\FilesCollector;
+use Kirby\Reflection\Attributes\Prop;
 
-class TiptapField extends InputField
+class TiptapField extends StringField
 {
-	use Mixin\Maxlength;
-	use Mixin\Minlength;
-	use Mixin\Spellcheck;
+	use Mixin\Counter;
 	use Mixin\Upload;
 
-	protected array|bool|null $buttons;
-	protected mixed $files;
-	protected string|null $format;
-	protected bool|null $inline;
-	protected mixed $links;
-	protected bool|null $pretty;
-	protected string|null $size;
-	protected string $value = '';
+	#[Prop]
+	protected array|bool|null $buttons = null;
 
-	public function __construct(
-		bool|null $autofocus = null,
-		array|bool|null $buttons = null,
-		mixed $default = null,
-		bool|null $disabled = null,
-		mixed $files = null,
-		string|null $format = null,
-		array|string|null $help = null,
-		bool|null $inline = null,
-		array|string|null $label = null,
-		mixed $links = null,
-		int|null $maxlength = null,
-		int|null $minlength = null,
-		string|null $name = null,
-		bool|null $pretty = null,
-		bool|null $required = null,
-		string|null $size = null,
-		bool|null $spellcheck = null,
-		bool|null $translate = null,
-		mixed $uploads = null,
-		array|null $when = null,
-		string|null $width = null
-	) {
-		parent::__construct(
-			autofocus: $autofocus,
-			default: $default,
-			disabled: $disabled,
-			help: $help,
-			label: $label,
-			name: $name,
-			required: $required,
-			translate: $translate,
-			when: $when,
-			width: $width
-		);
+	#[Prop]
+	protected array|string|null $files = null;
 
-		$this->buttons    = $buttons;
-		$this->files      = $files;
-		$this->format     = $format;
-		$this->inline     = $inline;
-		$this->links      = $links;
-		$this->maxlength  = $maxlength;
-		$this->minlength  = $minlength;
-		$this->pretty     = $pretty;
-		$this->size       = $size;
-		$this->spellcheck = $spellcheck;
-		$this->uploads    = $uploads;
-	}
+	#[Prop]
+	protected string|null $format = null;
+
+	#[Prop]
+	protected bool $inline = false;
+
+	#[Prop]
+	protected array|null $links = null;
+
+	#[Prop]
+	protected bool $pretty = false;
+
+	#[Prop]
+	protected string $size = 'auto';
+
+	protected bool|null $spellcheck = true;
 
 	public function api(): array
 	{
@@ -104,14 +68,10 @@ class TiptapField extends InputField
 
 	public function files(): array
 	{
-		$files = $this->files;
+		$files = $this->files ?? [];
 
 		if (is_string($files) === true) {
 			return ['query' => $files];
-		}
-
-		if (is_array($files) === false) {
-			$files = [];
 		}
 
 		if (isset($files['fields']) === true && is_array($files['fields']) === true) {
@@ -160,17 +120,12 @@ class TiptapField extends InputField
 
 	public function inline(): bool
 	{
-		return $this->inline ?? false;
-	}
-
-	public function kirbytags(): array
-	{
-		return Field::kirbytags($this->kirby());
+		return $this->inline;
 	}
 
 	public function links(): array
 	{
-		$links = is_array($this->links) === true ? $this->links : [];
+		$links = $this->links ?? [];
 
 		if (isset($links['fields']) === true && is_array($links['fields']) === true) {
 			$links['fields'] = Blueprint::fieldsProps($links['fields']);
@@ -181,47 +136,29 @@ class TiptapField extends InputField
 
 	public function pretty(): bool
 	{
-		$pretty = $this->pretty ?? false;
-
 		// Markdown storage never pretty-prints; surface the
 		// misconfiguration instead of silently ignoring it
-		if ($pretty === true && $this->format() === 'markdown') {
+		if ($this->pretty === true && $this->format() === 'markdown') {
 			throw new InvalidArgumentException(
 				message: 'The pretty option has no effect with format: markdown'
 			);
 		}
 
-		return $pretty;
+		return $this->pretty;
 	}
 
 	public function props(): array
 	{
 		return [
 			...parent::props(),
-			'buttons'    => $this->buttons(),
-			'files'      => $this->files(),
-			'format'     => $this->format(),
-			'inline'     => $this->inline(),
-			'kirbytags'  => $this->kirbytags(),
-			'links'      => $this->links(),
-			'maxlength'  => $this->maxlength(),
-			'minlength'  => $this->minlength(),
-			'pretty'     => $this->pretty(),
-			'size'       => $this->size(),
-			'spellcheck' => $this->spellcheck(),
-			'uploads'    => $this->uploads(),
-			'uuid'       => $this->uuid()
+			'kirbytags' => Field::kirbytags($this->kirby()),
+			'uuid'      => Field::getUuidConfig()
 		];
 	}
 
 	public function size(): string
 	{
-		return $this->size ?? 'auto';
-	}
-
-	public function spellcheck(): bool
-	{
-		return $this->spellcheck ?? true;
+		return $this->size;
 	}
 
 	public function toStoredValue(): mixed
@@ -229,14 +166,9 @@ class TiptapField extends InputField
 		return Field::store(
 			$this->toFormValue(),
 			$this->format(),
-			$this->inline() === true,
+			$this->inline(),
 			$this->kirby()
 		);
-	}
-
-	public function uuid(): array
-	{
-		return Field::getUuidConfig();
 	}
 
 	protected function validations(): array

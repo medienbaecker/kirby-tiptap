@@ -21,10 +21,10 @@ class Validations
 					$this->minlength &&
 					Validations::measure($value, $this->model()) < $this->minlength
 				) {
-					throw new InvalidArgumentException([
-						'key' => 'validation.minlength',
-						'data' => ['min' => $this->minlength]
-					]);
+					throw new InvalidArgumentException(
+						key: 'validation.minlength',
+						data: ['min' => $this->minlength]
+					);
 				}
 			},
 			'maxlength'  => function ($value) {
@@ -32,10 +32,10 @@ class Validations
 					$this->maxlength &&
 					Validations::measure($value, $this->model()) > $this->maxlength
 				) {
-					throw new InvalidArgumentException([
-						'key' => 'validation.maxlength',
-						'data' => ['max' => $this->maxlength]
-					]);
+					throw new InvalidArgumentException(
+						key: 'validation.maxlength',
+						data: ['max' => $this->maxlength]
+					);
 				}
 			},
 		];

@@ -14,11 +14,9 @@ export default defineConfig({
 			cors: true,
 		},
 		build: {
-			target: ["chrome107", "edge107", "firefox104", "safari16"],
+			target: ["chrome124", "edge124", "firefox125", "safari17.5"],
 			rollupOptions: {
 				output: {
-					// Kirby only serves the concatenated media/plugins/index.js,
-					// so code-split chunks would 404
 					codeSplitting: false,
 				},
 			},
