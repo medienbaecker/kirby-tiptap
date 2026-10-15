@@ -15,13 +15,9 @@
 </template>
 
 <script>
-import { defineAsyncComponent, h, resolveComponent } from 'vue'
 import { props } from './props.js'
 import { buttonRegistry } from '../utils/buttonRegistry.js'
 import ToolbarButton from './toolbarButtons/ToolbarButton.vue'
-
-// Component cache to avoid recreating async components
-const componentCache = new Map()
 
 export default {
 	components: { ToolbarButton },
@@ -40,48 +36,7 @@ export default {
 		this.$nextTick(() => this.initRovingTabindex())
 	},
 
-	updated() {
-		// Buttons load async, so the first roving-tabindex pass can run before any
-		// exist. Re-run once buttons are present but none is the tab stop yet.
-		if (this.getButtons().length && !this.$el.querySelector('button[tabindex="0"]')) {
-			this.initRovingTabindex()
-		}
-	},
-
 	computed: {
-		// Dynamically load button components from registry with caching
-		buttonComponents() {
-			const components = {}
-
-			// Get all buttons from registry
-			for (const [name, config] of buttonRegistry.getAllButtons()) {
-				// Simple buttons render a plain ToolbarButton, no component to load
-				if (!config.component) {
-					continue
-				}
-				// Use cached component or create new one
-				if (!componentCache.has(name)) {
-					componentCache.set(name, defineAsyncComponent({
-						loader: config.component,
-						errorComponent: {
-							name: `${name}ButtonError`,
-							render() {
-								return h(resolveComponent('k-button'), {
-									icon: 'alert',
-									title: `Error loading ${name} button`,
-									disabled: true,
-									class: 'tiptap-button-error'
-								})
-							}
-						}
-					}))
-				}
-				components[name] = componentCache.get(name)
-			}
-
-			return components
-		},
-
 		// Normalize buttons to include metadata
 		normalizedButtons() {
 			return this.buttons.map(button => {
@@ -136,7 +91,7 @@ export default {
 		},
 
 		getComponentType(button) {
-			const component = this.buttonComponents[button.type]
+			const component = buttonRegistry.getButton(button.type)?.component
 			if (!component && button.type !== '|' && !this.warnedButtons.has(button.type)) {
 				this.warnedButtons.add(button.type)
 				console.warn(`[kirby-tiptap] Unknown toolbar button "${button.type}" — not found in registry. Check the blueprint or that its extension is loaded.`)

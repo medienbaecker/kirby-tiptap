@@ -4,15 +4,19 @@ import {
 	kirbyTagDisabledCheck,
 } from "../extensions/insertionGuards";
 import type { Editor } from "@tiptap/core";
+import HeadingsButton from "../components/toolbarButtons/HeadingsButton.vue";
+import LinkButton from "../components/toolbarButtons/LinkButton.vue";
+import FileButton from "../components/toolbarButtons/FileButton.vue";
+import RegistryButtonComponent from "../components/toolbarButtons/RegistryButton.vue";
 
 /**
  * Buttons that only toggle an editor command render a plain ToolbarButton
  * straight from this config (`simple`). Buttons with their own UI
- * (dropdowns, dialogs) load a dedicated component instead.
+ * (dropdowns, dialogs) render a dedicated component instead.
  */
 const coreButtons: Record<string, ButtonRegistryEntry> = {
 	headings: {
-		component: () => import('../components/toolbarButtons/HeadingsButton.vue'),
+		component: HeadingsButton,
 		meta: { icon: 'title', group: 'text' }
 	},
 	bold: {
@@ -68,15 +72,15 @@ const coreButtons: Record<string, ButtonRegistryEntry> = {
 		meta: { icon: 'quote', group: 'blocks' }
 	},
 	link: {
-		component: () => import('../components/toolbarButtons/LinkButton.vue'),
+		component: LinkButton,
 		meta: { icon: 'url', group: 'text' }
 	},
 	file: {
-		component: () => import('../components/toolbarButtons/FileButton.vue'),
+		component: FileButton,
 		meta: { icon: 'image', group: 'blocks' }
 	},
 	image: {
-		component: () => import('../components/toolbarButtons/FileButton.vue'),
+		component: FileButton,
 		meta: { icon: 'image', group: 'blocks' }
 	},
 	bulletList: {
@@ -149,7 +153,7 @@ export const buttonRegistry = {
 				console.info(`[kirby-tiptap] Registry button "${button.name}" overrides core button`);
 			}
 			registryButtons[button.name] = {
-				component: () => import('../components/toolbarButtons/RegistryButton.vue'),
+				component: RegistryButtonComponent,
 				meta: {
 					icon: button.icon || 'puzzle',
 					group: 'registry',

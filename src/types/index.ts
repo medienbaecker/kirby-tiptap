@@ -56,7 +56,7 @@ export interface SimpleButtonConfig {
 }
 
 export interface ButtonRegistryEntry {
-	component?: () => Promise<{ default: Component }>
+	component?: Component
 	simple?: SimpleButtonConfig
 	meta: ButtonMeta
 }
