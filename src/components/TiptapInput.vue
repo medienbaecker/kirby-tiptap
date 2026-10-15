@@ -28,7 +28,8 @@ export default {
 		const { parseContent, emitContent } = useContent(
 			props,
 			emit,
-			lastEmittedJson
+			lastEmittedJson,
+			() => instance.proxy.$panel.content?.version?.('latest')?.[props.name]
 		)
 
 		const { editor, allowedButtons, createEditor } = useEditor(
