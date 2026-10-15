@@ -1,5 +1,6 @@
 import type { Ref } from "vue";
 import type { Editor } from "@tiptap/vue-3";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { processPlainTextParagraphs } from "../utils/contentProcessing";
 import {
 	containsAnchor,
@@ -26,8 +27,30 @@ interface UseContentReturn {
 export function useContent(
 	props: ContentProps,
 	emit: (event: string, value: { json: string }) => void,
-	lastEmittedJson?: Ref<string>
+	lastEmittedJson?: Ref<string>,
+	published?: () => unknown
 ): UseContentReturn {
+	let publishedCache: { source: string; node: ProseMirrorNode } | null = null;
+
+	const publishedIfUnchanged = (editorInstance: Editor, json: string): string => {
+		const source = published?.();
+		if (typeof source !== "string" || source === "" || source === json) {
+			return json;
+		}
+
+		try {
+			if (publishedCache?.source !== source) {
+				const doc = JSON.parse(source);
+				if (doc?.type !== "doc") return json;
+				publishedCache = { source, node: editorInstance.schema.nodeFromJSON(doc) };
+			}
+		} catch {
+			return json;
+		}
+
+		return editorInstance.state.doc.eq(publishedCache.node) ? source : json;
+	};
+
 	/**
 	 * Parse content from various input formats
 	 * Handles JSON strings, plain text with line breaks, and raw HTML
@@ -135,6 +158,8 @@ export function useContent(
 				props.pretty ? 2 : 0
 			);
 		}
+
+		json = publishedIfUnchanged(editorInstance, json);
 
 		emit("input", { json });
 
