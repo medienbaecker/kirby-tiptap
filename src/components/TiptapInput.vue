@@ -23,7 +23,7 @@ export default {
 
 	setup(props, { emit }) {
 		const instance = getCurrentInstance()
-		const lastEmittedJson = ref('')
+		const lastEmittedJson = ref(null)
 		const isEmpty = ref(true)
 
 		const { parseContent, emitContent } = useContent(

@@ -27,7 +27,7 @@ interface UseContentReturn {
 export function useContent(
 	props: ContentProps,
 	emit: (event: string, value: { json: string }) => void,
-	lastEmittedJson?: Ref<string>,
+	lastEmittedJson?: Ref<string | null>,
 	published?: () => unknown
 ): UseContentReturn {
 	let publishedCache: { source: string; node: ProseMirrorNode } | null = null;
