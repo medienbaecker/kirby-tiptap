@@ -63,6 +63,7 @@ export default {
 			if (!editor.value) return
 			if (props.format === 'markdown' && isCurrentContent(newValue)) return
 
+			lastEmittedJson.value = null
 			const newContent = parseContent(newValue)
 			editor.value.commands.setContent(newContent, {
 				emitUpdate: false,
