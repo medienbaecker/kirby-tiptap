@@ -18,6 +18,7 @@ import {
 } from "../extensions/invisibles";
 import { Replacements } from "../extensions/replacements";
 import { InsertionGuards } from "../extensions/insertionGuards";
+import { Blockquote } from "../extensions/blockquote";
 import { compileRegistry } from "../utils/registry";
 import { buttonRegistry } from "../utils/buttonRegistry";
 import { transformLinksToKirbyTags } from "../utils/pasteTransform";
@@ -139,7 +140,7 @@ export function useEditor(
 			strike: has("strike") ? {} : false,
 			code: has("code") ? {} : false,
 			codeBlock: has("codeBlock") ? {} : false,
-			blockquote: has("blockquote") ? {} : false,
+			blockquote: false as const,
 			bulletList: has("bulletList") ? {} : false,
 			orderedList: has("orderedList") ? {} : false,
 			horizontalRule: has("horizontalRule") ? {} : false,
@@ -188,6 +189,13 @@ export function useEditor(
 				Replacements,
 				InsertionGuards.configure({ format: props.format }),
 			];
+
+			if (
+				allowedButtons.value.some((btn) => buttonName(btn) === "blockquote") &&
+				!registryExtensions.some((ext) => ext.name === "blockquote")
+			) {
+				extensions.push(Blockquote);
+			}
 
 			// Markdown fields need the schema nodes even without the button,
 			// so stored JSON task lists load and survive saves

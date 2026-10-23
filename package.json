@@ -12,6 +12,7 @@
 		"typescript": "^5.9.0"
 	},
 	"dependencies": {
+		"@tiptap/extension-blockquote": "^3.27.1",
 		"@tiptap/extension-invisible-characters": "^3.27.1",
 		"@tiptap/extension-list": "^3.27.1",
 		"@tiptap/extension-task-item": "^3.27.1",
