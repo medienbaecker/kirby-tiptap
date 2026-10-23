@@ -72,7 +72,7 @@ const renderDoc = (doc) => {
 };
 
 const escapeHtml = (text) =>
-	text.replace(/[&<>]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[char]);
+	text.replace(/&(?!#?[0-9a-zA-Z]+;)|[<>]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[char]);
 
 // A cell is one truncated line; a parser here would only be a second chance
 // to disagree with the one the site renders with
@@ -86,7 +86,7 @@ const excerpt = (markdown) =>
 			.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
 			.replace(/(\*\*|__|~~|`)(.+?)\1/g, '$2')
 			.replace(/(^|[^\\])[*_]([^*_]+)[*_]/g, '$1$2')
-			.replace(/\\([\\`*_[\]~])/g, '$1')
+			.replace(/\\([\\`*_{}[\]()>#+\-.!|~])/g, '$1')
 			.replace(/\s+/g, ' ')
 			.trim()
 	);

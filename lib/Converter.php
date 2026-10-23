@@ -189,7 +189,7 @@ class Converter
 					$this->cli->dim()->out('  - ' . $label . ': already markdown');
 					break;
 				}
-				$result = $this->docToMarkdown($decoded, $value, $model, $entry['inline']);
+				$result = $this->docToMarkdown($decoded, $value, $model, $entry);
 				if (isset($result['markdown'])) {
 					$updates[$fieldName] = $result['markdown'];
 					$this->toMarkdown++;
@@ -238,7 +238,7 @@ class Converter
 					? $entry['field'] . '.' . $key
 					: $entry['field'] . '[' . $index . '].' . $key;
 				$label = $this->fieldLabel($path, $code);
-				$result = $this->docToMarkdown($decoded, $stored, $model, $options['inline']);
+				$result = $this->docToMarkdown($decoded, $stored, $model, $options);
 				if (isset($result['markdown'])) {
 					$list[$index][$key] = $result['markdown'];
 					$changed = true;
@@ -318,7 +318,7 @@ class Converter
 				continue;
 			}
 			$label = $this->fieldLabel($path . '.' . $key, $code);
-			$result = $this->docToMarkdown($decoded, $stored, $model, $options['inline']);
+			$result = $this->docToMarkdown($decoded, $stored, $model, $options);
 			if (isset($result['markdown'])) {
 				$block['content'][$key] = $result['markdown'];
 				$changed = true;
@@ -367,15 +367,25 @@ class Converter
 	 * The render comparison is a migration report, not a gate: the
 	 * field save handler converts on every write anyway
 	 */
-	private function docToMarkdown(array $doc, string $original, $model, bool $inline): array
+	private function docToMarkdown(array $doc, string $original, $model, array $entry): array
 	{
+		$inline = $entry['inline'];
 		$unsupported = MarkdownSerializer::findUnsupportedNodes($doc);
 		if ($unsupported !== []) {
 			return ['reason' => implode(', ', $unsupported)];
 		}
 
 		try {
-			$markdown = MarkdownSerializer::serialize($doc, $this->kirbytags, $inline);
+			$markdown = MarkdownSerializer::serialize(
+				$doc,
+				$this->kirbytags,
+				$inline,
+				$entry['buttons'],
+				Field::markdownOptions(kirby())
+			);
+			if ($markdown === null) {
+				return ['reason' => 'no markdown reads back as this content'];
+			}
 
 			$before = static::normalizeHtml(HtmlConverter::convert($original, $model, ['inline' => $inline]));
 			$after = static::normalizeHtml(HtmlConverter::convert($markdown, $model, ['inline' => $inline]));
@@ -434,6 +444,7 @@ class Converter
 					'kind' => $this->resolveFormat($field) === 'markdown' ? 'top-markdown' : 'top-json',
 					'field' => $name,
 					'inline' => ($field['inline'] ?? false) === true,
+					'buttons' => Field::buttons($field['buttons'] ?? null),
 				];
 				continue;
 			}
@@ -445,7 +456,10 @@ class Converter
 						($subField['type'] ?? null) === 'tiptap' &&
 						$this->resolveFormat($subField) === 'markdown'
 					) {
-						$subfields[$subName] = ['inline' => ($subField['inline'] ?? false) === true];
+						$subfields[$subName] = [
+							'inline' => ($subField['inline'] ?? false) === true,
+							'buttons' => Field::buttons($subField['buttons'] ?? null),
+						];
 					}
 				}
 				if ($subfields !== []) {
@@ -495,7 +509,10 @@ class Converter
 					($field['type'] ?? null) === 'tiptap' &&
 					$this->resolveFormat($field) === 'markdown'
 				) {
-					$fields[$key] = ['inline' => ($field['inline'] ?? false) === true];
+					$fields[$key] = [
+						'inline' => ($field['inline'] ?? false) === true,
+						'buttons' => Field::buttons($field['buttons'] ?? null),
+					];
 				}
 			}
 			if ($fields !== []) {

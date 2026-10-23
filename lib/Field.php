@@ -20,11 +20,20 @@ class Field
 		'orderedList',
 	];
 
+	public static function buttons(array|bool|null $buttons): array
+	{
+		if ($buttons === false) {
+			return [];
+		}
+
+		return is_array($buttons) ? $buttons : static::DEFAULT_BUTTONS;
+	}
+
 	/**
 	 * Save transform for markdown fields: Tiptap JSON becomes markdown.
 	 * Inexpressible docs stay JSON and converge on a later save
 	 */
-	public static function store(mixed $value, string $format, bool $inline, \Kirby\Cms\App $kirby)
+	public static function store(mixed $value, string $format, bool $inline, array $buttons, \Kirby\Cms\App $kirby)
 	{
 		if ($format !== 'markdown' || is_string($value) === false || trim($value) === '') {
 			return $value;
@@ -39,7 +48,13 @@ class Field
 			return $value;
 		}
 
-		return MarkdownSerializer::serialize($decoded, static::kirbytags($kirby), $inline);
+		return MarkdownSerializer::serialize(
+			$decoded,
+			static::kirbytags($kirby),
+			$inline,
+			$buttons,
+			static::markdownOptions($kirby)
+		) ?? $value;
 	}
 
 	/**
@@ -60,11 +75,19 @@ class Field
 			return $value;
 		}
 
-		return json_encode(MarkdownParser::parse($value, $buttons, [
+		return json_encode(
+			MarkdownParser::parse($value, $buttons, static::markdownOptions($kirby)),
+			JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+		);
+	}
+
+	public static function markdownOptions(\Kirby\Cms\App $kirby): array
+	{
+		return [
 			'breaks' => $kirby->option('markdown.breaks', true),
 			'extra' => $kirby->option('markdown.extra', false),
 			'safe' => $kirby->option('markdown.safe', false),
-		]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		];
 	}
 
 	/**

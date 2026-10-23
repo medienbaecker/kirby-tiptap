@@ -50,7 +50,6 @@ trait ParsedownTreeTrait
 			'extent' => $Inline['extent'],
 			'element' => [
 				'rawHtml' => substr($Excerpt['text'], 0, $Inline['extent']),
-				'_protect' => true,
 			],
 		];
 	}
@@ -60,6 +59,19 @@ trait ParsedownTreeTrait
 		$Inline = parent::inlineEscapeSequence($Excerpt);
 		if ($Inline !== null) {
 			$Inline['element'] = ['text' => $Excerpt['text'][1]];
+		}
+		return $Inline;
+	}
+
+	protected function inlineSpecialCharacter($Excerpt)
+	{
+		$Inline = parent::inlineSpecialCharacter($Excerpt);
+		if ($Inline !== null) {
+			$entity = $Inline['element']['rawHtml'];
+			$Inline['element'] = [
+				'text' => html_entity_decode($entity, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+				'_entity' => $entity,
+			];
 		}
 		return $Inline;
 	}
@@ -82,7 +94,7 @@ trait ParsedownTreeTrait
 		if ($Inline === null) {
 			return null;
 		}
-		if ($this->isDisabled('code') || preg_match('/`|^\s*$/', (string)($Inline['element']['text'] ?? '')) === 1) {
+		if ($this->isDisabled('code') || preg_match('/^\s*$/', (string)($Inline['element']['text'] ?? '')) === 1) {
 			return $this->asSource($Inline, $Excerpt);
 		}
 		return $Inline;

@@ -19,6 +19,12 @@ class MarkdownSerializer
 		'kirbytagRaw' => '',
 	];
 
+	private const HTML_TAGS = [
+		'bold' => 'strong',
+		'italic' => 'em',
+		'strike' => 'del',
+	];
+
 	private const HTML_REOPEN = [
 		'bold' => ['<strong>', '</strong>'],
 		'italic' => ['<em>', '</em>'],
@@ -53,8 +59,7 @@ class MarkdownSerializer
 	private const HTML_RAW =
 		'<!--[\s\S]*?-->' .
 		'|<([a-zA-Z][a-zA-Z0-9-]*)' . self::HTML_ATTRS . '>[\s\S]*?<\/\s*\1\s*>' .
-		'|<\/?[a-zA-Z][a-zA-Z0-9-]*' . self::HTML_ATTRS . '\/?>' .
-		'|&(?:[a-zA-Z][a-zA-Z0-9]{1,31}|#\d{1,7}|#[xX][0-9a-fA-F]{1,6});';
+		'|<\/?[a-zA-Z][a-zA-Z0-9-]*' . self::HTML_ATTRS . '\/?>';
 
 	private const SUPPORTED_NODES = [
 		'doc' => true,
@@ -101,11 +106,15 @@ class MarkdownSerializer
 		'tel' => ['class', 'rel', 'title'],
 	];
 
+	private const ESCAPABLE = '\\`*_{}[]()>#+-.!|~';
+
+	private static bool $escapeAll = false;
+
 	// JavaScript's \s (unicode) for whitespace parity with the Panel
 	private const WS_CHARS = ' \t\n\r\f\x0B\x{00a0}\x{1680}\x{2000}-\x{200a}\x{2028}\x{2029}\x{202f}\x{205f}\x{3000}\x{feff}';
 	private const WS = '[' . self::WS_CHARS . ']';
 
-	public static function serialize(array $doc, ?array $kirbytags = null, bool $inline = false): string
+	public static function serialize(array $doc, ?array $kirbytags, bool $inline, array $buttons, array $options): ?string
 	{
 		if ($inline) {
 			$doc = static::flattenInline($doc);
@@ -114,9 +123,163 @@ class MarkdownSerializer
 		$doc = static::transform($doc);
 		$doc = static::protect($doc, $kirbytags);
 
-		$markdown = static::renderInline($doc['content'] ?? [], $doc, "\n\n");
+		foreach ([false, true] as $escapeAll) {
+			static::$escapeAll = $escapeAll;
+			try {
+				$markdown = static::renderInline($doc['content'] ?? [], $doc, "\n\n");
+			} finally {
+				static::$escapeAll = false;
+			}
 
-		return static::isEmptyOutput($markdown) ? '' : $markdown;
+			$markdown = static::isEmptyOutput($markdown) ? '' : $markdown;
+
+			if (static::readsBackAs($markdown, $doc, $buttons, $options)) {
+				return $markdown;
+			}
+		}
+
+		return null;
+	}
+
+	private static function readsBackAs(string $markdown, array $doc, array $buttons, array $options): bool
+	{
+		$parsed = static::transform(MarkdownParser::parse($markdown, $buttons, $options));
+		$expected = static::readSource($doc['content'] ?? [], $buttons, $options);
+		return static::canonical($parsed['content'] ?? []) === static::canonical($expected);
+	}
+
+	private static function readSource(array $nodes, array $buttons, array $options): array
+	{
+		$formatting = '/<(' . implode('|', array_keys(MarkdownParser::HTML_MARKS)) . ')>/i';
+		$out = [];
+		foreach ($nodes as $node) {
+			if (isset($node['content']) && isset(self::VERBATIM_NODES[$node['type'] ?? '']) === false) {
+				$node['content'] = static::readSource($node['content'], $buttons, $options);
+			}
+
+			if (($node['type'] ?? null) !== 'text' || static::hasMark($node, 'kirbytagRaw') === false || preg_match($formatting, $node['text'] ?? '') !== 1) {
+				$out[] = $node;
+				continue;
+			}
+
+			$read = MarkdownParser::parse($node['text'], $buttons, $options)['content'] ?? [];
+			if (count($read) !== 1 || ($read[0]['type'] ?? null) !== 'paragraph') {
+				$out[] = $node;
+				continue;
+			}
+			foreach ($read[0]['content'] ?? [] as $child) {
+				$child['marks'] = [...($node['marks'] ?? []), ...($child['marks'] ?? [])];
+				$out[] = $child;
+			}
+		}
+		return $out;
+	}
+
+	private static function canonical(array $nodes): array
+	{
+		$out = [];
+		foreach ($nodes as $node) {
+			$type = $node['type'] ?? null;
+
+			if ($type === 'text') {
+				$marks = array_values(array_diff(array_column($node['marks'] ?? [], 'type'), ['kirbytagRaw']));
+				sort($marks);
+				$last = array_key_last($out);
+				if ($last !== null && $out[$last]['type'] === 'text' && $out[$last]['marks'] === $marks) {
+					$out[$last]['text'] .= $node['text'] ?? '';
+				} else {
+					$out[] = ['type' => 'text', 'text' => (string)($node['text'] ?? ''), 'marks' => $marks];
+				}
+				continue;
+			}
+
+			$attrs = array_filter(
+				array_intersect_key($node['attrs'] ?? [], self::SUPPORTED_ATTRS[$type] ?? []),
+				fn ($value) => $value !== null && $value !== ''
+			);
+			if ($type === 'orderedList') {
+				$attrs['start'] = (int)($attrs['start'] ?? 1);
+			}
+
+			$entry = ['type' => $type, 'attrs' => $attrs];
+
+			if (isset(self::VERBATIM_NODES[$type])) {
+				$entry['text'] = rtrim(implode('', array_column($node['content'] ?? [], 'text')) ?: (string)($node['attrs']['raw'] ?? ''));
+				unset($entry['attrs']['raw']);
+			} elseif ($type === 'paragraph' || $type === 'heading') {
+				$entry['content'] = static::canonicalLines(static::canonical($node['content'] ?? []));
+				if ($entry['content'] === []) {
+					continue;
+				}
+			} elseif (isset($node['content'])) {
+				$entry['content'] = static::canonical($node['content']);
+			}
+
+			$out[] = $entry;
+		}
+		return $out;
+	}
+
+	private static function canonicalLines(array $nodes): array
+	{
+		$lines = [[]];
+		foreach ($nodes as $node) {
+			if ($node['type'] === 'hardBreak') {
+				$lines[] = [];
+				continue;
+			}
+			$line = &$lines[array_key_last($lines)];
+			$parts = $node['type'] === 'text'
+				? preg_split('/([ \t]+)/', $node['text'], -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY)
+				: [null];
+			foreach ($parts as $part) {
+				$piece = $part === null ? $node : ['type' => 'text', 'text' => $part, 'marks' => trim($part) === '' ? [] : $node['marks']];
+				$last = array_key_last($line);
+				if ($last !== null && $piece['type'] === 'text' && $line[$last]['type'] === 'text' && $line[$last]['marks'] === $piece['marks']) {
+					$line[$last]['text'] .= $piece['text'];
+				} else {
+					$line[] = $piece;
+				}
+			}
+			unset($line);
+		}
+
+		$out = [];
+		foreach ($lines as $index => $line) {
+			if ($index > 0) {
+				$out[] = ['type' => 'hardBreak', 'attrs' => []];
+			}
+			foreach ($line as $position => $node) {
+				if ($node['type'] === 'text') {
+					if (in_array('code', $node['marks'], true)) {
+						$node['text'] = trim($node['text'], ' ');
+					}
+					$node['text'] = preg_replace('/[ \t]+/', ' ', $node['text']);
+					if ($position === 0) {
+						$node['text'] = ltrim($node['text'], ' ');
+					}
+					if ($position === count($line) - 1) {
+						$node['text'] = rtrim($node['text'], ' ');
+					}
+					if ($node['text'] === '') {
+						continue;
+					}
+				}
+				$out[] = $node;
+			}
+		}
+
+		while ($out !== [] && $out[array_key_last($out)]['type'] === 'hardBreak') {
+			array_pop($out);
+		}
+
+		return $out;
+	}
+
+	public static function linkLabel(array $nodes): string
+	{
+		$label = static::protect(['type' => 'paragraph', 'content' => $nodes], null);
+		return str_replace(['&lt;', '&amp;'], ['<', '&'], static::renderInline($label['content'], $label, ''));
 	}
 
 	public static function findUnsupportedNodes(array $doc): array
@@ -233,6 +396,31 @@ class MarkdownSerializer
 	 */
 	private static function transformInline(array $nodes, bool $inHeading): array
 	{
+		$lines = [[]];
+		foreach ($nodes as $node) {
+			if (($node['type'] ?? null) === 'hardBreak') {
+				$lines[] = [$node];
+				continue;
+			}
+			$lines[array_key_last($lines)][] = $node;
+		}
+
+		$nodes = [];
+		foreach ($lines as $line) {
+			$text = array_filter($line, fn ($node) => ($node['type'] ?? null) !== 'hardBreak');
+			if ($text !== [] && array_filter($text, fn ($node) => static::isWhitespaceOnly($node) === false) === []) {
+				$line = array_diff_key($line, $text);
+			}
+			array_push($nodes, ...array_values($line));
+		}
+
+		foreach ($nodes as $index => $node) {
+			if (($nodes[$index + 1]['type'] ?? null) === 'hardBreak' && ($node['type'] ?? null) === 'text') {
+				$nodes[$index]['text'] = rtrim($node['text'], " \t");
+			}
+		}
+		$nodes = array_values(array_filter($nodes, fn ($node) => ($node['type'] ?? null) !== 'text' || $node['text'] !== ''));
+
 		$result = [];
 		$count = count($nodes);
 
@@ -240,7 +428,7 @@ class MarkdownSerializer
 			$node = $nodes[$i];
 
 			if (($node['type'] ?? null) === 'hardBreak') {
-				if ($inHeading) {
+				if ($inHeading || $result === []) {
 					$result[] = static::rawText('<br>');
 					continue;
 				}
@@ -388,6 +576,38 @@ class MarkdownSerializer
 			}
 		}
 
+		$ranges = static::sourceRanges($text, $registered);
+
+		if ($ranges === []) {
+			return [$node];
+		}
+
+		$result = [];
+		$cursor = 0;
+		foreach ($ranges as [$start, $end]) {
+			if ($start > $cursor) {
+				$gap = $node;
+				$gap['text'] = substr($text, $cursor, $start - $cursor);
+				$result[] = $gap;
+			}
+			$result[] = [
+				'type' => 'text',
+				'text' => substr($text, $start, $end - $start),
+				'marks' => [...($node['marks'] ?? []), ['type' => 'kirbytagRaw']],
+			];
+			$cursor = $end;
+		}
+		if ($cursor < strlen($text)) {
+			$tail = $node;
+			$tail['text'] = substr($text, $cursor);
+			$result[] = $tail;
+		}
+
+		return $result;
+	}
+
+	public static function sourceRanges(string $text, ?array $registered): array
+	{
 		$ranges = [];
 		preg_match_all('/' . self::HTML_RAW . '/i', $text, $html, PREG_OFFSET_CAPTURE);
 		foreach ($html[0] as [$raw, $start]) {
@@ -424,32 +644,7 @@ class MarkdownSerializer
 
 		usort($ranges, fn ($a, $b) => $a[0] <=> $b[0]);
 
-		if ($ranges === []) {
-			return [$node];
-		}
-
-		$result = [];
-		$cursor = 0;
-		foreach ($ranges as [$start, $end]) {
-			if ($start > $cursor) {
-				$gap = $node;
-				$gap['text'] = substr($text, $cursor, $start - $cursor);
-				$result[] = $gap;
-			}
-			$result[] = [
-				'type' => 'text',
-				'text' => substr($text, $start, $end - $start),
-				'marks' => [...($node['marks'] ?? []), ['type' => 'kirbytagRaw']],
-			];
-			$cursor = $end;
-		}
-		if ($cursor < strlen($text)) {
-			$tail = $node;
-			$tail['text'] = substr($text, $cursor);
-			$result[] = $tail;
-		}
-
-		return $result;
+		return $ranges;
 	}
 
 	private static function overlaps(array $ranges, int $start, int $end): bool
@@ -516,14 +711,15 @@ class MarkdownSerializer
 					// &nbsp; keeps runs of empty paragraphs alive across reparses
 					return $previousEmpty ? '&nbsp;' : '';
 				}
-				return static::escapeBlockStart(static::renderInline($content, $node, ''));
+				return static::renderInline($content, $node, '');
 
 			case 'heading':
 				if (isset($node['content']) === false) {
 					return '';
 				}
 				$level = (int)($node['attrs']['level'] ?? 0) ?: 1;
-				return str_repeat('#', $level) . ' ' . static::renderInline($node['content'], $node, '');
+				$content = static::renderInline($node['content'], $node, '');
+				return str_repeat('#', $level) . ' ' . $content . (str_ends_with($content, '#') ? ' #' : '');
 
 			case 'blockquote':
 				$parts = [];
@@ -542,7 +738,10 @@ class MarkdownSerializer
 				if (isset($node['content']) === false) {
 					return "```{$language}\n\n```";
 				}
-				return "```{$language}\n" . static::renderInline($node['content'], $node, '') . "\n```";
+				$code = static::renderInline($node['content'], $node, '');
+				preg_match_all('/^\s*(`+)/m', $code, $runs);
+				$fence = str_repeat('`', max(3, ...array_map(fn ($run) => strlen($run) + 1, $runs[1] ?: [''])));
+				return "{$fence}{$language}\n{$code}\n{$fence}";
 
 			case 'horizontalRule':
 				return '---';
@@ -583,20 +782,35 @@ class MarkdownSerializer
 		}
 
 		$firstLine = strtok($rendered, "\n");
-		return rtrim((string)$firstLine) === '-' ? '* ' . substr($rendered, 2) : $rendered;
+		return rtrim((string)$firstLine) === '-' ? preg_replace('/^-(?= |$)/m', '*', $rendered) : $rendered;
 	}
 
 	/**
-	 * A paragraph opening with a block marker is read back as that block:
-	 * "#tag" becomes a heading, "- x" a list
+	 * A line opening with a block marker is read back as that block:
+	 * "#tag" becomes a heading, "- x" a list, "---" a rule, ":--" a table
+	 * and an indent a code block. Parsedown has no escape for "=" and ":"
 	 */
 	private static function escapeBlockStart(string $markdown): string
 	{
-		if (preg_match('/^(?:#|[-+](?=\s))/', $markdown) === 1) {
+		$markdown = ltrim($markdown, " \t");
+
+		if (preg_match('/^=+[ \t]*(?:\n|$)/', $markdown) === 1) {
+			return '&#61;' . substr($markdown, 1);
+		}
+
+		if (preg_match('/^:[-:| ]*(?:\n|$)/', $markdown) === 1) {
+			return '&#58;' . substr($markdown, 1);
+		}
+
+		if (str_starts_with($markdown, '<')) {
+			return '&lt;' . substr($markdown, 1);
+		}
+
+		if (preg_match('/^(?:#|>|\||-(?=[-\s|:]|$)|\+(?=\s|$))/', $markdown) === 1) {
 			return '\\' . $markdown;
 		}
 
-		if (preg_match('/^(\d+)(?=[.)]\s)/', $markdown, $match) === 1) {
+		if (preg_match('/^(\d+)(?=[.)](?:\s|$))/', $markdown, $match) === 1) {
 			return $match[1] . '\\' . substr($markdown, strlen($match[1]));
 		}
 
@@ -617,19 +831,14 @@ class MarkdownSerializer
 		$first = array_shift($children);
 		$output = $prefix . ($first === null ? '' : static::renderInline([$first], $node, ''));
 
-		// Kirby's parser nests by the marker's own width, so "1. " needs three.
-		// Paragraphs keep two: marked re-reads a continuation paragraph with a
-		// fixed two-space dedent, so a wider one leaves a space that grows on
-		// every save.
+		// Kirby's parser nests by the marker's own width, so "1. " needs three
 		$width = str_repeat(' ', strlen($prefix));
 
 		foreach (array_values($children) as $i => $child) {
-			$isParagraph = ($child['type'] ?? null) === 'paragraph';
-			$pad = $isParagraph ? '  ' : $width;
 			$childContent = static::renderNode($child, $node, $i + 1);
 			$childContent = static::escapeNestedEmptyItem($child, $childContent);
 			$indented = implode("\n", array_map(
-				fn ($line) => $pad . $line,
+				fn ($line) => $width . $line,
 				explode("\n", $childContent)
 			));
 			$output .= (($child['type'] ?? null) === 'paragraph' ? "\n\n" : "\n") . $indented;
@@ -690,6 +899,7 @@ class MarkdownSerializer
 		$reopenHtml = [];
 		$nodes = array_values($nodes);
 		$count = count($nodes);
+		$lineStart = ($parent['type'] ?? null) === 'paragraph';
 
 		foreach ($nodes as $i => $node) {
 			$next = $i < $count - 1 ? $nodes[$i + 1] : null;
@@ -720,6 +930,10 @@ class MarkdownSerializer
 				$openingModes = [];
 
 				$content = static::renderNode($node, $parent, $i);
+				$lineStart = $type === 'hardBreak';
+				if ($content === '' && $before === '' && $type !== 'paragraph') {
+					continue;
+				}
 
 				// Hard breaks terminate marks instead of reopening them
 				$after = '';
@@ -737,6 +951,23 @@ class MarkdownSerializer
 			}
 
 			$text = static::encodeText($node['text'] ?? '', $node, $parent);
+			if ($lineStart) {
+				if (static::hasMark($node, 'kirbytagRaw')) {
+					$lineStart = false;
+				} elseif (static::hasMark($node, 'code')) {
+					$text = ltrim($text, " \t");
+					$lineStart = $text === '';
+				} else {
+					$text = static::escapeBlockStart($text);
+					$lineStart = trim($text) === '';
+				}
+			}
+
+			if (static::$escapeAll) {
+				$result[] = static::htmlMarks($node, $text);
+				continue;
+			}
+
 			$currentMarks = [];
 			foreach ($node['marks'] ?? [] as $mark) {
 				if (isset($mark['type'])) {
@@ -786,6 +1017,13 @@ class MarkdownSerializer
 					&& static::italicTouchesBold($nodes, $i, $result)
 				) {
 					$mode = 'underscore';
+				}
+				if ($mode === 'markdown' && $entry['type'] === 'code') {
+					$code = '';
+					for ($j = $i; isset($nodes[$j]) && static::hasMark($nodes[$j], 'code'); $j++) {
+						$code .= $nodes[$j]['text'] ?? '';
+					}
+					$mode = static::codeDelimiter($code);
 				}
 				$text = static::markOpening($entry['type'], $mode) . $text;
 				$openingModes[$entry['type']] = $mode;
@@ -1006,11 +1244,16 @@ class MarkdownSerializer
 			return $text;
 		}
 
+		if (static::$escapeAll) {
+			return static::escapeAllCharacters($text);
+		}
+
 		// Only an entity-shaped "&" needs escaping; Parsedown passes those
 		// through and escapes every other ampersand itself
 		$text = preg_replace('/&(?=#?+[0-9a-zA-Z]++;)/', '&amp;', $text);
-		$text = str_replace(['<', '>'], ['&lt;', '&gt;'], $text);
-		return preg_replace('/([\\\\`*_\[\]~])/', '\\\\$1', $text);
+		$text = preg_replace('/<(?=[\w\/!]|[^\s>]*(?:@|$))/', '&lt;', $text);
+		$text = preg_replace('/([\\\\`*_\[\]~])/', '\\\\$1', $text);
+		return preg_replace_callback('/\n([^\n]*)/', fn ($line) => "\n" . static::escapeBlockStart($line[1]), $text);
 	}
 
 	private static function hasMark(array $node, string $type): bool
@@ -1048,8 +1291,46 @@ class MarkdownSerializer
 		return preg_match('/^' . self::WS . '/u', (string)($after['text'] ?? '')) !== 1;
 	}
 
+	private static function htmlMarks(array $node, string $text): string
+	{
+		preg_match('/^([ \t]*)(.*?)([ \t]*)$/s', $text, $parts);
+		[, $leading, $text, $trailing] = $parts;
+		if ($text === '') {
+			return $leading . $trailing;
+		}
+		if (static::hasMark($node, 'code')) {
+			$text = '<code>' . static::escapeAllCharacters($text) . '</code>';
+		}
+		foreach (array_reverse(self::HTML_TAGS) as $markType => $tag) {
+			if (static::hasMark($node, $markType)) {
+				$text = '<' . $tag . '>' . $text . '</' . $tag . '>';
+			}
+		}
+		return $leading . $text . $trailing;
+	}
+
+	private static function escapeAllCharacters(string $text): string
+	{
+		return preg_replace_callback(
+			'/[!-\/:-@\[-`{-~\t]/',
+			fn ($match) => str_contains(self::ESCAPABLE, $match[0]) ? '\\' . $match[0] : '&#' . ord($match[0]) . ';',
+			$text
+		);
+	}
+
+	private static function codeDelimiter(string $code): string
+	{
+		$code = trim($code, " \t");
+		preg_match_all('/`+/', $code, $runs);
+		$delimiter = str_repeat('`', max(0, ...array_map('strlen', $runs[0] ?: [''])) + 1);
+		return $delimiter . (str_starts_with($code, '`') || str_ends_with($code, '`') ? ' ' : '');
+	}
+
 	private static function markOpening(string $markType, string $mode): string
 	{
+		if ($markType === 'code' && str_starts_with($mode, '`')) {
+			return $mode;
+		}
 		if ($mode === 'html') {
 			return self::HTML_REOPEN[$markType][0] ?? '';
 		}
@@ -1061,6 +1342,9 @@ class MarkdownSerializer
 
 	private static function markClosing(string $markType, string $mode): string
 	{
+		if ($markType === 'code' && str_starts_with($mode, '`')) {
+			return strrev($mode);
+		}
 		if ($mode === 'html') {
 			return self::HTML_REOPEN[$markType][1] ?? '';
 		}

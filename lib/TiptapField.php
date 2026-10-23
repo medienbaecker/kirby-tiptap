@@ -44,15 +44,7 @@ class TiptapField extends StringField
 
 	public function buttons(): array
 	{
-		if ($this->buttons === false) {
-			return [];
-		}
-
-		if (is_array($this->buttons) === true) {
-			return $this->buttons;
-		}
-
-		return Field::DEFAULT_BUTTONS;
+		return Field::buttons($this->buttons);
 	}
 
 	public function fill(mixed $value): static
@@ -155,6 +147,7 @@ class TiptapField extends StringField
 			$this->toFormValue(),
 			$this->format(),
 			$this->inline(),
+			$this->buttons(),
 			$this->kirby()
 		);
 	}

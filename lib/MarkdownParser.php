@@ -15,6 +15,8 @@ class MarkdownParser
 		's' => 'strike',
 	];
 
+	public const HTML_MARKS = [...self::MARKS, 'code' => 'code'];
+
 	private const HEADINGS = ['h1' => 1, 'h2' => 2, 'h3' => 3, 'h4' => 4, 'h5' => 5, 'h6' => 6];
 
 	private const BLOCK_TYPES = ['paragraph', 'heading', 'blockquote', 'codeBlock',
@@ -175,7 +177,7 @@ class MarkdownParser
 	private function plain(array $nodes): array
 	{
 		if (count($nodes) === 1 && ($nodes[0]['type'] ?? '') === 'hardBreak') {
-			return [$this->textNode((string)($nodes[0]['_raw'] ?? '<br>'), [])];
+			return [$this->textNode((string)($nodes[0]['_raw'] ?? '<br>'), [['type' => 'kirbytagRaw']])];
 		}
 		foreach ($nodes as $index => $node) {
 			unset($nodes[$index]['_raw']);
@@ -183,19 +185,135 @@ class MarkdownParser
 		return array_values($nodes);
 	}
 
+	private function decodeEntities(array $nodes): array
+	{
+		$runs = [];
+		foreach ($nodes as $index => $node) {
+			$last = array_key_last($runs);
+			$previous = $last === null ? null : $nodes[$runs[$last][array_key_last($runs[$last])]];
+			if (
+				($node['type'] ?? null) === 'text'
+				&& ($previous['type'] ?? null) === 'text'
+				&& ($previous['marks'] ?? []) == ($node['marks'] ?? [])
+			) {
+				$runs[$last][] = $index;
+			} else {
+				$runs[] = [$index];
+			}
+		}
+
+		$out = [];
+		foreach ($runs as $run) {
+			$text = '';
+			$spans = [];
+			foreach ($run as $index) {
+				$spans[] = [strlen($text), strlen($text) + strlen($nodes[$index]['text'] ?? ''), $nodes[$index]];
+				$text .= $nodes[$index]['text'] ?? '';
+			}
+
+			$kept = [];
+			$code = in_array(['type' => 'code'], $spans[0][2]['marks'] ?? []);
+			foreach ($code ? [] : MarkdownSerializer::sourceRanges($text, null) as [$rangeStart, $rangeEnd]) {
+				foreach ($spans as [$start, $end, $node]) {
+					if (isset($node['_entity']) && $start < $rangeEnd && $end > $rangeStart) {
+						$kept[] = [min($rangeStart, $start), max($rangeEnd, $end)];
+						break;
+					}
+				}
+			}
+
+			if ($kept !== []) {
+				array_push($out, ...$this->keepAsWritten($spans, $kept));
+				continue;
+			}
+
+			foreach ($spans as [, , $node]) {
+				unset($node['_entity']);
+				$out[] = $node;
+			}
+		}
+
+		return $out;
+	}
+
+	private function keepAsWritten(array $spans, array $kept): array
+	{
+		$inside = fn (int $position): bool => array_filter(
+			$kept,
+			fn ($range) => $position >= $range[0] && $position < $range[1]
+		) !== [];
+
+		$pieces = [];
+		foreach ($spans as [$start, $end, $node]) {
+			if (isset($node['_entity'])) {
+				$pieces[] = [$inside($start), $inside($start) ? $node['_entity'] : $node['text']];
+				continue;
+			}
+			for ($position = $start; $position < $end; $position++) {
+				$pieces[] = [$inside($position), $node['text'][$position - $start]];
+			}
+		}
+
+		$runs = [];
+		foreach ($pieces as [$source, $text]) {
+			$last = array_key_last($runs);
+			if ($last !== null && $runs[$last][0] === $source) {
+				$runs[$last][1] .= $text;
+			} else {
+				$runs[] = [$source, $text];
+			}
+		}
+
+		$marks = $spans[0][2]['marks'] ?? [];
+		return array_map(
+			fn ($run) => $this->textNode($run[1], $run[0] ? [...$marks, ['type' => 'kirbytagRaw']] : $marks),
+			$runs
+		);
+	}
+
+	private function closingTag(array $elements, int $opening): ?int
+	{
+		if (preg_match('/^<(' . implode('|', array_keys(self::HTML_MARKS)) . ')>$/i', (string)$elements[$opening]['rawHtml'], $match) !== 1) {
+			return null;
+		}
+
+		$depth = 0;
+		for ($index = $opening + 1; $index < count($elements); $index++) {
+			$html = strtolower((string)($elements[$index]['rawHtml'] ?? ''));
+			if ($html === '<' . strtolower($match[1]) . '>') {
+				$depth++;
+			} elseif ($html === '</' . strtolower($match[1]) . '>') {
+				if ($depth === 0) {
+					return $index;
+				}
+				$depth--;
+			}
+		}
+
+		return null;
+	}
+
 	private function inline(array $elements, array $marks = []): array
 	{
 		$out = [];
-		foreach ($elements as $element) {
+		$elements = array_values($elements);
+		for ($index = 0; $index < count($elements); $index++) {
+			$element = $elements[$index];
 			if (isset($element['rawHtml'])) {
 				$html = (string)$element['rawHtml'];
 				if (preg_match('/^<br\s*\/?>$/i', $html) === 1) {
 					$out[] = ['type' => 'hardBreak', '_raw' => $html];
 					continue;
 				}
-				$out[] = isset($element['_protect'])
-					? $this->textNode($html, [...$marks, ['type' => 'kirbytagRaw']])
-					: $this->textNode($html, $marks);
+				$closing = $this->closingTag($elements, $index);
+				if ($closing !== null) {
+					$mark = ['type' => self::HTML_MARKS[strtolower(trim($html, '<>'))]];
+					$inner = array_slice($elements, $index + 1, $closing - $index - 1);
+					array_push($out, ...$this->inline($inner, in_array($mark, $marks) ? $marks : [...$marks, $mark]));
+					$index = $closing;
+					continue;
+				}
+				$out[] = $this->textNode($html, [...$marks, ['type' => 'kirbytagRaw']]);
 				continue;
 			}
 
@@ -204,7 +322,8 @@ class MarkdownParser
 			if ($name === null) {
 				if (array_key_exists('text', $element)) {
 					if ($element['text'] !== '') {
-						$out[] = $this->textNode((string)$element['text'], $marks);
+						$out[] = $this->textNode((string)$element['text'], $marks)
+							+ (isset($element['_entity']) ? ['_entity' => $element['_entity']] : []);
 					}
 					continue;
 				}
@@ -234,10 +353,7 @@ class MarkdownParser
 
 			if ($name === 'a') {
 				$href = (string)($element['attributes']['href'] ?? '');
-				$label = '';
-				foreach ($this->inline($this->resolve($element)) as $node) {
-					$label .= $node['text'] ?? '';
-				}
+				$label = MarkdownSerializer::linkLabel($this->merge($this->inline($this->resolve($element))));
 				$attrs = $element['attributes'] ?? [];
 				unset($attrs['href']);
 				$out[] = $this->textNode(
@@ -277,7 +393,7 @@ class MarkdownParser
 			}
 
 			if ($name === 'p' || $name === null) {
-				$content = $this->plain($this->breaks($this->inline($this->resolve($element))));
+				$content = $this->plain($this->breaks($this->decodeEntities($this->inline($this->resolve($element)))));
 				$out[] = ['type' => 'paragraph'] + ($content !== [] ? ['content' => $content] : []);
 				continue;
 			}
@@ -290,7 +406,7 @@ class MarkdownParser
 				$out[] = [
 					'type' => 'heading',
 					'attrs' => ['level' => self::HEADINGS[$name]],
-					'content' => $this->plain($this->breaks($this->inline($this->resolve($element)))),
+					'content' => $this->plain($this->breaks($this->decodeEntities($this->inline($this->resolve($element))))),
 				];
 				continue;
 			}
@@ -338,14 +454,17 @@ class MarkdownParser
 				$items = [];
 				foreach ($element['elements'] ?? [] as $item) {
 					$inner = $this->wrap($this->blocks($this->resolve($item)));
-					$items[] = $inner !== [] ? $inner : [['type' => 'paragraph']];
+					$items[] = [
+						$inner !== [] ? $inner : [['type' => 'paragraph']],
+						(string)($item['handler']['argument'][0] ?? ''),
+					];
 				}
 
 				if ($name === 'ol') {
 					$out[] = [
 						'type' => 'orderedList',
 						'attrs' => ['start' => (int)($element['attributes']['start'] ?? 1)],
-						'content' => array_map(fn ($content) => ['type' => 'listItem', 'content' => $content], $items),
+						'content' => array_map(fn ($item) => ['type' => 'listItem', 'content' => $item[0]], $items),
 					];
 					continue;
 				}
@@ -361,19 +480,19 @@ class MarkdownParser
 				continue;
 			}
 
-			$out[] = ['type' => 'paragraph', 'content' => $this->inline($this->resolve($element))];
+			$out[] = ['type' => 'paragraph', 'content' => $this->decodeEntities($this->inline($this->resolve($element)))];
 		}
 		return $out;
 	}
 
 	// Parsedown has no task list syntax, so "[ ] " reaches us as plain text
-	private function checkbox(array $content): ?bool
+	private function checkbox(array $content, string $source): ?bool
 	{
 		$first = $content[0]['content'][0] ?? null;
 		if (($content[0]['type'] ?? '') !== 'paragraph' || ($first['type'] ?? '') !== 'text') {
 			return null;
 		}
-		if (preg_match('/^\[([ xX])\]\s+/', (string)$first['text'], $match) !== 1) {
+		if (preg_match('/^\[([ xX])\]\s+/', $source, $match) !== 1) {
 			return null;
 		}
 		return $match[1] !== ' ';
@@ -403,8 +522,8 @@ class MarkdownParser
 			$run = [];
 		};
 
-		foreach ($items as $content) {
-			$checked = $this->checkbox($content);
+		foreach ($items as [$content, $source]) {
+			$checked = $this->checkbox($content, $source);
 			$isTask = $checked !== null;
 			if ($runIsTask !== null && $isTask !== $runIsTask) {
 				$flush();
