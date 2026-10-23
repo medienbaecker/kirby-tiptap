@@ -754,6 +754,7 @@ class MarkdownSerializer
 				if (isset($node['content']) === false) {
 					return '';
 				}
+				$node['_alternate'] = static::alternatesMarker($parent, $index);
 				return static::renderInline($node['content'], $node, "\n");
 
 			case 'listItem':
@@ -817,14 +818,30 @@ class MarkdownSerializer
 		return $markdown;
 	}
 
+	private static function alternatesMarker(?array $parent, int $index): bool
+	{
+		$type = $parent['content'][$index]['type'] ?? null;
+		for ($previous = $index - 1; $previous >= 0; $previous--) {
+			$sibling = $parent['content'][$previous];
+			if (($sibling['type'] ?? null) === 'paragraph' && trim(static::renderNode($sibling, $parent, $previous)) === '') {
+				continue;
+			}
+			return ($sibling['type'] ?? null) === $type && static::alternatesMarker($parent, $previous) === false;
+		}
+		return false;
+	}
+
 	private static function renderListItem(array $node, ?array $parent, int $index): string
 	{
 		if (($parent['type'] ?? null) === 'orderedList') {
 			$start = (int)($parent['attrs']['start'] ?? 0) ?: 1;
 			$type = $parent['attrs']['type'] ?? null;
 			$prefix = static::listMarker(is_string($type) ? $type : null, $start + $index);
+			if ($parent['_alternate']) {
+				$prefix = substr($prefix, 0, -2) . ') ';
+			}
 		} else {
-			$prefix = '- ';
+			$prefix = $parent['_alternate'] ? '* ' : '- ';
 		}
 
 		$children = $node['content'] ?? [];
