@@ -1,6 +1,5 @@
 import { ref, shallowRef, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
 import { Editor } from "@tiptap/vue-3";
-import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import InvisibleCharacters from "@tiptap/extension-invisible-characters";
@@ -18,11 +17,10 @@ import {
 } from "../extensions/invisibles";
 import { Replacements } from "../extensions/replacements";
 import { InsertionGuards } from "../extensions/insertionGuards";
-import { Blockquote } from "../extensions/blockquote";
 import { compileRegistry } from "../utils/registry";
 import { buttonRegistry } from "../utils/buttonRegistry";
 import { transformLinksToKirbyTags } from "../utils/pasteTransform";
-import { starterKitOverrides } from "../utils/starterKit";
+import { coreExtensions } from "../utils/coreExtensions";
 import type {
 	TiptapDocument,
 	ButtonItem,
@@ -63,12 +61,8 @@ interface UseEditorReturn {
 }
 
 // Object buttons configure a core button, so they must count as that button
-const buttonName = (btn: ButtonItem): string | null =>
-	typeof btn === "string"
-		? btn
-		: typeof btn === "object" && btn !== null && "type" in btn
-			? btn.type
-			: null;
+const buttonName = (btn: ButtonItem): string =>
+	typeof btn === "string" ? btn : "headings" in btn ? "headings" : btn.type;
 
 /**
  * Composable for Tiptap editor configuration and management
@@ -97,6 +91,7 @@ export function useEditor(
 		}
 
 		const blockElements = [
+			"headings",
 			"codeBlock",
 			"blockquote",
 			"bulletList",
@@ -107,47 +102,11 @@ export function useEditor(
 		];
 
 		return buttons
-			.filter((btn) => {
-				if (typeof btn === "object" && "headings" in btn) {
-					return false;
-				}
-				const name = buttonName(btn);
-				return !name || !blockElements.includes(name);
-			})
+			.filter((btn) => !blockElements.includes(buttonName(btn)))
 			.filter((btn, i, arr) => {
 				// Remove separators at beginning or end
 				return btn !== "|" || (i !== 0 && i !== arr.length - 1);
 			});
-	});
-
-	/**
-	 * Returns StarterKit configuration based on allowed buttons
-	 */
-	const starterKitConfig = computed(() => {
-		const buttons = allowedButtons.value;
-		const has = (name: string) =>
-			buttons.some((btn) => buttonName(btn) === name);
-		const hasHeadings = buttons.some(
-			(btn) => typeof btn === "object" && btn !== null && "headings" in btn
-		);
-
-		// StarterKit expects false to disable, or options object to configure
-		return {
-			dropcursor: { width: 2, color: "var(--color-blue-600)" },
-			heading: hasHeadings ? {} : false,
-			bold: has("bold") ? {} : false,
-			italic: has("italic") ? {} : false,
-			strike: has("strike") ? {} : false,
-			code: has("code") ? {} : false,
-			codeBlock: has("codeBlock") ? {} : false,
-			blockquote: false as const,
-			bulletList: has("bulletList") ? {} : false,
-			orderedList: has("orderedList") ? {} : false,
-			horizontalRule: has("horizontalRule") ? {} : false,
-			link: false as const,
-			underline: false as const,
-			trailingNode: false as const,
-		};
 	});
 
 	/**
@@ -158,7 +117,6 @@ export function useEditor(
 		eventHandlers: EventHandlers
 	) => {
 		try {
-			// Compile third-party extensions first so we can disable overridden StarterKit extensions
 			const { extensions: registryExtensions, buttons: registryButtons } =
 				compileRegistry();
 			if (registryButtons.length > 0) {
@@ -167,14 +125,8 @@ export function useEditor(
 
 			const isMarkdown = props.format === "markdown";
 
-			// Disable StarterKit extensions that registry extensions replace
-			const skConfig = starterKitOverrides(
-				starterKitConfig.value,
-				registryExtensions
-			);
-
 			const extensions: AnyExtension[] = [
-				StarterKit.configure(skConfig),
+				...coreExtensions(allowedButtons.value.map(buttonName), registryExtensions),
 				Highlights.configure({
 					kirbytags: props.kirbytags,
 					endpoints: props.endpoints,
@@ -189,13 +141,6 @@ export function useEditor(
 				Replacements,
 				InsertionGuards.configure({ format: props.format }),
 			];
-
-			if (
-				allowedButtons.value.some((btn) => buttonName(btn) === "blockquote") &&
-				!registryExtensions.some((ext) => ext.name === "blockquote")
-			) {
-				extensions.push(Blockquote);
-			}
 
 			// Markdown fields need the schema nodes even without the button,
 			// so stored JSON task lists load and survive saves

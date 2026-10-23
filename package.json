@@ -13,11 +13,22 @@
 	},
 	"dependencies": {
 		"@tiptap/extension-blockquote": "^3.27.1",
+		"@tiptap/extension-bold": "^3.27.1",
+		"@tiptap/extension-code": "^3.27.1",
+		"@tiptap/extension-code-block": "^3.27.1",
+		"@tiptap/extension-document": "^3.27.1",
+		"@tiptap/extension-hard-break": "^3.27.1",
+		"@tiptap/extension-heading": "^3.27.1",
+		"@tiptap/extension-horizontal-rule": "^3.27.1",
 		"@tiptap/extension-invisible-characters": "^3.27.1",
+		"@tiptap/extension-italic": "^3.27.1",
 		"@tiptap/extension-list": "^3.27.1",
+		"@tiptap/extension-paragraph": "^3.27.1",
+		"@tiptap/extension-strike": "^3.27.1",
 		"@tiptap/extension-task-item": "^3.27.1",
 		"@tiptap/extension-task-list": "^3.27.1",
-		"@tiptap/starter-kit": "^3.27.1",
+		"@tiptap/extension-text": "^3.27.1",
+		"@tiptap/extensions": "^3.27.1",
 		"@tiptap/vue-3": "^3.27.1"
 	}
 }

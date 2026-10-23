@@ -2,7 +2,7 @@
  * Code block with language selection.
  *
  * Replaces the built-in codeBlock with one that has a language attribute.
- * Uses the same "codeBlock" name so StarterKit's version is disabled.
+ * Uses the same "codeBlock" name so the built-in version is disabled.
  *
  * Frontend snippet renders <code class="language-xxx"> for Prism / Highlight.js.
  */

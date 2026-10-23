@@ -9,14 +9,13 @@
 <script>
 import { getHTMLFromFragment, getSchema } from '@tiptap/core';
 import { Node } from '@tiptap/pm/model';
-import StarterKit from '@tiptap/starter-kit';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { findKirbyTagRanges } from '../utils/kirbyTags';
 import { KirbytagRaw, RawMarkdownTable } from '../extensions/rawSource';
 import { compileRegistry } from '../utils/registry';
-import { starterKitOverrides } from '../utils/starterKit';
+import { coreButtons, coreExtensions } from '../utils/coreExtensions';
 
 const decorateKirbyTags = (html) => {
 	const ranges = findKirbyTagRanges(html);
@@ -32,7 +31,7 @@ const decorateKirbyTags = (html) => {
 };
 
 // Collapse an inline doc's paragraphs into one, joined by hardBreaks,
-// so StarterKit renders the preview on a single line.
+// so the preview renders on a single line.
 const flattenInline = (json) => ({
 	type: 'doc',
 	content: [{
@@ -51,10 +50,8 @@ let previewExtensions = null;
 const getPreviewExtensions = () => {
 	if (!previewExtensions) {
 		const { extensions } = compileRegistry();
-		// link: false matches the editor schema, so KirbyTags containing
-		// URLs stay plain text instead of being autolinked
 		previewExtensions = [
-			StarterKit.configure(starterKitOverrides({ link: false }, extensions)),
+			...coreExtensions(coreButtons, extensions),
 			TaskList,
 			TaskItem,
 			KirbytagRaw,
