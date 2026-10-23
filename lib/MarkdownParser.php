@@ -15,7 +15,6 @@ class MarkdownParser
 		's' => 'strike',
 	];
 
-	public const HTML_MARKS = [...self::MARKS, 'code' => 'code'];
 
 	private const HEADINGS = ['h1' => 1, 'h2' => 2, 'h3' => 3, 'h4' => 4, 'h5' => 5, 'h6' => 6];
 
@@ -211,106 +210,31 @@ class MarkdownParser
 				$text .= $nodes[$index]['text'] ?? '';
 			}
 
-			$kept = [];
 			$code = in_array(['type' => 'code'], $spans[0][2]['marks'] ?? []);
-			foreach ($code ? [] : MarkdownSerializer::sourceRanges($text, null) as [$rangeStart, $rangeEnd]) {
-				foreach ($spans as [$start, $end, $node]) {
-					if (isset($node['_entity']) && $start < $rangeEnd && $end > $rangeStart) {
-						$kept[] = [min($rangeStart, $start), max($rangeEnd, $end)];
-						break;
-					}
-				}
-			}
+			$ranges = $code ? [] : MarkdownSerializer::sourceRanges($text, null);
 
-			if ($kept !== []) {
-				array_push($out, ...$this->keepAsWritten($spans, $kept));
-				continue;
-			}
-
-			foreach ($spans as [, , $node]) {
-				unset($node['_entity']);
-				$out[] = $node;
+			foreach ($spans as [$start, $end, $node]) {
+				$inSource = isset($node['_entity']) && array_filter(
+					$ranges,
+					fn ($range) => $start < $range[1] && $end > $range[0]
+				) !== [];
+				$out[] = $inSource
+					? $this->textNode($node['_entity'], [...($node['marks'] ?? []), ['type' => 'kirbytagRaw']])
+					: array_diff_key($node, ['_entity' => true]);
 			}
 		}
 
 		return $out;
 	}
 
-	private function keepAsWritten(array $spans, array $kept): array
-	{
-		$inside = fn (int $position): bool => array_filter(
-			$kept,
-			fn ($range) => $position >= $range[0] && $position < $range[1]
-		) !== [];
-
-		$pieces = [];
-		foreach ($spans as [$start, $end, $node]) {
-			if (isset($node['_entity'])) {
-				$pieces[] = [$inside($start), $inside($start) ? $node['_entity'] : $node['text']];
-				continue;
-			}
-			for ($position = $start; $position < $end; $position++) {
-				$pieces[] = [$inside($position), $node['text'][$position - $start]];
-			}
-		}
-
-		$runs = [];
-		foreach ($pieces as [$source, $text]) {
-			$last = array_key_last($runs);
-			if ($last !== null && $runs[$last][0] === $source) {
-				$runs[$last][1] .= $text;
-			} else {
-				$runs[] = [$source, $text];
-			}
-		}
-
-		$marks = $spans[0][2]['marks'] ?? [];
-		return array_map(
-			fn ($run) => $this->textNode($run[1], $run[0] ? [...$marks, ['type' => 'kirbytagRaw']] : $marks),
-			$runs
-		);
-	}
-
-	private function closingTag(array $elements, int $opening): ?int
-	{
-		if (preg_match('/^<(' . implode('|', array_keys(self::HTML_MARKS)) . ')>$/i', (string)$elements[$opening]['rawHtml'], $match) !== 1) {
-			return null;
-		}
-
-		$depth = 0;
-		for ($index = $opening + 1; $index < count($elements); $index++) {
-			$html = strtolower((string)($elements[$index]['rawHtml'] ?? ''));
-			if ($html === '<' . strtolower($match[1]) . '>') {
-				$depth++;
-			} elseif ($html === '</' . strtolower($match[1]) . '>') {
-				if ($depth === 0) {
-					return $index;
-				}
-				$depth--;
-			}
-		}
-
-		return null;
-	}
-
 	private function inline(array $elements, array $marks = []): array
 	{
 		$out = [];
-		$elements = array_values($elements);
-		for ($index = 0; $index < count($elements); $index++) {
-			$element = $elements[$index];
+		foreach ($elements as $element) {
 			if (isset($element['rawHtml'])) {
 				$html = (string)$element['rawHtml'];
 				if (preg_match('/^<br\s*\/?>$/i', $html) === 1) {
 					$out[] = ['type' => 'hardBreak', '_raw' => $html];
-					continue;
-				}
-				$closing = $this->closingTag($elements, $index);
-				if ($closing !== null) {
-					$mark = ['type' => self::HTML_MARKS[strtolower(trim($html, '<>'))]];
-					$inner = array_slice($elements, $index + 1, $closing - $index - 1);
-					array_push($out, ...$this->inline($inner, in_array($mark, $marks) ? $marks : [...$marks, $mark]));
-					$index = $closing;
 					continue;
 				}
 				$out[] = $this->textNode($html, [...$marks, ['type' => 'kirbytagRaw']]);

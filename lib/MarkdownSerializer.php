@@ -19,12 +19,6 @@ class MarkdownSerializer
 		'kirbytagRaw' => '',
 	];
 
-	private const HTML_TAGS = [
-		'bold' => 'strong',
-		'italic' => 'em',
-		'strike' => 'del',
-	];
-
 	private const HTML_REOPEN = [
 		'bold' => ['<strong>', '</strong>'],
 		'italic' => ['<em>', '</em>'],
@@ -106,10 +100,6 @@ class MarkdownSerializer
 		'tel' => ['class', 'rel', 'title'],
 	];
 
-	private const ESCAPABLE = '\\`*_{}[]()>#+-.!|~';
-
-	private static bool $escapeAll = false;
-
 	// JavaScript's \s (unicode) for whitespace parity with the Panel
 	private const WS_CHARS = ' \t\n\r\f\x0B\x{00a0}\x{1680}\x{2000}-\x{200a}\x{2028}\x{2029}\x{202f}\x{205f}\x{3000}\x{feff}';
 	private const WS = '[' . self::WS_CHARS . ']';
@@ -123,56 +113,16 @@ class MarkdownSerializer
 		$doc = static::transform($doc);
 		$doc = static::protect($doc, $kirbytags);
 
-		foreach ([false, true] as $escapeAll) {
-			static::$escapeAll = $escapeAll;
-			try {
-				$markdown = static::renderInline($doc['content'] ?? [], $doc, "\n\n");
-			} finally {
-				static::$escapeAll = false;
-			}
+		$markdown = static::renderInline($doc['content'] ?? [], $doc, "\n\n");
+		$markdown = static::isEmptyOutput($markdown) ? '' : $markdown;
 
-			$markdown = static::isEmptyOutput($markdown) ? '' : $markdown;
-
-			if (static::readsBackAs($markdown, $doc, $buttons, $options)) {
-				return $markdown;
-			}
-		}
-
-		return null;
+		return static::readsBackAs($markdown, $doc, $buttons, $options) ? $markdown : null;
 	}
 
 	private static function readsBackAs(string $markdown, array $doc, array $buttons, array $options): bool
 	{
 		$parsed = static::transform(MarkdownParser::parse($markdown, $buttons, $options));
-		$expected = static::readSource($doc['content'] ?? [], $buttons, $options);
-		return static::canonical($parsed['content'] ?? []) === static::canonical($expected);
-	}
-
-	private static function readSource(array $nodes, array $buttons, array $options): array
-	{
-		$formatting = '/<(' . implode('|', array_keys(MarkdownParser::HTML_MARKS)) . ')>/i';
-		$out = [];
-		foreach ($nodes as $node) {
-			if (isset($node['content']) && isset(self::VERBATIM_NODES[$node['type'] ?? '']) === false) {
-				$node['content'] = static::readSource($node['content'], $buttons, $options);
-			}
-
-			if (($node['type'] ?? null) !== 'text' || static::hasMark($node, 'kirbytagRaw') === false || preg_match($formatting, $node['text'] ?? '') !== 1) {
-				$out[] = $node;
-				continue;
-			}
-
-			$read = MarkdownParser::parse($node['text'], $buttons, $options)['content'] ?? [];
-			if (count($read) !== 1 || ($read[0]['type'] ?? null) !== 'paragraph') {
-				$out[] = $node;
-				continue;
-			}
-			foreach ($read[0]['content'] ?? [] as $child) {
-				$child['marks'] = [...($node['marks'] ?? []), ...($child['marks'] ?? [])];
-				$out[] = $child;
-			}
-		}
-		return $out;
+		return static::canonical($parsed['content'] ?? []) === static::canonical($doc['content'] ?? []);
 	}
 
 	private static function canonical(array $nodes): array
@@ -420,6 +370,7 @@ class MarkdownSerializer
 			}
 		}
 		$nodes = array_values(array_filter($nodes, fn ($node) => ($node['type'] ?? null) !== 'text' || $node['text'] !== ''));
+
 
 		$result = [];
 		$count = count($nodes);
@@ -980,11 +931,6 @@ class MarkdownSerializer
 				}
 			}
 
-			if (static::$escapeAll) {
-				$result[] = static::htmlMarks($node, $text);
-				continue;
-			}
-
 			$currentMarks = [];
 			foreach ($node['marks'] ?? [] as $mark) {
 				if (isset($mark['type'])) {
@@ -1261,10 +1207,6 @@ class MarkdownSerializer
 			return $text;
 		}
 
-		if (static::$escapeAll) {
-			return static::escapeAllCharacters($text);
-		}
-
 		// Only an entity-shaped "&" needs escaping; Parsedown passes those
 		// through and escapes every other ampersand itself
 		$text = preg_replace('/&(?=#?+[0-9a-zA-Z]++;)/', '&amp;', $text);
@@ -1306,33 +1248,6 @@ class MarkdownSerializer
 		}
 
 		return preg_match('/^' . self::WS . '/u', (string)($after['text'] ?? '')) !== 1;
-	}
-
-	private static function htmlMarks(array $node, string $text): string
-	{
-		preg_match('/^([ \t]*)(.*?)([ \t]*)$/s', $text, $parts);
-		[, $leading, $text, $trailing] = $parts;
-		if ($text === '') {
-			return $leading . $trailing;
-		}
-		if (static::hasMark($node, 'code')) {
-			$text = '<code>' . static::escapeAllCharacters($text) . '</code>';
-		}
-		foreach (array_reverse(self::HTML_TAGS) as $markType => $tag) {
-			if (static::hasMark($node, $markType)) {
-				$text = '<' . $tag . '>' . $text . '</' . $tag . '>';
-			}
-		}
-		return $leading . $text . $trailing;
-	}
-
-	private static function escapeAllCharacters(string $text): string
-	{
-		return preg_replace_callback(
-			'/[!-\/:-@\[-`{-~\t]/',
-			fn ($match) => str_contains(self::ESCAPABLE, $match[0]) ? '\\' . $match[0] : '&#' . ord($match[0]) . ';',
-			$text
-		);
 	}
 
 	private static function codeDelimiter(string $code): string
