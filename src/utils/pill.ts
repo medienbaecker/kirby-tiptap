@@ -83,7 +83,7 @@ export const pill = (text: string, model: string, attributes?: KirbytagsMap) => 
 			? { icon }
 			: item
 				? { image: { cover: true, ...item.image } }
-				: { icon: "alert", theme: "negative" };
+				: { image: { icon: "alert", alt: window.panel.t("tiptap.kirbytag.missing") }, theme: "negative" };
 
 	return {
 		title: full,

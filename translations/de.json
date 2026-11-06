@@ -6,5 +6,6 @@
 	"upload.error.disabled": "Datei-Uploads sind für dieses Feld nicht aktiviert",
 	"upload.error.noData": "Keine Dateien vom Upload erhalten",
 	"upload.error.failed": "Upload fehlgeschlagen",
-	"navigate.error": "Diese Referenz konnte nicht geöffnet werden"
+	"navigate.error": "Diese Referenz konnte nicht geöffnet werden",
+	"kirbytag.missing": "Nicht gefunden"
 }

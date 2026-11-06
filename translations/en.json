@@ -6,5 +6,6 @@
 	"upload.error.disabled": "Uploads are not enabled for this field",
 	"upload.error.noData": "No file data received from upload",
 	"upload.error.failed": "Upload failed",
-	"navigate.error": "Could not open this reference"
+	"navigate.error": "Could not open this reference",
+	"kirbytag.missing": "Not found"
 }
