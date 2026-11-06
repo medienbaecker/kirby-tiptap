@@ -17,9 +17,11 @@ const shortUrl = (text: string): string => {
 	if (!url) return text;
 
 	const host = url.hostname.replace(/^www\./, "");
-	const last = url.pathname.split("/").filter(Boolean).pop();
+	const segments = url.pathname.split("/").filter(Boolean);
+	const last = segments.at(-1);
 	if (!last) return host;
-	return last.length > 16 ? `${host}/…` : `${host}/…/${last}`;
+	if (last.length > 16) return `${host}/…`;
+	return segments.length === 1 ? `${host}/${last}` : `${host}/…/${last}`;
 };
 
 const plain = (html: string): string => new DOMParser().parseFromString(html, "text/html").body.textContent ?? "";
