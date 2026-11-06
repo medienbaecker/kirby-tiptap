@@ -20,8 +20,8 @@ export default {
 		},
 
 		attributes() {
-			const { props, href } = this.tag;
-			return href ? { ...props, element: "a", href, tabindex: -1, draggable: "false" } : props;
+			const { props, link } = this.tag;
+			return link ? { ...props, element: "a", href: link, tabindex: -1, draggable: "false" } : props;
 		}
 	},
 

@@ -24,6 +24,8 @@ const shortUrl = (text: string): string => {
 	return segments.length === 1 ? `${host}/${last}` : `${host}/…/${last}`;
 };
 
+const webUrl = (value: string): string | undefined => (/^https?:\/\//.test(value) ? value : undefined);
+
 const plain = (html: string): string => new DOMParser().parseFromString(html, "text/html").body.textContent ?? "";
 
 const shorten = (text: string): string =>
@@ -56,27 +58,22 @@ export const pill = (text: string, model: string, attributes?: KirbytagsMap) => 
 	const type = text.match(/^\((\w+):/)![1].toLowerCase();
 	const linked = target(text, model, attributes);
 	const item = linked ? modelItem(linked.endpoint, linked.id) : undefined;
+	const panelLink = item ? window.panel.url(item.link).toString() : undefined;
 	let icon: string;
 	let full: string;
-	let url: string | undefined;
+	let link: string | undefined;
 
 	if (isFileTag(text)) {
 		const { uuid: value = "" } = parseKirbyTag(text, attributes);
 		icon = linked ? "loader" : type;
 		full = item?.filename ?? value;
-		url = linked ? undefined : value;
+		link = panelLink ?? webUrl(value);
 	} else {
 		const { href = "", text: label } = parseKirbyTag(text, attributes);
 		icon = linkIcon(type, href);
 		full = label || (item ? plain(item.text) : href);
-		url = { email: `mailto:${href}`, tel: `tel:${href}` }[type] ?? href;
+		link = panelLink ?? { email: `mailto:${href}`, tel: `tel:${href}` }[type] ?? webUrl(href);
 	}
-
-	const href = item
-		? window.panel.app.config.globalProperties.$url(item.link).toString()
-		: /^(https?:|mailto:|tel:)/.test(url ?? "")
-			? url
-			: undefined;
 
 	const props =
 		item === undefined
@@ -87,7 +84,7 @@ export const pill = (text: string, model: string, attributes?: KirbytagsMap) => 
 
 	return {
 		title: full,
-		href,
+		link,
 		props: { element: "span", theme: "light", ...props, text: shorten(shortUrl(full)) },
 	};
 };
