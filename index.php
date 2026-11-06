@@ -15,7 +15,7 @@ use Medienbaecker\Tiptap\Converter;
 Kirby::plugin('medienbaecker/tiptap', [
 	'options' => [
 		'uuid' => null,
-		'format' => 'json',
+		'format' => 'markdown',
 		'kirbytags' => false,
 	],
 	'blueprints' => [

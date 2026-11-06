@@ -430,7 +430,9 @@ class Converter
 			$type = $field['type'] ?? null;
 
 			if ($type === 'textarea' || $type === 'markdown') {
-				$entries[] = ['kind' => 'legacy', 'field' => $name];
+				if ($this->resolveFormat([]) === 'json') {
+					$entries[] = ['kind' => 'legacy', 'field' => $name];
+				}
 				continue;
 			}
 
@@ -524,7 +526,7 @@ class Converter
 
 	private function resolveFormat(array $field): string
 	{
-		$format = $field['format'] ?? option('medienbaecker.tiptap.format', 'json');
+		$format = $field['format'] ?? option('medienbaecker.tiptap.format', 'markdown');
 		return $format === 'markdown' ? 'markdown' : 'json';
 	}
 

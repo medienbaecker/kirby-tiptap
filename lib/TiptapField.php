@@ -98,7 +98,7 @@ class TiptapField extends StringField
 
 	public function format(): string
 	{
-		$format = $this->format ?? option('medienbaecker.tiptap.format', 'json');
+		$format = $this->format ?? option('medienbaecker.tiptap.format', 'markdown');
 
 		if (in_array($format, ['json', 'markdown'], true) === false) {
 			throw new InvalidArgumentException(
