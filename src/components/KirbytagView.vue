@@ -1,6 +1,6 @@
 <template>
 	<NodeViewWrapper as="span" class="tiptap-kirbytag" :title="tag.title" data-drag-handle @mousedown="select" @click="edit">
-		<k-tag v-bind="tag.props" />
+		<k-tag v-bind="attributes" />
 	</NodeViewWrapper>
 </template>
 
@@ -17,6 +17,11 @@ export default {
 		tag() {
 			const { endpoints, kirbytagAttributes } = this.extension.options;
 			return pill(this.node.attrs.text, endpoints.model, kirbytagAttributes);
+		},
+
+		attributes() {
+			const { props, href } = this.tag;
+			return href ? { ...props, element: "a", href, tabindex: -1, draggable: "false" } : props;
 		}
 	},
 
@@ -25,7 +30,9 @@ export default {
 			this.editor.chain().setNodeSelection(this.getPos()).focus(undefined, { scrollIntoView: false }).run();
 		},
 
-		edit() {
+		edit(event) {
+			if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+			event.preventDefault();
 			this.editor.chain().setNodeSelection(this.getPos()).editKirbytag().run();
 		}
 	}

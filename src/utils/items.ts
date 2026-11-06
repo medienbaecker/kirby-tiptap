@@ -2,6 +2,7 @@ import { reactive } from "vue";
 
 export interface ModelItem {
 	filename?: string;
+	link: string;
 	text: string;
 	image: Record<string, unknown>;
 }
