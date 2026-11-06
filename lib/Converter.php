@@ -456,7 +456,12 @@ class Converter
 
 			if ($type === 'writer') {
 				$entries[] = $this->resolveFormat([]) === 'markdown'
-					? ['kind' => 'writer-markdown', 'field' => $name, 'inline' => ($field['inline'] ?? false) === true, 'buttons' => Field::buttons(null)]
+					? [
+						'kind' => 'writer-markdown',
+						'field' => $name,
+						'inline' => ($field['inline'] ?? false) === true,
+						'buttons' => Field::buttons(null),
+					]
 					: ['kind' => 'legacy', 'field' => $name, 'html' => true];
 				continue;
 			}
