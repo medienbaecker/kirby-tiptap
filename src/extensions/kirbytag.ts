@@ -1,5 +1,6 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeSelection, Plugin, PluginKey } from "@tiptap/pm/state";
+import { ReplaceStep } from "@tiptap/pm/transform";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { Mark, Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { VueNodeViewRenderer } from "@tiptap/vue-3";
@@ -66,6 +67,48 @@ export const kirbytagsToText = (doc: TiptapDocument): TiptapDocument => {
 			}, []);
 
 	return { ...doc, content: convert(doc.content ?? []) };
+};
+
+const tidySpacesAfterMove = (transaction: Transaction, state: EditorState): Transaction | null => {
+	const { selection } = state;
+	const [removal] = transaction.steps;
+	if (
+		transaction.getMeta("uiEvent") !== "drop" ||
+		!(selection instanceof NodeSelection) ||
+		selection.node.type.name !== "kirbytag" ||
+		!(removal instanceof ReplaceStep) ||
+		removal.slice.size > 0
+	) {
+		return null;
+	}
+
+	const charAt = (pos: number) => {
+		const $pos = state.doc.resolve(pos);
+		return pos >= $pos.start() && pos < $pos.end() ? state.doc.textBetween(pos, pos + 1, undefined, "\ufffc") : "";
+	};
+
+	const fixes: { pos: number; insert?: string; delete?: number }[] = [];
+
+	const origin = transaction.mapping.slice(1).map(removal.from);
+	const before = charAt(origin - 1);
+	const after = charAt(origin);
+	if (before === " " && (after === " " || after === "" || /[.,;:!?)]/.test(after))) {
+		fixes.push({ pos: origin - 1, delete: 1 });
+	} else if (before === "" && after === " ") {
+		fixes.push({ pos: origin, delete: 1 });
+	}
+
+	if (/[^\s(]/.test(charAt(selection.from - 1))) fixes.push({ pos: selection.from, insert: " " });
+	if (/[\p{L}\p{N}]/u.test(charAt(selection.to))) fixes.push({ pos: selection.to, insert: " " });
+
+	if (!fixes.length) return null;
+
+	const tidy = state.tr;
+	for (const fix of fixes.sort((a, b) => b.pos - a.pos)) {
+		if (fix.delete) tidy.delete(fix.pos, fix.pos + fix.delete);
+		if (fix.insert) tidy.insertText(fix.insert, fix.pos);
+	}
+	return tidy.setSelection(NodeSelection.create(tidy.doc, tidy.mapping.map(selection.from)));
 };
 
 declare module "@tiptap/core" {
@@ -164,8 +207,10 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 					});
 					return {};
 				},
-				appendTransaction: (transactions, _, state) =>
-					transactions.some((transaction) => transaction.docChanged) ? tagsToNodes(state) : null,
+				appendTransaction: (transactions, _, state) => {
+					if (!transactions.some((transaction) => transaction.docChanged)) return null;
+					return tidySpacesAfterMove(transactions[transactions.length - 1], state) ?? tagsToNodes(state);
+				},
 			}),
 		];
 	},
