@@ -60,7 +60,7 @@ With `inline: true` the field has no paragraphs and hides the block buttons. Ren
 
 Image, file, video, link, email and tel tags show as pills, like in Kirby's link field. A pill turns red when its page or file is gone. Other tags, such as `(date: year)` or tags from your own plugins, stay text.
 
-<img src=".github/panel-pill-states.png" width="772" alt="Pills for a shortened long URL, an email address, a missing image in red and a phone number.">
+<img src=".github/panel-pill-states.png" width="772" alt="Pills for a short URL, a shortened long URL, an email address, a missing image in red and a phone number.">
 
 Click a pill to edit it. Drag it to move it. Right-click it to open the link, or the page or file in the Panel. With the keyboard, select it with the arrow keys and press Enter.
 
