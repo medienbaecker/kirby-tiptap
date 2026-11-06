@@ -34,7 +34,7 @@ declare module "@tiptap/core" {
 			 */
 			openFileDialog: () => ReturnType;
 			/**
-			 * Uploads files (or opens the system file picker) and inserts the uploaded file's tag
+			 * Uploads files (or opens the system file picker) and inserts their tags
 			 */
 			uploadFile: (files?: FileList) => ReturnType;
 		};
@@ -144,7 +144,7 @@ const upload = async (editor: Editor, options: FileDialogOptions, files?: FileLi
 
 	const failed = panel.upload.files.find((file) => !file.completed);
 	if (failed) {
-		if (panel.upload.completed.length) await uploadOptions.on.done(panel.upload.completed);
+		if (panel.upload.completed.length) await uploadOptions.on.complete(panel.upload.completed);
 		panel.upload.reset();
 		uploadOptions.on.error?.(new Error(failed.error ?? ""));
 	}

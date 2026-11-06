@@ -20,7 +20,7 @@ interface UploadOptions {
 	on: {
 		cancel: () => void;
 		error?: (error: Error) => void;
-		done: (files: unknown[]) => Promise<void>;
+		complete: (files: unknown[]) => Promise<void>;
 	};
 	attributes?: { template?: string; parent?: string };
 }
@@ -37,7 +37,7 @@ export function buildUploadOptions(
 		on: {
 			cancel: handlers.cancel,
 			error: handlers.error,
-			done: async (files: unknown[]) => {
+			complete: async (files: unknown[]) => {
 				const dragTexts = (files as UploadedFile[]).map((file) => file.dragText).filter((text) => text !== undefined);
 				handlers.done(await Promise.all(dragTexts.map((text) => processKirbyTagApi(text, endpoints, panel))));
 			},
