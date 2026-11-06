@@ -205,11 +205,12 @@ function uploadFiles(
 	const options = buildUploadOptions(endpoints, uploads as UploadsConfig, panel, {
 		cancel: restore,
 		error: () => restore(),
-		done: async (file) => {
-			if (!file?.dragText) return;
-			const content = await processKirbyTagApi(file.dragText, endpoints, panel);
+		done: async (uploaded) => {
+			const dragTexts = uploaded.map((file) => file?.dragText).filter(Boolean) as string[];
+			if (!dragTexts.length) return;
+			const tags = await Promise.all(dragTexts.map((dragText) => processKirbyTagApi(dragText, endpoints, panel)));
 			editor.chain().focus()
-				.insertContentAt(dropPosition, content, { parseOptions: { preserveWhitespace: true } })
+				.insertContentAt(dropPosition, tags.join(" "), { parseOptions: { preserveWhitespace: true } })
 				.unsetAllMarks()
 				.run();
 		},

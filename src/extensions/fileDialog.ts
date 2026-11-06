@@ -114,13 +114,14 @@ const upload = async (editor: Editor, options: FileDialogOptions, files?: FileLi
 
 	const restoreSelection = restoreSelectionAt(editor);
 
-	const insert = async (file: UploadedFile) => {
-		if (!file?.dragText) {
+	const insert = async (uploaded: UploadedFile[]) => {
+		const dragTexts = uploaded.map((file) => file?.dragText).filter(Boolean) as string[];
+		if (!dragTexts.length) {
 			panel.notification.error(panel.t("tiptap.upload.error.noData"));
 			return;
 		}
-		const content = await processKirbyTagApi(file.dragText, endpoints, panel);
-		editor.commands.insertContent(content);
+		const tags = await Promise.all(dragTexts.map((dragText) => processKirbyTagApi(dragText, endpoints, panel)));
+		editor.commands.insertContent(tags.join(" "));
 	};
 
 	const uploadOptions = buildUploadOptions(endpoints, uploads, panel, {
@@ -130,7 +131,7 @@ const upload = async (editor: Editor, options: FileDialogOptions, files?: FileLi
 			const failed = panel.t("tiptap.upload.error.failed");
 			panel.notification.error(error.message ? `${failed}: ${error.message}` : failed);
 		},
-		done: (file) => restoreSelection(() => insert(file)),
+		done: (uploaded) => restoreSelection(() => insert(uploaded)),
 	});
 
 	if (!files) {

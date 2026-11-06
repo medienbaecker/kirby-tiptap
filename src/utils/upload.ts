@@ -9,7 +9,7 @@ export interface UploadedFile {
 }
 
 interface UploadHandlers {
-	done: (file: UploadedFile) => void;
+	done: (files: UploadedFile[]) => void;
 	cancel: () => void;
 	error?: (error: Error) => void;
 }
@@ -33,12 +33,12 @@ export function buildUploadOptions(
 ): UploadOptions {
 	const options: UploadOptions = {
 		url: `${panel.urls.api}/${getFieldApiPath(endpoints)}/upload`,
-		multiple: false,
+		multiple: true,
 		on: {
 			cancel: handlers.cancel,
 			error: handlers.error,
 			done: (files: unknown[]) => {
-				if (files?.length) handlers.done(files[0] as UploadedFile);
+				if (files?.length) handlers.done(files as UploadedFile[]);
 			},
 		},
 	};
