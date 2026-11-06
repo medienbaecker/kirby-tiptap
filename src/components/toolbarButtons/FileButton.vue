@@ -81,7 +81,7 @@ export default {
 		},
 
 		handleUpload() {
-			this.editor.commands.uploadFile();
+			this.editor.commands.uploadFiles();
 		},
 
 		kirbyTagDisabledCheck,

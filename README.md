@@ -245,6 +245,6 @@ Extensions can open the field's dialogs:
 | --- | --- |
 | `openLinkDialog()` | Edits the link tag under the cursor, or inserts one |
 | `openFileDialog()` | Edits the file tag under the cursor, or inserts one |
-| `uploadFile(files?)` | Uploads files, or opens the file picker, and inserts the tags |
+| `uploadFiles(files?)` | Uploads files, or opens the file picker, and inserts the tags |
 
 Markdown can't express custom nodes, so fields with them are stored as JSON. Render those fields with `tiptap()` and add a snippet for the node in `site/snippets/tiptap/`.

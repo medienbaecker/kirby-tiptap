@@ -36,7 +36,7 @@ declare module "@tiptap/core" {
 			/**
 			 * Uploads files (or opens the system file picker) and inserts their tags
 			 */
-			uploadFile: (files?: FileList) => ReturnType;
+			uploadFiles: (files?: FileList) => ReturnType;
 		};
 	}
 }
@@ -233,7 +233,7 @@ export const FileDialog = Extension.create<FileDialogOptions>({
 					if (dispatch) openDialog(editor, this.options);
 					return true;
 				},
-			uploadFile:
+			uploadFiles:
 				(files) =>
 				({ editor, dispatch }) => {
 					if (dispatch) upload(editor, this.options, files);
