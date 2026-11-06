@@ -62,7 +62,7 @@ Image, file, video, link, email and tel tags show as pills, like in Kirby's link
 
 <img src=".github/panel-pill-states.png" width="772" alt="Pills for a shortened long URL, an email address, a missing image in red and a phone number.">
 
-Click a pill to edit it. Drag it to move it. With the keyboard, select it with the arrow keys and press Enter.
+Click a pill to edit it. Drag it to move it. Right-click it to open the link, or the page or file in the Panel. With the keyboard, select it with the arrow keys and press Enter.
 
 <img src=".github/panel-pill-selected.png" width="772" alt="The image pill selected, with an outline.">
 
@@ -100,7 +100,7 @@ files:
 
 ## Drag, drop and paste
 
-Drag pages and files from the Panel into the field. Drop or paste files from your computer to upload them. Pasted HTML links become link tags.
+Drag pages and files from the Panel into the field. Drop or paste files from your computer to upload them, several at once. Pasted HTML links become link tags.
 
 <img src=".github/panel-upload.png" width="704" alt="Kirby's upload dialog after pasting an image.">
 
