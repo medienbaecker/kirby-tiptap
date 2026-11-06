@@ -74,7 +74,7 @@ export default {
 
 		onMounted(() => {
 			const eventHandlers = {
-				handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url']),
+				handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url'], instance.proxy.$panel, props.endpoints, props.uploads),
 				handleDrop: createDropHandler(editor, instance.proxy.$panel, instance.proxy.$helper, props.endpoints, props.uploads)
 			}
 
@@ -341,6 +341,36 @@ export default {
 	&:hover {
 		text-decoration-color: currentColor;
 	}
+}
+
+/* Visual KirbyTags */
+.tiptap-kirbytag {
+	cursor: pointer;
+}
+
+.tiptap-kirbytag .k-tag {
+	--tag-height: 1lh;
+	max-width: 16em;
+	position: static;
+	display: inline-flex;
+	vertical-align: top;
+	font-size: inherit;
+	line-height: inherit;
+}
+
+.tiptap-kirbytag .k-tag-text {
+	padding-inline-end: var(--spacing-1);
+}
+
+.tiptap-kirbytag .k-tag-image + .k-tag-text {
+	padding-inline-start: var(--spacing-1);
+}
+
+.ProseMirror-focused .tiptap-kirbytag.ProseMirror-selectednode .k-tag,
+:root:has(.k-dialog) .tiptap-kirbytag.ProseMirror-selectednode .k-tag {
+	position: relative;
+	z-index: 1;
+	outline: var(--outline);
 }
 
 /* Override Kirby's pointer-events: none on block contents when Cmd/Ctrl is held (multiselect) */

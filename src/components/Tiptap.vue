@@ -28,7 +28,7 @@ export default {
 		counterValue() {
 			// Count reader-visible text so the counter matches the
 			// server-side min/maxlength validation.
-			return getVisibleText(this.text, this.kirbytags);
+			return getVisibleText(this.text, this.kirbytagAttributes);
 		}
 	},
 

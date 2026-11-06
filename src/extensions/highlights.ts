@@ -12,10 +12,9 @@ import {
 	checkKirbyTagReferences,
 } from "../utils/kirbyTags";
 import { HTML_RAW } from "./rawSource";
-import type { Panel } from "kirby-types";
 
 interface HighlightsOptions {
-	kirbytags?: KirbytagsMap;
+	kirbytagAttributes?: KirbytagsMap;
 	endpoints?: EndpointsConfig;
 }
 
@@ -24,25 +23,23 @@ export const Highlights = Extension.create<HighlightsOptions>({
 
 	addOptions() {
 		return {
-			kirbytags: {},
+			kirbytagAttributes: {},
 			endpoints: undefined,
 		};
 	},
 
 	addProseMirrorPlugins() {
-		const { endpoints, kirbytags } = this.options;
+		const { endpoints, kirbytagAttributes } = this.options;
 
 		const registeredTags =
-			kirbytags && Object.keys(kirbytags).length
-				? new Set(Object.keys(kirbytags))
+			kirbytagAttributes && Object.keys(kirbytagAttributes).length
+				? new Set(Object.keys(kirbytagAttributes))
 				: null;
 
 		const resolvedCache = new Map<string, boolean>();
 		const pendingRefs = new Map<string, string>();
 		let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 		let activeView: EditorView | null = null;
-
-		const getPanel = () => (window as unknown as { panel: Panel }).panel;
 
 		const flushPendingRefs = async () => {
 			if (!pendingRefs.size || !endpoints) return;
@@ -57,7 +54,7 @@ export const Highlights = Extension.create<HighlightsOptions>({
 				const results = await checkKirbyTagReferences(
 					batch,
 					endpoints,
-					getPanel()
+					window.panel
 				);
 				for (const [ref, resolvable] of Object.entries(results)) {
 					resolvedCache.set(ref, resolvable);
@@ -119,7 +116,7 @@ export const Highlights = Extension.create<HighlightsOptions>({
 
 							for (const [start, end] of kirbytagPositions) {
 								const tagText = text.substring(start, end);
-								const parsed = parseKirbyTag(tagText, kirbytags);
+								const parsed = parseKirbyTag(tagText, kirbytagAttributes);
 
 								if (
 									registeredTags &&
@@ -142,7 +139,7 @@ export const Highlights = Extension.create<HighlightsOptions>({
 									navTarget &&
 									isResolved(navTarget.reference, navTarget.type)
 								) {
-									const refRange = findReferenceRange(tagText, kirbytags);
+									const refRange = findReferenceRange(tagText, kirbytagAttributes);
 									if (refRange) {
 										decorations.push(
 											Decoration.inline(
@@ -211,7 +208,7 @@ export const Highlights = Extension.create<HighlightsOptions>({
 							if (type === "external") {
 								window.open(reference, "_blank", "noopener,noreferrer");
 							} else {
-								navigateToKirbyTag({ reference, type }, endpoints, getPanel());
+								navigateToKirbyTag({ reference, type }, endpoints, window.panel);
 							}
 
 							return true;

@@ -27,6 +27,9 @@ class TiptapField extends StringField
 	protected bool $inline = false;
 
 	#[Prop]
+	protected bool|null $kirbytags = null;
+
+	#[Prop]
 	protected array|null $links = null;
 
 	#[Prop]
@@ -111,6 +114,11 @@ class TiptapField extends StringField
 		return $this->inline;
 	}
 
+	public function kirbytags(): bool
+	{
+		return $this->kirbytags ?? option('medienbaecker.tiptap.kirbytags', false);
+	}
+
 	public function links(): array
 	{
 		$links = $this->links ?? [];
@@ -131,8 +139,9 @@ class TiptapField extends StringField
 	{
 		return [
 			...parent::props(),
-			'kirbytags' => Field::kirbytags($this->kirby()),
-			'uuid'      => Field::getUuidConfig()
+			'kirbytagAttributes' => Field::kirbytagAttributes($this->kirby()),
+			'kirbytagItems'      => $this->kirbytags() ? null : (Field::modelItems(Field::modelTags($this->toFormValue()), $this->model()) ?: null),
+			'uuid'               => Field::getUuidConfig()
 		];
 	}
 

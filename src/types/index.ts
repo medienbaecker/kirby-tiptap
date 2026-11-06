@@ -1,3 +1,4 @@
+import type { Panel } from "kirby-types";
 import type { Editor } from '@tiptap/vue-3'
 import type { AnyExtension, Editor as CoreEditor } from '@tiptap/core'
 import type { Component } from 'vue'
@@ -18,6 +19,8 @@ export interface FilesConfig {
 // Endpoints configuration
 export interface EndpointsConfig {
 	field: string
+	model?: string
+	section?: string
 	'process-kirbytag'?: string
 }
 
@@ -134,7 +137,7 @@ export interface DialogFieldConfig {
 	type: string
 	label?: string
 	placeholder?: string
-	options?: DialogOption[]
+	options?: DialogOption[] | string[]
 	required?: boolean
 	width?: string
 	[key: string]: unknown
@@ -170,7 +173,13 @@ export interface RegistryExtension {
 	buttons?: () => RegistryButton[]
 }
 
+export interface RegistryField {
+	endpoints?: EndpointsConfig
+	uploads?: UploadsConfig | false
+}
+
 export interface TiptapContext {
+	field?: RegistryField
 	tiptap: {
 		core: {
 			Extension: any
@@ -186,6 +195,8 @@ export interface TiptapContext {
 		state: {
 			Plugin: any
 			PluginKey: any
+			NodeSelection: any
+			TextSelection: any
 		}
 		view: {
 			Decoration: any
@@ -207,6 +218,7 @@ export interface WindowKirbyTiptap {
 declare global {
 	interface Window {
 		kirbyTiptap?: WindowKirbyTiptap
+		panel: Panel
 	}
 }
 

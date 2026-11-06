@@ -32,7 +32,7 @@ class Converter
 			'pageFilter' => $cli->arg('page'),
 			'dryRun' => $cli->arg('dry-run'),
 		];
-		$this->kirbytags = Field::kirbytags(kirby());
+		$this->kirbytags = Field::kirbytagAttributes(kirby());
 	}
 
 	public function run(): void

@@ -8,8 +8,8 @@
 				:icon="getIcon(button)" :title="getTitle(button)" :command="getSimple(button).command"
 				:active-check="getSimple(button).activeCheck" :disabled-check="getSimple(button).disabledCheck" />
 			<component v-else :is="getComponentType(button)" :editor="editor"
-				:levels="getLevels(button)" :links="links" :files="files" :endpoints="endpoints" :uploads="uploads"
-				:kirbytags="kirbytags" :buttonName="getButtonName(button)" :buttonConfig="getButtonConfig(button)" />
+				:levels="getLevels(button)" :uploads="uploads" :buttonName="getButtonName(button)"
+				:buttonConfig="getButtonConfig(button)" />
 		</template>
 	</nav>
 </template>

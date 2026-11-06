@@ -43,11 +43,20 @@ export async function processKirbyTagApi(
  */
 export function createPasteHandler(
 	editorRef: Ref<Editor | null>,
-	allowedTypes: string[] = []
+	allowedTypes: string[] = [],
+	panel: Panel,
+	endpoints: EndpointsConfig | undefined,
+	uploads: UploadsConfig | false | undefined
 ): (view: EditorView, event: ClipboardEvent, slice: Slice) => boolean | void {
 	return (view, event) => {
 		// Don't generate KirbyTags in forbidden contexts
 		if (!canInsertKirbyTag(view.state)) return false;
+
+		const files = event.clipboardData?.files;
+		if (uploads && files?.length && !event.clipboardData?.getData("text/plain")) {
+			uploadFiles(editorRef, view.state.selection.from, files, endpoints, uploads, panel);
+			return true;
+		}
 
 		// HTML content
 		const htmlContent = event.clipboardData?.getData("text/html") || "";
@@ -156,11 +165,11 @@ export function createDropHandler(
 					endpoints || null,
 					panel
 				);
-			} else if (helper?.isUploadEvent && helper.isUploadEvent(event)) {
-				handleFileUpload(
+			} else if (helper?.isUploadEvent && helper.isUploadEvent(event) && event.dataTransfer?.files.length) {
+				uploadFiles(
 					editorRef,
-					coordinates,
-					event,
+					coordinates.pos,
+					event.dataTransfer.files,
 					endpoints,
 					uploads,
 					panel
@@ -174,26 +183,23 @@ export function createDropHandler(
 }
 
 /**
- * Handles file upload from drag & drop
+ * Uploads dropped or pasted files through Kirby's upload dialog and inserts their tags at the position
  */
-function handleFileUpload(
+function uploadFiles(
 	editorRef: Ref<Editor | null>,
-	coordinates: Coordinates,
-	event: DragEvent,
+	position: number,
+	files: FileList,
 	endpoints: EndpointsConfig | undefined,
 	uploads: UploadsConfig | false | undefined,
 	panel: Panel
 ): void {
 	if (!uploads || !endpoints?.field) return;
 
-	const files = event.dataTransfer?.files;
-	if (!files?.length) return;
-
 	const editor = editorRef.value;
 	if (!editor) return;
 
 	const { from, to } = editor.state.selection;
-	const dropPosition = coordinates.pos;
+	const dropPosition = position;
 	const restore = () => editor.commands.setTextSelection({ from, to });
 
 	const options = buildUploadOptions(endpoints, uploads as UploadsConfig, panel, {

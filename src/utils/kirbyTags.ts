@@ -1,3 +1,4 @@
+import type { Editor } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import type {
 	ParsedKirbyTag,
@@ -40,7 +41,7 @@ const fieldBoundarySource = (tagType: string, attrs?: string[]): string => {
 /**
  * Parse a Kirby‐tag string like "(tag: value attr1: value1 attr2: value2)"
  * into an object { type, value, attr1, attr2, ... }
- * Pass the field's kirbytags map (tag name => registered attribute names)
+ * Pass the field's kirbytagAttributes map (tag name => registered attribute names)
  * so attribute values containing colons don't split on unregistered words.
  */
 export const parseKirbyTag = (
@@ -513,6 +514,12 @@ export const checkKirbyTagReferences = async (
 	return response.results;
 };
 
+/**
+ * Checks if text is a media KirbyTag (image, file, or video)
+ */
+export const isFileTag = (text: string | null): boolean =>
+	/^\((image|file|video):/i.test(text ?? "");
+
 const LINK_TAG_PREFIXES = ["(link:", "(email:", "(tel:"] as const;
 
 /**
@@ -520,6 +527,25 @@ const LINK_TAG_PREFIXES = ["(link:", "(email:", "(tel:"] as const;
  */
 export const isLinkTag = (text: string | null): boolean => {
 	if (!text) return false;
-	return LINK_TAG_PREFIXES.some((prefix) => text.startsWith(prefix));
+	const lower = text.toLowerCase();
+	return LINK_TAG_PREFIXES.some((prefix) => lower.startsWith(prefix));
 };
 
+/**
+ * Replaces a tag the dialogs edited (unless nothing changed); in fields with pills the pill stays selected
+ */
+export const replaceTag = (
+	editor: Editor,
+	range: { from: number; to: number },
+	content: string
+): void => {
+	if (editor.state.doc.textBetween(range.from, range.to) !== content) {
+		editor.chain().focus().deleteRange(range).insertContent(content).run();
+	} else {
+		editor.commands.focus();
+	}
+
+	if (editor.state.doc.nodeAt(range.from)?.type.name === "kirbytag") {
+		editor.commands.setNodeSelection(range.from);
+	}
+};

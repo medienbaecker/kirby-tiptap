@@ -12,19 +12,24 @@ import { Node } from '@tiptap/pm/model';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
-import { findKirbyTagRanges } from '../utils/kirbyTags';
+import { h, render, watchEffect } from 'vue';
+import { findKirbyTagRanges, isFileTag, isLinkTag } from '../utils/kirbyTags';
+import { pill } from '../utils/pill';
 import { KirbytagRaw, RawMarkdownTable } from '../extensions/rawSource';
 import { compileRegistry } from '../utils/registry';
 import { coreButtons, coreExtensions } from '../utils/coreExtensions';
 
-const decorateKirbyTags = (html) => {
+const decorateKirbyTags = (html, visual = false) => {
 	const ranges = findKirbyTagRanges(html);
 	if (ranges.length === 0) return html;
 	let out = '';
 	let cursor = 0;
 	for (const [start, end] of ranges) {
+		const tag = html.substring(start, end);
 		out += html.substring(cursor, start);
-		out += `<span class="kirbytag">${html.substring(start, end)}</span>`;
+		out += visual && (isFileTag(tag) || isLinkTag(tag)) && !tag.includes('<')
+			? `<span class="tiptap-kirbytag" data-kirbytag="${tag.replaceAll('"', '&quot;')}"></span>`
+			: `<span class="kirbytag">${tag}</span>`;
 		cursor = end;
 	}
 	return out + html.substring(cursor);
@@ -104,16 +109,54 @@ export default {
 				json = JSON.parse(this.value);
 			} catch {
 				// Markdown (format: markdown) or legacy plain-text value
-				return decorateKirbyTags(excerpt(this.value ?? ''));
+				return decorateKirbyTags(excerpt(this.value ?? ''), this.field.kirbytags === false);
 			}
 			try {
 				const inline = this.field.inline ?? json.inline;
 				const doc = inline === true ? flattenInline(json) : json;
-				return decorateKirbyTags(renderDoc(doc));
+				return decorateKirbyTags(renderDoc(doc), this.field.kirbytags === false);
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.
 				return this.value;
 			}
+		}
+	},
+	watch: {
+		html: {
+			handler: 'mountPills',
+			flush: 'post'
+		}
+	},
+	mounted() {
+		this.mountPills();
+	},
+	unmounted() {
+		this.unmountPills();
+	},
+	methods: {
+		mountPills() {
+			this.unmountPills();
+
+			const component = this.$.appContext.components['k-tag'];
+			const model = this.$panel.view.props.api;
+
+			this.pills = [...this.$el.querySelectorAll('[data-kirbytag]')].map((slot) => ({
+				slot,
+				stop: watchEffect(() => {
+					const { title, props } = pill(slot.dataset.kirbytag, model, this.field.kirbytagAttributes);
+					const vnode = h(component, props);
+					vnode.appContext = this.$.appContext;
+					render(vnode, slot);
+					slot.title = title;
+				})
+			}));
+		},
+		unmountPills() {
+			for (const { slot, stop } of this.pills ?? []) {
+				stop();
+				render(null, slot);
+			}
+			this.pills = [];
 		}
 	}
 };

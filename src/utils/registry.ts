@@ -1,14 +1,14 @@
 import { Extension } from "@tiptap/core";
 import type { AnyExtension } from "@tiptap/core";
 import { tiptapContext } from "./tiptapExports";
-import type { RegistryButton, RegistryShortcut, RegistryExtension } from "../types";
+import type { RegistryButton, RegistryShortcut, RegistryExtension, RegistryField } from "../types";
 
 interface CompileResult {
 	extensions: AnyExtension[];
 	buttons: RegistryButton[];
 }
 
-export function compileRegistry(): CompileResult {
+export function compileRegistry(field?: RegistryField): CompileResult {
 	const registry = window.kirbyTiptap?.registry;
 	if (!registry) {
 		return { extensions: [], buttons: [] };
@@ -19,7 +19,7 @@ export function compileRegistry(): CompileResult {
 	const seenNames = new Set<string>();
 
 	compileShortcuts(registry.shortcuts || [], extensions);
-	compileExtensions(registry.extensions || [], extensions, buttons, seenNames);
+	compileExtensions(registry.extensions || [], extensions, buttons, seenNames, field);
 	collectButtons(registry.buttons || [], buttons);
 
 	return { extensions, buttons };
@@ -74,6 +74,7 @@ function compileExtensions(
 	extensions: AnyExtension[],
 	buttons: RegistryButton[],
 	seenNames: Set<string>,
+	field?: RegistryField,
 ): void {
 	for (const entry of entries) {
 		if (!entry.name) {
@@ -91,7 +92,7 @@ function compileExtensions(
 		seenNames.add(entry.name);
 
 		try {
-			const ext = entry.create(tiptapContext);
+			const ext = entry.create({ ...tiptapContext, field });
 			if (!ext || typeof ext !== 'object') {
 				console.warn(`[kirby-tiptap] Extension "${entry.name}" create() returned invalid value`);
 				continue;

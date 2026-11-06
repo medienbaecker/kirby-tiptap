@@ -21,7 +21,7 @@ A powerful, user-friendly [Tiptap](https://tiptap.dev) field for [Kirby](https:/
 
 ## Features
 
-- 🌏 **Best of both worlds:** Uses (and highlights) [KirbyTags](https://getkirby.com/docs/reference/plugins/extensions/kirbytags) for images/links while providing WYSIWYG formatting
+- 🌏 **Best of both worlds:** Uses [KirbyTags](https://getkirby.com/docs/reference/plugins/extensions/kirbytags) for images/links, shown as pills in the editor, while providing WYSIWYG formatting
 - 📦 **Supports all standard Kirby field features** like `required`, `default`, `placeholder`, `counter`, `disabled`, `help`, `size`, `spellcheck` and `minlength`/`maxlength`
 - 🤓 **Smart text handling** with intuitive soft hyphen `(-)` and non-breaking space `(_)` replacements, and visible special characters
 - 🔧 **Configurable buttons** with customizable heading levels
@@ -94,6 +94,7 @@ fields:
     size: small # small, medium, large, huge or the default auto
     spellcheck: false # disable spellcheck
     pretty: true # pretty-print JSON in content file (incompatible with structure fields)
+    kirbytags: true # show KirbyTags as highlighted text instead of pills (see below)
     links:
       # Set link types in the link dialog
       options:
@@ -134,6 +135,12 @@ fields:
     maxlength: 10
     minlength: 10
 ```
+
+#### Visual KirbyTags
+
+The editor shows image, file, video, link, email and tel tags as pills, like the link field does. The content stays plain KirbyTags, so the frontend renders exactly as before. Click a pill to edit it in the link or file dialog, or select it with the arrow keys and press Enter or Space. Drag it to move it. Other tags, such as `gist` or your own, stay text.
+
+To see and edit the tags as highlighted text instead, set `kirbytags: true` on the field, or for all fields in `site/config/config.php` with `'medienbaecker.tiptap.kirbytags' => true`.
 
 #### Markdown format
 
@@ -393,8 +400,22 @@ The `create()` factory receives these modules:
 | `tiptap.vue3.VueNodeViewRenderer` | `@tiptap/vue-3`     |
 | `pm.state.Plugin`                 | `prosemirror-state` |
 | `pm.state.PluginKey`              | `prosemirror-state` |
+| `pm.state.NodeSelection`          | `prosemirror-state` |
+| `pm.state.TextSelection`          | `prosemirror-state` |
 | `pm.view.Decoration`              | `prosemirror-view`  |
 | `pm.view.DecorationSet`           | `prosemirror-view`  |
+
+The factory also receives `field` with the field's `endpoints` (`field`, `model`, `section`) and its `uploads` setting, so an extension can call the field's API routes, e.g. to upload a file. It is undefined where no field is involved, such as table previews.
+
+#### Commands
+
+The field's dialogs are Tiptap commands, so extensions can open them too:
+
+| Command                              | Description                                                                |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `editor.commands.openLinkDialog()`   | Opens the link dialog: edits the link tag at the selection, or inserts one |
+| `editor.commands.openFileDialog()`   | Opens the file dialog: edits the file tag at the selection, or inserts one |
+| `editor.commands.uploadFile(files?)` | Uploads `files`, or opens the system file picker, and inserts the file tag |
 
 #### Button options
 

@@ -1,6 +1,6 @@
 import { Extension, Node, Mark, mergeAttributes } from "@tiptap/core";
 import { VueNodeViewRenderer } from "@tiptap/vue-3";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Plugin, PluginKey, NodeSelection, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { TiptapContext } from "../types";
 
@@ -10,7 +10,7 @@ export const tiptapContext: TiptapContext = {
 		vue3: { VueNodeViewRenderer },
 	},
 	pm: {
-		state: { Plugin, PluginKey },
+		state: { Plugin, PluginKey, NodeSelection, TextSelection },
 		view: { Decoration, DecorationSet },
 	},
 };

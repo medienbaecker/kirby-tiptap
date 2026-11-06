@@ -2,6 +2,7 @@ import type { Ref } from "vue";
 import type { Editor } from "@tiptap/vue-3";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { processPlainTextParagraphs } from "../utils/contentProcessing";
+import { kirbytagsToText } from "../extensions/kirbytag";
 import {
 	containsAnchor,
 	transformLinksToKirbyTags,
@@ -12,7 +13,7 @@ interface ContentProps {
 	inline?: boolean;
 	pretty?: boolean;
 	format?: "json" | "markdown";
-	kirbytags?: KirbytagsMap;
+	kirbytagAttributes?: KirbytagsMap;
 }
 
 interface UseContentReturn {
@@ -32,7 +33,7 @@ export function useContent(
 ): UseContentReturn {
 	let publishedCache: { source: string; node: ProseMirrorNode } | null = null;
 
-	const publishedIfUnchanged = (editorInstance: Editor, json: string): string => {
+	const publishedIfUnchanged = (editorInstance: Editor, json: string, content: TiptapDocument): string => {
 		const source = published?.();
 		if (typeof source !== "string" || source === "" || source === json) {
 			return json;
@@ -48,7 +49,7 @@ export function useContent(
 			return json;
 		}
 
-		return editorInstance.state.doc.eq(publishedCache.node) ? source : json;
+		return editorInstance.schema.nodeFromJSON(content).eq(publishedCache.node) ? source : json;
 	};
 
 	/**
@@ -133,7 +134,7 @@ export function useContent(
 			return;
 		}
 
-		const content = editorInstance.getJSON() as TiptapDocument;
+		const content = kirbytagsToText(editorInstance.getJSON() as TiptapDocument);
 
 		if (!content || !content.content) {
 			emit("input", { json: "" });
@@ -159,7 +160,7 @@ export function useContent(
 			);
 		}
 
-		json = publishedIfUnchanged(editorInstance, json);
+		json = publishedIfUnchanged(editorInstance, json, content);
 
 		emit("input", { json });
 

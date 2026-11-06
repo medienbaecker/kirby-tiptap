@@ -32,7 +32,7 @@ function containsRawHtml(text: string): boolean {
 function touchesRawHtml($from: ResolvedPos, $to: ResolvedPos = $from): boolean {
 	if ($from.parent !== $to.parent) return false;
 
-	const text = $from.parent.textContent;
+	const text = textOf($from.parent);
 	if (!text.includes("<")) return false;
 
 	const from = posToCharIndex($from.parent, $from.parentOffset);
@@ -46,6 +46,9 @@ function touchesRawHtml($from: ResolvedPos, $to: ResolvedPos = $from): boolean {
 
 	return false;
 }
+
+const textOf = (block: ProseMirrorNode): string =>
+	block.textBetween(0, block.content.size, undefined, () => "");
 
 function charIndexToPos(
 	block: ProseMirrorNode,
@@ -98,7 +101,7 @@ export function canInsertKirbyTag(state: EditorState, pos?: number): boolean {
 	// No nested KirbyTags
 	const parent = $pos.parent;
 	const offset = $pos.parentOffset;
-	const ranges = findKirbyTagRanges(parent.textContent);
+	const ranges = findKirbyTagRanges(textOf(parent));
 	if (
 		ranges.some(([s, e]) => {
 			const from = charIndexToPos(parent, 0, s);
@@ -206,7 +209,7 @@ export const InsertionGuards = Extension.create<InsertionGuardsOptions>({
 					newState.doc.descendants((node, pos) => {
 						if (!node.isTextblock) return;
 
-						const ranges = findKirbyTagRanges(node.textContent);
+						const ranges = findKirbyTagRanges(textOf(node));
 
 						for (const [start, end] of ranges) {
 							const from = charIndexToPos(node, pos + 1, start);

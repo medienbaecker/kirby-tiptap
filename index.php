@@ -16,6 +16,7 @@ Kirby::plugin('medienbaecker/tiptap', [
 	'options' => [
 		'uuid' => null,
 		'format' => 'json',
+		'kirbytags' => false,
 	],
 	'blueprints' => [
 		'blocks/tiptap' => __DIR__ . '/blueprints/blocks/tiptap.yml',

@@ -17,6 +17,10 @@ import {
 } from "../extensions/invisibles";
 import { Replacements } from "../extensions/replacements";
 import { InsertionGuards } from "../extensions/insertionGuards";
+import { FileDialog } from "../extensions/fileDialog";
+import { LinkDialog } from "../extensions/linkDialog";
+import { Kirbytag } from "../extensions/kirbytag";
+import type { ModelItem } from "../utils/items";
 import { compileRegistry } from "../utils/registry";
 import { buttonRegistry } from "../utils/buttonRegistry";
 import { transformLinksToKirbyTags } from "../utils/pasteTransform";
@@ -26,15 +30,23 @@ import type {
 	ButtonItem,
 	EndpointsConfig,
 	KirbytagsMap,
+	UploadsConfig,
+	FilesConfig,
+	LinksConfig,
 } from "../types";
 
 interface EditorProps {
 	buttons: ButtonItem[];
 	inline?: boolean;
 	format?: "json" | "markdown";
-	kirbytags?: KirbytagsMap;
+	kirbytagAttributes?: KirbytagsMap;
 	spellcheck?: boolean;
 	endpoints?: EndpointsConfig;
+	uploads?: UploadsConfig | false;
+	files?: FilesConfig;
+	links?: LinksConfig;
+	kirbytags?: boolean;
+	kirbytagItems?: Record<string, ModelItem>;
 }
 
 interface EventHandlers {
@@ -118,7 +130,10 @@ export function useEditor(
 	) => {
 		try {
 			const { extensions: registryExtensions, buttons: registryButtons } =
-				compileRegistry();
+				compileRegistry({
+					endpoints: props.endpoints,
+					uploads: props.uploads,
+				});
 			if (registryButtons.length > 0) {
 				buttonRegistry.registerRegistryButtons(registryButtons);
 			}
@@ -128,7 +143,7 @@ export function useEditor(
 			const extensions: AnyExtension[] = [
 				...coreExtensions(allowedButtons.value.map(buttonName), registryExtensions),
 				Highlights.configure({
-					kirbytags: props.kirbytags,
+					kirbytagAttributes: props.kirbytagAttributes,
 					endpoints: props.endpoints,
 				}),
 				InvisibleCharacters.configure({
@@ -140,6 +155,17 @@ export function useEditor(
 				}),
 				Replacements,
 				InsertionGuards.configure({ format: props.format }),
+				LinkDialog.configure({
+					endpoints: props.endpoints,
+					links: props.links,
+					kirbytagAttributes: props.kirbytagAttributes,
+				}),
+				FileDialog.configure({
+					endpoints: props.endpoints,
+					files: props.files,
+					kirbytagAttributes: props.kirbytagAttributes,
+					uploads: props.uploads,
+				}),
 			];
 
 			// Markdown fields need the schema nodes even without the button,
@@ -152,6 +178,16 @@ export function useEditor(
 					TaskList,
 					TaskItem.configure({
 						nested: true,
+					})
+				);
+			}
+
+			if (props.kirbytags === false) {
+				extensions.push(
+					Kirbytag.configure({
+						endpoints: props.endpoints,
+						kirbytagAttributes: props.kirbytagAttributes,
+						items: props.kirbytagItems,
 					})
 				);
 			}

@@ -2,6 +2,14 @@
 
 namespace Medienbaecker\Tiptap;
 
+use Kirby\Cms\File;
+use Kirby\Cms\ModelWithContent;
+use Kirby\Panel\Ui\Item\FileItem;
+use Kirby\Panel\Ui\Item\PageItem;
+use Kirby\Text\KirbyTag;
+use Kirby\Toolkit\V;
+use Kirby\Uuid\Uuid;
+
 /**
  * Tiptap field configuration and props
  */
@@ -50,11 +58,56 @@ class Field
 
 		return MarkdownSerializer::serialize(
 			$decoded,
-			static::kirbytags($kirby),
+			static::kirbytagAttributes($kirby),
 			$inline,
 			$buttons,
 			static::markdownOptions($kirby)
 		) ?? $value;
+	}
+
+	/**
+	 * Panel items (as Kirby's items requests return them) for the files and pages
+	 * that media tags and page/file links point to, keyed by tag
+	 */
+	public static function modelItems(array $tags, ModelWithContent $parent): array
+	{
+		$kirby = $parent->kirby();
+		$items = [];
+
+		foreach ($tags as $text) {
+			$tag   = KirbyTag::parse($text, ['parent' => $parent]);
+			$model = match (true) {
+				Uuid::is($tag->value, 'page') => $kirby->page($tag->value),
+				Uuid::is($tag->value, 'file') => $kirby->file($tag->value),
+				$tag->type === 'link', V::url($tag->value) => null,
+				default => $tag->file($tag->value),
+			};
+
+			if ($model?->isListable() === true) {
+				$item = $model instanceof File ? new FileItem($model) : new PageItem($model);
+				$items[$text] = $item->props();
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Media tags and page/file links in a Tiptap JSON value
+	 */
+	public static function modelTags(mixed $value): array
+	{
+		$doc  = (is_string($value) ? json_decode($value, true) : null) ?? [];
+		$tags = [];
+
+		array_walk_recursive($doc, function ($text, $key) use (&$tags) {
+			if ($key === 'text' && is_string($text)) {
+				preg_match_all('/\((?:image|file|video):(?:[^()]|\([^()]*\))*\)|\(link:\s*(?:page|file):\/\/(?:[^()]|\([^()]*\))*\)/i', $text, $matches);
+				array_push($tags, ...$matches[0]);
+			}
+		});
+
+		return array_values(array_unique($tags));
 	}
 
 	/**
@@ -120,7 +173,7 @@ class Field
 	 * Map of tag name => registered attribute names, so the Panel and
 	 * the CLI converter split attributes exactly like KirbyTag::parse()
 	 */
-	public static function kirbytags(\Kirby\Cms\App $kirby): array
+	public static function kirbytagAttributes(\Kirby\Cms\App $kirby): array
 	{
 		$tags = [];
 		foreach ($kirby->extensions('tags') as $name => $tag) {

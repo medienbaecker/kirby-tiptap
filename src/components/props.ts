@@ -8,6 +8,7 @@ import type {
 	UuidConfig,
 	KirbytagsMap,
 } from "../types";
+import type { ModelItem } from "../utils/items";
 
 export const props = {
 	name: String,
@@ -24,8 +25,10 @@ export const props = {
 	size: String,
 	buttons: Array as PropType<ButtonItem[]>,
 	inline: Boolean,
+	kirbytags: Boolean,
 	format: String as PropType<'json' | 'markdown'>,
-	kirbytags: Object as PropType<KirbytagsMap>,
+	kirbytagAttributes: Object as PropType<KirbytagsMap>,
+	kirbytagItems: Object as PropType<Record<string, ModelItem>>,
 	links: Object as PropType<LinksConfig>,
 	files: Object as PropType<FilesConfig>,
 	endpoints: Object as PropType<EndpointsConfig>,
