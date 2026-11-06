@@ -182,6 +182,24 @@ class Converter
 				}
 				break;
 
+			case 'writer-markdown':
+				$json = $this->textToJson($value, $fieldName, true);
+				if ($json === null) {
+					break;
+				}
+				$label = $this->fieldLabel($fieldName, $code);
+				$result = $this->docToMarkdown(json_decode($json, true), $value, $model, $entry);
+				if (isset($result['markdown'])) {
+					$updates[$fieldName] = $result['markdown'];
+					$this->toMarkdown++;
+					$this->reportConversion($label, $result);
+				} else {
+					$updates[$fieldName] = $json;
+					$this->toJson++;
+					$this->cli->yellow()->out('  ✓ ' . $label . ': converted to JSON (' . $result['reason'] . ')');
+				}
+				break;
+
 			case 'top-markdown':
 				$label = $this->fieldLabel($fieldName, $code);
 				$decoded = json_decode($value, true);
@@ -437,7 +455,9 @@ class Converter
 			}
 
 			if ($type === 'writer') {
-				$entries[] = ['kind' => 'legacy', 'field' => $name, 'html' => true];
+				$entries[] = $this->resolveFormat([]) === 'markdown'
+					? ['kind' => 'writer-markdown', 'field' => $name, 'inline' => ($field['inline'] ?? false) === true, 'buttons' => Field::buttons(null)]
+					: ['kind' => 'legacy', 'field' => $name, 'html' => true];
 				continue;
 			}
 
