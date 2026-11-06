@@ -87,15 +87,15 @@ const tidySpacesAfterMove = (transaction: Transaction, state: EditorState): Tran
 		return pos >= $pos.start() && pos < $pos.end() ? state.doc.textBetween(pos, pos + 1, undefined, "\ufffc") : "";
 	};
 
-	const fixes: { pos: number; insert?: string; delete?: number }[] = [];
+	const fixes: { pos: number; insert?: string; remove?: boolean }[] = [];
 
 	const origin = transaction.mapping.slice(1).map(removal.from);
 	const before = charAt(origin - 1);
 	const after = charAt(origin);
 	if (before === " " && (after === " " || after === "" || /[.,;:!?)]/.test(after))) {
-		fixes.push({ pos: origin - 1, delete: 1 });
+		fixes.push({ pos: origin - 1, remove: true });
 	} else if (before === "" && after === " ") {
-		fixes.push({ pos: origin, delete: 1 });
+		fixes.push({ pos: origin, remove: true });
 	}
 
 	if (/[^\s(]/.test(charAt(selection.from - 1))) fixes.push({ pos: selection.from, insert: " " });
@@ -105,7 +105,7 @@ const tidySpacesAfterMove = (transaction: Transaction, state: EditorState): Tran
 
 	const tidy = state.tr;
 	for (const fix of fixes.sort((a, b) => b.pos - a.pos)) {
-		if (fix.delete) tidy.delete(fix.pos, fix.pos + fix.delete);
+		if (fix.remove) tidy.delete(fix.pos, fix.pos + 1);
 		if (fix.insert) tidy.insertText(fix.insert, fix.pos);
 	}
 	return tidy.setSelection(NodeSelection.create(tidy.doc, tidy.mapping.map(selection.from)));
