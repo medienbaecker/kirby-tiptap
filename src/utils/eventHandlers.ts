@@ -7,35 +7,12 @@ import { validateInput, generateLinkTag } from "./inputValidation";
 import { processPlainTextParagraphs } from "./contentProcessing";
 import { canInsertKirbyTag } from "../extensions/insertionGuards";
 import { buildUploadOptions } from "./upload";
-import { getFieldApiPath } from "./kirbyTags";
+import { processKirbyTagApi } from "./kirbyTags";
 import type { UploadsConfig, EndpointsConfig } from "../types";
 
 interface Coordinates {
 	pos: number;
 	inside?: number;
-}
-
-/**
- * Helper to process KirbyTag through API for UUID conversion
- */
-export async function processKirbyTagApi(
-	kirbyTag: string,
-	endpoints: EndpointsConfig | null | undefined,
-	panel: Panel | null
-): Promise<string> {
-	if (!endpoints || !panel || !kirbyTag) {
-		return kirbyTag;
-	}
-
-	try {
-		// getFieldApiPath strips the /api prefix, which panel.api.post() re-adds.
-		const apiUrl = `${getFieldApiPath(endpoints)}/process-kirbytag`;
-
-		const response = await panel.api.post<{ text?: string }>(apiUrl, { kirbyTag });
-		return response.text || kirbyTag;
-	} catch {
-		return kirbyTag;
-	}
 }
 
 /**
@@ -205,10 +182,8 @@ function uploadFiles(
 	const options = buildUploadOptions(endpoints, uploads as UploadsConfig, panel, {
 		cancel: restore,
 		error: () => restore(),
-		done: async (uploaded) => {
-			const dragTexts = uploaded.map((file) => file?.dragText).filter(Boolean) as string[];
-			if (!dragTexts.length) return;
-			const tags = await Promise.all(dragTexts.map((dragText) => processKirbyTagApi(dragText, endpoints, panel)));
+		done: (tags) => {
+			if (!tags.length) return;
 			editor.chain().focus()
 				.insertContentAt(dropPosition, tags.join(" "), { parseOptions: { preserveWhitespace: true } })
 				.unsetAllMarks()

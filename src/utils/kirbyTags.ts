@@ -549,3 +549,26 @@ export const replaceTag = (
 		editor.commands.setNodeSelection(range.from);
 	}
 };
+
+/**
+ * Helper to process KirbyTag through API for UUID conversion
+ */
+export async function processKirbyTagApi(
+	kirbyTag: string,
+	endpoints: EndpointsConfig | null | undefined,
+	panel: Panel | null
+): Promise<string> {
+	if (!endpoints || !panel || !kirbyTag) {
+		return kirbyTag;
+	}
+
+	try {
+		// getFieldApiPath strips the /api prefix, which panel.api.post() re-adds.
+		const apiUrl = `${getFieldApiPath(endpoints)}/process-kirbytag`;
+
+		const response = await panel.api.post<{ text?: string }>(apiUrl, { kirbyTag });
+		return response.text || kirbyTag;
+	} catch {
+		return kirbyTag;
+	}
+}

@@ -1,10 +1,9 @@
 import { Extension } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
-import { parseKirbyTag, isLinkTag, getTagEditingContext, replaceTag } from "../utils/kirbyTags";
+import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag } from "../utils/kirbyTags";
 import type { TagEditingContext } from "../utils/kirbyTags";
 import { validateInput, generateLinkTag } from "../utils/inputValidation";
 import { buildDialogFields, processFieldValues } from "../utils/dialogFields";
-import { processKirbyTagApi } from "../utils/eventHandlers";
 import type { DialogFieldConfig, EndpointsConfig, KirbytagsMap, LinksConfig } from "../types";
 
 interface LinkDialogOptions {

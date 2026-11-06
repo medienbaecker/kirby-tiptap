@@ -7,12 +7,11 @@ import {
 	getFieldApiPath,
 	getTagEditingContext,
 	isFileTag,
+	processKirbyTagApi,
 	replaceTag,
 } from "../utils/kirbyTags";
 import { buildDialogFields, processFieldValues } from "../utils/dialogFields";
-import { processKirbyTagApi } from "../utils/eventHandlers";
 import { buildUploadOptions } from "../utils/upload";
-import type { UploadedFile } from "../utils/upload";
 import type { EndpointsConfig, FilesConfig, KirbytagsMap, ParsedKirbyTag, DialogFieldConfig, UploadsConfig } from "../types";
 
 interface FileDialogOptions {
@@ -114,13 +113,11 @@ const upload = async (editor: Editor, options: FileDialogOptions, files?: FileLi
 
 	const restoreSelection = restoreSelectionAt(editor);
 
-	const insert = async (uploaded: UploadedFile[]) => {
-		const dragTexts = uploaded.map((file) => file?.dragText).filter(Boolean) as string[];
-		if (!dragTexts.length) {
+	const insert = (tags: string[]) => {
+		if (!tags.length) {
 			panel.notification.error(panel.t("tiptap.upload.error.noData"));
 			return;
 		}
-		const tags = await Promise.all(dragTexts.map((dragText) => processKirbyTagApi(dragText, endpoints, panel)));
 		editor.commands.insertContent(tags.join(" "));
 	};
 
@@ -131,7 +128,7 @@ const upload = async (editor: Editor, options: FileDialogOptions, files?: FileLi
 			const failed = panel.t("tiptap.upload.error.failed");
 			panel.notification.error(error.message ? `${failed}: ${error.message}` : failed);
 		},
-		done: (uploaded) => restoreSelection(() => insert(uploaded)),
+		done: (tags) => restoreSelection(() => insert(tags)),
 	});
 
 	if (!files) {
@@ -147,6 +144,7 @@ const upload = async (editor: Editor, options: FileDialogOptions, files?: FileLi
 
 	const failed = panel.upload.files.find((file) => !file.completed);
 	if (failed) {
+		if (panel.upload.completed.length) await uploadOptions.on.done(panel.upload.completed);
 		panel.upload.reset();
 		uploadOptions.on.error?.(new Error(failed.error ?? ""));
 	}

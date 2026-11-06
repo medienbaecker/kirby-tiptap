@@ -1,6 +1,6 @@
 import type { Panel } from "kirby-types";
 import type { UploadsConfig, EndpointsConfig } from "../types";
-import { getFieldApiPath } from "./kirbyTags";
+import { getFieldApiPath, processKirbyTagApi } from "./kirbyTags";
 
 export interface UploadedFile {
 	dragText?: string;
@@ -9,7 +9,7 @@ export interface UploadedFile {
 }
 
 interface UploadHandlers {
-	done: (files: UploadedFile[]) => void;
+	done: (tags: string[]) => void;
 	cancel: () => void;
 	error?: (error: Error) => void;
 }
@@ -20,7 +20,7 @@ interface UploadOptions {
 	on: {
 		cancel: () => void;
 		error?: (error: Error) => void;
-		done: (files: unknown[]) => void;
+		done: (files: unknown[]) => Promise<void>;
 	};
 	attributes?: { template?: string; parent?: string };
 }
@@ -37,8 +37,9 @@ export function buildUploadOptions(
 		on: {
 			cancel: handlers.cancel,
 			error: handlers.error,
-			done: (files: unknown[]) => {
-				if (files?.length) handlers.done(files as UploadedFile[]);
+			done: async (files: unknown[]) => {
+				const dragTexts = (files as UploadedFile[]).map((file) => file.dragText).filter((text) => text !== undefined);
+				handlers.done(await Promise.all(dragTexts.map((text) => processKirbyTagApi(text, endpoints, panel))));
 			},
 		},
 	};
