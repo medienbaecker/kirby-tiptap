@@ -171,5 +171,9 @@ export default {
 		color: light-dark(var(--color-yellow-900), inherit);
 		background: light-dark(var(--color-yellow-200), var(--color-yellow-800));
 	}
+
+	.tiptap-kirbytag img {
+		border-radius: 0;
+	}
 }
 </style>
