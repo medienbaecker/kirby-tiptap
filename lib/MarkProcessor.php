@@ -29,10 +29,10 @@ class MarkProcessor
 		$result = [];
 		$openMarks = [];
 		$nodesStack = [&$result];
+		$inline = $this->isInlineContent($content);
 
 		foreach ($content as $child) {
-			// Block nodes close all inline marks
-			if ($this->isBlockNode($child)) {
+			if ($inline === false) {
 				$this->closeMarksToDepth(0, $openMarks, $nodesStack);
 				$result[] = $this->processNode($child);
 				continue;
@@ -58,14 +58,18 @@ class MarkProcessor
 	}
 
 	/**
-	 * Check if node is a block element (not inline text/hardBreak/kirbyTag).
+	 * Check if the content belongs inside a textblock, where every node is
+	 * inline, custom ones too: it has text, a hard break or marks.
 	 */
-	private function isBlockNode(array $node): bool
+	private function isInlineContent(array $content): bool
 	{
-		return match ($node['type'] ?? '') {
-			'text', 'hardBreak', 'kirbyTag' => false,
-			default => true,
-		};
+		foreach ($content as $node) {
+			if (in_array($node['type'] ?? '', ['text', 'hardBreak', 'kirbyTag'], true) || isset($node['marks'])) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
