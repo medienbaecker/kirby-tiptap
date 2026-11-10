@@ -6,8 +6,6 @@ import type {
 	ResolvedKirbyTag,
 	EndpointsConfig,
 	KirbytagsMap,
-	TiptapDocument,
-	TiptapNode,
 } from "../types";
 import type { Panel } from "kirby-types";
 

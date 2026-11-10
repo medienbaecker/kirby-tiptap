@@ -1,4 +1,4 @@
-import { ref, shallowRef, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
+import { shallowRef, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
 import { Editor } from "@tiptap/vue-3";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";

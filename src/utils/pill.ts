@@ -1,6 +1,6 @@
 import { isFileTag, parseKirbyTag } from "./kirbyTags";
 import { fileId, modelItem } from "./items";
-import type { ItemEndpoint, ModelItem } from "./items";
+import type { ItemEndpoint } from "./items";
 import type { KirbytagsMap } from "../types";
 
 const linkIcon = (type: string, href: string): string => {
