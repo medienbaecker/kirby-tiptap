@@ -1,30 +1,18 @@
 import { ref, shallowRef, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
 import { Editor } from "@tiptap/vue-3";
-import TaskList from "@tiptap/extension-task-list";
-import TaskItem from "@tiptap/extension-task-item";
-import InvisibleCharacters from "@tiptap/extension-invisible-characters";
-import {
-	KirbytagRaw,
-	RawMarkdownTable,
-} from "../extensions/rawSource";
 import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
-import { Highlights } from "../extensions/highlights";
 import {
 	SoftHyphenCharacter,
 	NonBreakingSpaceCharacter,
 } from "../extensions/invisibles";
-import { Replacements } from "../extensions/replacements";
-import { InsertionGuards } from "../extensions/insertionGuards";
-import { FileDialog } from "../extensions/fileDialog";
-import { LinkDialog } from "../extensions/linkDialog";
-import { Kirbytag } from "../extensions/kirbytag";
 import type { ModelItem } from "../utils/items";
-import { compileRegistry } from "../utils/registry";
+import { compileRegistry, withRegistry } from "../utils/registry";
 import { buttonRegistry } from "../utils/buttonRegistry";
 import { transformLinksToKirbyTags } from "../utils/pasteTransform";
 import { coreExtensions } from "../utils/coreExtensions";
+import { tiptapContext } from "../utils/tiptapExports";
 import type {
 	TiptapDocument,
 	ButtonItem,
@@ -34,6 +22,20 @@ import type {
 	FilesConfig,
 	LinksConfig,
 } from "../types";
+
+const {
+	fileDialog,
+	highlights,
+	insertionGuards,
+	invisibleCharacters,
+	kirbytag,
+	kirbytagRaw,
+	linkDialog,
+	rawSource,
+	replacements,
+	taskItem,
+	taskList,
+} = tiptapContext.extensions;
 
 interface EditorProps {
 	buttons: ButtonItem[];
@@ -47,6 +49,7 @@ interface EditorProps {
 	links?: LinksConfig;
 	kirbytags?: boolean;
 	kirbytagItems?: Record<string, ModelItem>;
+	extensions?: Record<string, Record<string, unknown>>;
 }
 
 interface EventHandlers {
@@ -140,27 +143,27 @@ export function useEditor(
 
 			const isMarkdown = props.format === "markdown";
 
-			const extensions: AnyExtension[] = [
-				...coreExtensions(allowedButtons.value.map(buttonName), registryExtensions),
-				Highlights.configure({
+			const builtIns: AnyExtension[] = [
+				...coreExtensions(allowedButtons.value.map(buttonName)),
+				highlights.configure({
 					kirbytagAttributes: props.kirbytagAttributes,
 					endpoints: props.endpoints,
 				}),
-				InvisibleCharacters.configure({
+				invisibleCharacters.configure({
 					injectCSS: false,
 					builders: [
 						new SoftHyphenCharacter(),
 						new NonBreakingSpaceCharacter(),
 					],
 				}),
-				Replacements,
-				InsertionGuards.configure({ format: props.format }),
-				LinkDialog.configure({
+				replacements,
+				insertionGuards.configure({ format: props.format }),
+				linkDialog.configure({
 					endpoints: props.endpoints,
 					links: props.links,
 					kirbytagAttributes: props.kirbytagAttributes,
 				}),
-				FileDialog.configure({
+				fileDialog.configure({
 					endpoints: props.endpoints,
 					files: props.files,
 					kirbytagAttributes: props.kirbytagAttributes,
@@ -174,17 +177,17 @@ export function useEditor(
 				allowedButtons.value.some((btn) => buttonName(btn) === "taskList") ||
 				props.format === "markdown"
 			) {
-				extensions.push(
-					TaskList,
-					TaskItem.configure({
+				builtIns.push(
+					taskList,
+					taskItem.configure({
 						nested: true,
 					})
 				);
 			}
 
 			if (props.kirbytags === false) {
-				extensions.push(
-					Kirbytag.configure({
+				builtIns.push(
+					kirbytag.configure({
 						endpoints: props.endpoints,
 						kirbytagAttributes: props.kirbytagAttributes,
 						items: props.kirbytagItems,
@@ -192,19 +195,14 @@ export function useEditor(
 				);
 			}
 
-			// Append registry extensions
-			if (registryExtensions.length > 0) {
-				extensions.push(...registryExtensions);
-			}
-
 			if (isMarkdown) {
-				extensions.push(KirbytagRaw, RawMarkdownTable);
+				builtIns.push(kirbytagRaw, rawSource);
 			}
 
 			const newEditor = new Editor({
 				content: initialContent,
 				...(isMarkdown ? { contentType: "markdown" as const } : {}),
-				extensions,
+				extensions: withRegistry(builtIns, registryExtensions, props.extensions),
 				editorProps: {
 					handlePaste: eventHandlers.handlePaste,
 					handleDrop: eventHandlers.handleDrop,

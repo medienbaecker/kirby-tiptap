@@ -1,59 +1,56 @@
 import type { AnyExtension } from "@tiptap/core";
-import { Bold } from "@tiptap/extension-bold";
-import { Code } from "@tiptap/extension-code";
-import { CodeBlock } from "@tiptap/extension-code-block";
-import { Document } from "@tiptap/extension-document";
-import { HardBreak } from "@tiptap/extension-hard-break";
-import { Heading } from "@tiptap/extension-heading";
-import { HorizontalRule } from "@tiptap/extension-horizontal-rule";
-import { Italic } from "@tiptap/extension-italic";
-import {
-	BulletList,
-	ListItem,
-	ListKeymap,
-	OrderedList,
-} from "@tiptap/extension-list";
-import { Paragraph } from "@tiptap/extension-paragraph";
-import { Strike } from "@tiptap/extension-strike";
-import { Text } from "@tiptap/extension-text";
-import { Dropcursor, Gapcursor, UndoRedo } from "@tiptap/extensions";
-import { Blockquote } from "../extensions/blockquote";
+import { tiptapContext } from "./tiptapExports";
+
+const {
+	blockquote,
+	bold,
+	bulletList,
+	code,
+	codeBlock,
+	doc,
+	dropCursor,
+	gapCursor,
+	hardBreak,
+	heading,
+	horizontalRule,
+	italic,
+	listItem,
+	listKeymap,
+	orderedList,
+	paragraph,
+	strike,
+	text,
+	undoRedo,
+} = tiptapContext.extensions;
 
 const definitions: [AnyExtension, string?][] = [
-	[Bold, "bold"],
-	[Blockquote, "blockquote"],
-	[BulletList, "bulletList"],
-	[Code, "code"],
-	[CodeBlock, "codeBlock"],
-	[Document],
-	[Dropcursor.configure({ width: 2, color: "var(--color-blue-600)" })],
-	[Gapcursor],
-	[HardBreak],
-	[Heading, "headings"],
-	[UndoRedo],
-	[HorizontalRule, "horizontalRule"],
-	[Italic, "italic"],
-	[ListItem],
-	[ListKeymap],
-	[OrderedList, "orderedList"],
-	[Paragraph],
-	[Strike, "strike"],
-	[Text],
+	[bold, "bold"],
+	[blockquote, "blockquote"],
+	[bulletList, "bulletList"],
+	[code, "code"],
+	[codeBlock, "codeBlock"],
+	[doc],
+	[dropCursor.configure({ width: 2, color: "var(--color-blue-600)" })],
+	[gapCursor],
+	[hardBreak],
+	[heading, "headings"],
+	[undoRedo],
+	[horizontalRule, "horizontalRule"],
+	[italic, "italic"],
+	[listItem],
+	[listKeymap],
+	[orderedList, "orderedList"],
+	[paragraph],
+	[strike, "strike"],
+	[text],
 ];
 
 export const coreButtons = definitions.flatMap(([, button]) =>
 	button ? [button] : []
 );
 
-export function coreExtensions(
-	buttons: string[],
-	registryExtensions: { name?: string }[]
-): AnyExtension[] {
+export function coreExtensions(buttons: string[]): AnyExtension[] {
 	return definitions
-		.filter(
-			([extension, button]) =>
-				(!button || buttons.includes(button)) &&
-				!registryExtensions.some((ext) => ext.name === extension.name)
-		)
+		.filter(([, button]) => !button || buttons.includes(button))
 		.map(([extension]) => extension);
 }

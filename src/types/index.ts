@@ -180,6 +180,12 @@ export interface RegistryField {
 
 export interface TiptapContext {
 	field?: RegistryField
+	extensions: Record<string, AnyExtension>
+	components: Record<string, Component>
+	kirbytags: {
+		parse: (text: string, attributes?: KirbytagsMap) => ParsedKirbyTag
+		target: (text: string, model: string, attributes?: KirbytagsMap) => { endpoint: string; id: string } | null
+	}
 	tiptap: {
 		core: {
 			Extension: any
@@ -188,6 +194,7 @@ export interface TiptapContext {
 			mergeAttributes: any
 		}
 		vue3: {
+			NodeViewWrapper: any
 			VueNodeViewRenderer: any
 		}
 	}

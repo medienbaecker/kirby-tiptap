@@ -34,4 +34,5 @@ export const props = {
 	endpoints: Object as PropType<EndpointsConfig>,
 	uploads: [Object, Boolean] as PropType<UploadsConfig | false>,
 	uuid: Object as PropType<UuidConfig>,
+	extensions: Object as PropType<Record<string, Record<string, unknown>>>,
 };

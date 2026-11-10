@@ -154,7 +154,7 @@ echo $page->text()->tiptap([
 ]);
 ```
 
-JSON renders through snippets. To change the HTML of a node, copy its snippet from the plugin's `snippets/tiptap/` folder to `site/snippets/tiptap/`, for example `heading.php`:
+JSON renders through snippets. To change the HTML of a node, copy its snippet from the plugin's `snippets/tiptap/` folder to `site/snippets/tiptap/`, or register it as `tiptap/heading` in your own plugin. For example `heading.php`:
 
 ```php
 <?php
@@ -193,16 +193,20 @@ text:
 
 ## Extensions
 
-Plugins can add toolbar buttons, keyboard shortcuts and Tiptap extensions. See [`extension-examples/`](extension-examples) for working examples.
+Plugins can add buttons, shortcuts and Tiptap extensions, and change the built-in ones. [`extension-examples/`](extension-examples) has working examples.
 
 <img src=".github/panel-extensions.png" width="772" alt="A field with the callout example button and node, and a long word underlined by the long-words example.">
 
-Register them in your plugin's `index.js`, before the Panel loads:
+Register everything in your plugin's `index.js`:
 
 ```js
 window.kirbyTiptap ??= {};
 window.kirbyTiptap.registry ??= { extensions: [], buttons: [], shortcuts: [] };
+```
 
+### Buttons and shortcuts
+
+```js
 window.kirbyTiptap.registry.buttons.push({
 	name: "signature",
 	label: "Insert signature",
@@ -219,12 +223,14 @@ window.kirbyTiptap.registry.shortcuts.push({
 
 Add `signature` to a field's `buttons`. Shortcuts work in every field.
 
-For nodes, marks and ProseMirror plugins, push a factory. It gets the plugin's own Tiptap and ProseMirror modules, so you don't bundle a second copy:
+### Tiptap extensions
+
+For nodes, marks and ProseMirror plugins, push a factory. It gets the field's own Tiptap and ProseMirror, so you don't bundle a second copy:
 
 ```js
 window.kirbyTiptap.registry.extensions.push({
 	name: "wordCount",
-	create({ tiptap, pm, field }) {
+	create({ tiptap, pm, field, extensions, components, kirbytags }) {
 		return tiptap.core.Extension.create({ name: "wordCount" /* … */ });
 	},
 	buttons: () => [/* buttons that belong to the extension */],
@@ -233,18 +239,49 @@ window.kirbyTiptap.registry.extensions.push({
 
 | Argument | Contains |
 | --- | --- |
-| `tiptap.core` | `Extension`, `Node`, `Mark`, `mergeAttributes` |
-| `tiptap.vue3` | `VueNodeViewRenderer` |
-| `pm.state` | `Plugin`, `PluginKey`, `NodeSelection`, `TextSelection` |
-| `pm.view` | `Decoration`, `DecorationSet` |
+| `tiptap` | `core`: `Extension`, `Node`, `Mark`, `mergeAttributes`. `vue3`: `VueNodeViewRenderer`, `NodeViewWrapper` |
+| `pm` | `state`: `Plugin`, `PluginKey`, `NodeSelection`, `TextSelection`. `view`: `Decoration`, `DecorationSet` |
 | `field` | The field's `endpoints` and `uploads`, undefined in previews |
+| `extensions` | The built-in extensions by name, e.g. `kirbytag`, `bold`, `paragraph` |
+| `components` | `KirbytagView`, the pill. `this.tag.item` is the page or file it shows |
+| `kirbytags` | `parse(text)` reads a tag, `target(text, model)` finds its page or file |
 
-Extensions can open the field's dialogs:
+Custom nodes need a snippet to render on the frontend, see [JSON format](#json-format).
+
+### Changing a built-in
+
+An extension with a built-in's name replaces it in every field that uses it. Extend the original to change one part, like how pills look:
+
+```js
+window.kirbyTiptap.registry.extensions.push({
+	name: "kirbytag",
+	create({ tiptap, extensions }) {
+		return extensions.kirbytag.extend({
+			addNodeView: () => tiptap.vue3.VueNodeViewRenderer(MyPill),
+		});
+	},
+});
+```
+
+A pill is a `kirbytag` node with the tag in `attrs.text`. When two plugins change the same extension, the second gets the first one's version in `extensions`.
+
+### Options per field
+
+Set options by extension name. The extension reads them from `this.options`:
+
+```yaml
+text:
+  type: tiptap
+  extensions:
+    wordCount:
+      max: 500
+```
+
+### Commands
 
 | Command | Does |
 | --- | --- |
 | `openLinkDialog()` | Edits the link tag under the cursor, or inserts one |
 | `openFileDialog()` | Edits the file tag under the cursor, or inserts one |
+| `editKirbytag()` | Edits the selected pill |
 | `uploadFiles(files?)` | Uploads files, or opens the file picker, and inserts the tags |
-
-Markdown can't express custom nodes, so fields with them are stored as JSON. Render those fields with `tiptap()` and add a snippet for the node in `site/snippets/tiptap/`.

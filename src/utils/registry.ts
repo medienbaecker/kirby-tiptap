@@ -16,13 +16,28 @@ export function compileRegistry(field?: RegistryField): CompileResult {
 
 	const extensions: AnyExtension[] = [];
 	const buttons: RegistryButton[] = [];
-	const seenNames = new Set<string>();
 
 	compileShortcuts(registry.shortcuts || [], extensions);
-	compileExtensions(registry.extensions || [], extensions, buttons, seenNames, field);
+	compileExtensions(registry.extensions || [], extensions, buttons, field);
 	collectButtons(registry.buttons || [], buttons);
 
 	return { extensions, buttons };
+}
+
+export function withRegistry(
+	builtIns: AnyExtension[],
+	registryExtensions: AnyExtension[],
+	options: Record<string, Record<string, unknown>> = {},
+): AnyExtension[] {
+	const builtInNames = new Set(Object.values(tiptapContext.extensions).map((extension) => extension.name));
+
+	return [
+		...builtIns.map((extension) => {
+			const replacement = registryExtensions.find((registered) => registered.name === extension.name);
+			return replacement ? replacement.configure(extension.options) : extension;
+		}),
+		...registryExtensions.filter((registered) => !builtInNames.has(registered.name)),
+	].map((extension) => (options[extension.name] ? extension.configure(options[extension.name]) : extension));
 }
 
 function compileShortcuts(
@@ -73,9 +88,10 @@ function compileExtensions(
 	entries: RegistryExtension[],
 	extensions: AnyExtension[],
 	buttons: RegistryButton[],
-	seenNames: Set<string>,
 	field?: RegistryField,
 ): void {
+	const available = { ...tiptapContext.extensions };
+
 	for (const entry of entries) {
 		if (!entry.name) {
 			console.warn("[kirby-tiptap] Skipping extension with no name:", entry);
@@ -85,19 +101,19 @@ function compileExtensions(
 			console.warn(`[kirby-tiptap] Skipping extension "${entry.name}": create is not a function`);
 			continue;
 		}
-		if (seenNames.has(entry.name)) {
-			console.warn(`[kirby-tiptap] Skipping duplicate extension "${entry.name}"`);
-			continue;
-		}
-		seenNames.add(entry.name);
-
 		try {
-			const ext = entry.create({ ...tiptapContext, field });
+			const ext = entry.create({ ...tiptapContext, extensions: available, field });
 			if (!ext || typeof ext !== 'object') {
 				console.warn(`[kirby-tiptap] Extension "${entry.name}" create() returned invalid value`);
 				continue;
 			}
-			extensions.push(ext);
+			const index = extensions.findIndex((registered) => registered.name === ext.name);
+			if (index === -1) {
+				extensions.push(ext);
+			} else {
+				extensions[index] = ext;
+			}
+			available[ext.name] = ext;
 		} catch (error) {
 			console.warn(`[kirby-tiptap] Extension "${entry.name}" factory failed:`, error);
 			continue;

@@ -85,6 +85,7 @@ export const pill = (text: string, model: string, attributes?: KirbytagsMap) => 
 	return {
 		title: full,
 		link,
+		item,
 		props: { element: "span", theme: "light", ...props, text: shorten(shortUrl(full)) },
 	};
 };

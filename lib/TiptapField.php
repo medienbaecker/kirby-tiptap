@@ -18,6 +18,9 @@ class TiptapField extends StringField
 	protected array|bool|null $buttons = null;
 
 	#[Prop]
+	protected array|null $extensions = null;
+
+	#[Prop]
 	protected array|string|null $files = null;
 
 	#[Prop]

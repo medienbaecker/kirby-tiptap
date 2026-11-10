@@ -9,15 +9,13 @@
 <script>
 import { getHTMLFromFragment, getSchema } from '@tiptap/core';
 import { Node } from '@tiptap/pm/model';
-import TaskList from '@tiptap/extension-task-list';
-import TaskItem from '@tiptap/extension-task-item';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { h, render, watchEffect } from 'vue';
 import { findKirbyTagRanges, isFileTag, isLinkTag } from '../utils/kirbyTags';
 import { pill } from '../utils/pill';
-import { KirbytagRaw, RawMarkdownTable } from '../extensions/rawSource';
-import { compileRegistry } from '../utils/registry';
+import { compileRegistry, withRegistry } from '../utils/registry';
 import { coreButtons, coreExtensions } from '../utils/coreExtensions';
+import { tiptapContext } from '../utils/tiptapExports';
 
 const decorateKirbyTags = (html, visual = false) => {
 	const ranges = findKirbyTagRanges(html);
@@ -55,14 +53,14 @@ let previewExtensions = null;
 const getPreviewExtensions = () => {
 	if (!previewExtensions) {
 		const { extensions } = compileRegistry();
-		previewExtensions = [
-			...coreExtensions(coreButtons, extensions),
-			TaskList,
-			TaskItem,
-			KirbytagRaw,
-			RawMarkdownTable,
-			...extensions
-		];
+		const { kirbytagRaw, rawSource, taskItem, taskList } = tiptapContext.extensions;
+		previewExtensions = withRegistry([
+			...coreExtensions(coreButtons),
+			taskList,
+			taskItem,
+			kirbytagRaw,
+			rawSource
+		], extensions);
 	}
 	return previewExtensions;
 };

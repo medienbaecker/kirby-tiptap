@@ -146,10 +146,7 @@ export const buttonRegistry = {
 				console.warn("[kirby-tiptap] Skipping registry button with no name");
 				continue;
 			}
-			if (button.name in registryButtons) {
-				continue;
-			}
-			if (button.name in coreButtons) {
+			if (button.name in coreButtons && !(button.name in registryButtons)) {
 				console.info(`[kirby-tiptap] Registry button "${button.name}" overrides core button`);
 			}
 			registryButtons[button.name] = {
