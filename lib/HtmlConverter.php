@@ -23,13 +23,14 @@ class HtmlConverter
 			$node = $content[$i];
 			$children = static::renderSnippets($node['content'] ?? [], $node);
 
-			$name = 'tiptap/' . ($node['type'] ?? '');
+			$type  = $node['type'] ?? '';
+			$names = ['tiptap/' . $type, 'tiptap/built-in/' . $type];
 
 			// A node type without a snippet (e.g. a custom extension node)
 			// must not silently swallow content: warn, throw in debug mode,
 			// and fall back to the children so text survives.
-			if (Snippet::file($name) === null) {
-				$message = 'kirby-tiptap: no snippet "' . $name . '" for node type "' . ($node['type'] ?? '?') . '"';
+			if (Snippet::file($names) === null) {
+				$message = 'kirby-tiptap: no snippet "tiptap/' . $type . '" for node type "' . ($type ?: '?') . '"';
 				if (option('debug', false) === true) {
 					throw new Exception(message: $message);
 				}
@@ -39,7 +40,7 @@ class HtmlConverter
 				continue;
 			}
 
-			$html .= snippet($name, [
+			$html .= snippet($names, [
 				...$node,
 				'content' => $children,
 				'next' => $content[$i + 1] ?? null,
