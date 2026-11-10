@@ -11,7 +11,7 @@
 import { markRaw } from 'vue'
 import TiptapInput from './TiptapInput.vue'
 import { props } from './props.js'
-import { getVisibleText } from '../utils/kirbyTags'
+import { getVisibleDocText } from '../utils/kirbyTags'
 import counter from "@/mixins/forms/counter.js";
 
 export default {
@@ -26,9 +26,7 @@ export default {
 
 	computed: {
 		counterValue() {
-			// Count reader-visible text so the counter matches the
-			// server-side min/maxlength validation.
-			return getVisibleText(this.text, this.kirbytagAttributes);
+			return this.text;
 		}
 	},
 
@@ -57,7 +55,7 @@ export default {
 			editor.on('update', this.readText);
 		},
 		readText() {
-			this.text = this.editor?.getText() ?? '';
+			this.text = this.editor ? getVisibleDocText(this.editor.state.doc, this.kirbytagAttributes) : '';
 		},
 		focus() {
 			this.$refs.input.focus();

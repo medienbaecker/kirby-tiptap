@@ -1,5 +1,6 @@
 import type { Editor } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type {
 	ParsedKirbyTag,
 	NavigationTarget,
@@ -367,6 +368,30 @@ export const getVisibleText = (text: string, tags?: KirbytagsMap): string => {
 		cursor = end;
 	}
 	return out + text.substring(cursor);
+};
+
+/**
+ * The text a reader sees, counted like the server's min/maxlength check:
+ * one character per block and line break, KirbyTags as their visible text
+ */
+export const getVisibleDocText = (doc: ProseMirrorNode, tags?: KirbytagsMap): string => {
+	const blocks: string[] = [];
+
+	doc.descendants((node) => {
+		if (!node.isTextblock) return true;
+
+		let text = "";
+		node.forEach((child) => {
+			if (child.isText) text += child.text;
+			else if (child.type.name === "hardBreak") text += "\n";
+			else if (child.type.name === "kirbytag") text += child.attrs.text;
+		});
+		const visible = getVisibleText(text, tags);
+		if (visible !== "") blocks.push(visible);
+		return false;
+	});
+
+	return blocks.join("\n").trim();
 };
 
 /**
