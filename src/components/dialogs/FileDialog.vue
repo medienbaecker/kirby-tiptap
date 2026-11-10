@@ -5,8 +5,8 @@
 
 		<k-collection :empty="{
 			icon: 'image',
-			text: $panel.dialog.isLoading ? $t('loading') : (empty?.text || $t('dialog.files.empty')),
-			...empty
+			...empty,
+			text: $panel.dialog.isLoading ? $t('loading') : (empty?.text || $t('dialog.files.empty'))
 		}" :items="items" :link="false" :pagination="{
 			details: true,
 			dropdown: false,
