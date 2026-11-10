@@ -47,31 +47,28 @@ const flattenInline = (json) => ({
 	}]
 });
 
-// The registry doesn't change at runtime — compile the extension set once
-// instead of per table cell.
-let previewExtensions = null;
-const getPreviewExtensions = () => {
-	if (!previewExtensions) {
+// The registry doesn't change at runtime: one schema per set of field
+// options instead of per table cell.
+const schemas = new Map();
+const previewSchema = (options = {}) => {
+	const key = JSON.stringify(options);
+	if (!schemas.has(key)) {
 		const { extensions } = compileRegistry();
 		const { kirbytagRaw, rawSource, taskItem, taskList } = tiptapContext.extensions;
-		previewExtensions = withRegistry([
+		schemas.set(key, getSchema(withRegistry([
 			...coreExtensions(coreButtons),
 			taskList,
 			taskItem,
 			kirbytagRaw,
 			rawSource
-		], extensions);
+		], extensions, options)));
 	}
-	return previewExtensions;
+	return schemas.get(key);
 };
 
-let previewSchema = null;
-const renderDoc = (doc) => {
-	previewSchema ??= getSchema(getPreviewExtensions());
-	return getHTMLFromFragment(
-		Node.fromJSON(previewSchema, doc).content,
-		previewSchema
-	);
+const renderDoc = (doc, options) => {
+	const schema = previewSchema(options);
+	return getHTMLFromFragment(Node.fromJSON(schema, doc).content, schema);
 };
 
 const escapeHtml = (text) =>
@@ -112,7 +109,7 @@ export default {
 			try {
 				const inline = this.field.inline ?? json.inline;
 				const doc = inline === true ? flattenInline(json) : json;
-				return decorateKirbyTags(renderDoc(doc), this.field.kirbytags === false);
+				return decorateKirbyTags(renderDoc(doc, this.field.extensions), this.field.kirbytags === false);
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.
 				return this.value;
