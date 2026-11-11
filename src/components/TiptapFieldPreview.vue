@@ -8,7 +8,7 @@
 
 <script>
 import { getHTMLFromFragment, getSchema } from '@tiptap/core';
-import { Node } from '@tiptap/pm/model';
+import { Fragment, Node } from '@tiptap/pm/model';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { h, render, watchEffect } from 'vue';
 import { findKirbyTagRanges, isFileTag, isLinkTag } from '../utils/kirbyTags';
@@ -33,20 +33,6 @@ const decorateKirbyTags = (html, visual = false) => {
 	return out + html.substring(cursor);
 };
 
-// Collapse an inline doc's paragraphs into one, joined by hardBreaks,
-// so the preview renders on a single line.
-const flattenInline = (json) => ({
-	type: 'doc',
-	content: [{
-		type: 'paragraph',
-		content: json.content.flatMap((node, i) =>
-			node.type !== 'paragraph'
-				? [node]
-				: i === 0 ? (node.content ?? []) : [{ type: 'hardBreak' }, ...(node.content ?? [])]
-		)
-	}]
-});
-
 // The registry doesn't change at runtime: one schema per set of field
 // options instead of per table cell.
 const schemas = new Map();
@@ -66,9 +52,16 @@ const previewSchema = (options = {}) => {
 	return schemas.get(key);
 };
 
-const renderDoc = (doc, options) => {
+const renderLine = (json, options) => {
 	const schema = previewSchema(options);
-	return getHTMLFromFragment(Node.fromJSON(schema, doc).content, schema);
+	const inline = [];
+	Node.fromJSON(schema, json).descendants((node) => {
+		if (!node.isTextblock) return true;
+		if (inline.length > 0) inline.push(schema.text(' '));
+		node.content.forEach((child) => inline.push(child.type.name === 'hardBreak' ? schema.text(' ') : child));
+		return false;
+	});
+	return getHTMLFromFragment(Fragment.from(inline), schema);
 };
 
 const escapeHtml = (text) =>
@@ -107,9 +100,7 @@ export default {
 				return decorateKirbyTags(excerpt(this.value ?? ''), this.field.kirbytags === false);
 			}
 			try {
-				const inline = this.field.inline ?? json.inline;
-				const doc = inline === true ? flattenInline(json) : json;
-				return decorateKirbyTags(renderDoc(doc, this.field.extensions), this.field.kirbytags === false);
+				return decorateKirbyTags(renderLine(json, this.field.extensions), this.field.kirbytags === false);
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.
 				return this.value;
@@ -160,6 +151,12 @@ export default {
 <style>
 .k-tiptap-field-preview {
 	padding: 0.375rem var(--table-cell-padding);
+
+	.k-text {
+		overflow-x: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
 
 	.kirbytag {
 		border-radius: var(--rounded);
