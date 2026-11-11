@@ -20,16 +20,12 @@ const shortUrl = (text: string): string => {
 	const segments = url.pathname.split("/").filter(Boolean);
 	const last = segments[segments.length - 1];
 	if (!last) return host;
-	if (last.length > 16) return `${host}/…`;
 	return segments.length === 1 ? `${host}/${last}` : `${host}/…/${last}`;
 };
 
 const webUrl = (value: string): string | undefined => (/^https?:\/\//.test(value) ? value : undefined);
 
 const plain = (html: string): string => new DOMParser().parseFromString(html, "text/html").body.textContent ?? "";
-
-const shorten = (text: string): string =>
-	text.length > 26 ? `${text.slice(0, 16)}…${text.slice(-9)}` : text;
 
 /**
  * The file or page a tag points to, as Kirby's items requests expect it
@@ -52,7 +48,7 @@ export const target = (
 };
 
 /**
- * k-tag props, the full text (for the title) and the link of a visual KirbyTag
+ * Pill props, the full text when the pill shortens it (for the title) and the link of a visual KirbyTag
  */
 export const pill = (text: string, model: string, attributes?: KirbytagsMap) => {
 	const type = text.match(/^\((\w+):/)![1].toLowerCase();
@@ -77,15 +73,17 @@ export const pill = (text: string, model: string, attributes?: KirbytagsMap) => 
 
 	const props =
 		item === undefined
-			? { icon }
+			? { image: { icon } }
 			: item
 				? { image: { cover: true, ...item.image } }
 				: { image: { icon: "alert", alt: window.panel.t("tiptap.kirbytag.missing") }, theme: "negative" };
 
+	const shown = shortUrl(full);
+
 	return {
-		title: full,
+		title: shown === full ? undefined : full,
 		link,
 		item,
-		props: { element: "span", theme: "light", ...props, text: shorten(shortUrl(full)) },
+		props: { ...props, text: shown },
 	};
 };

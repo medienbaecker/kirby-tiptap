@@ -13,6 +13,7 @@ import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { h, render, watchEffect } from 'vue';
 import { findKirbyTagRanges, isFileTag, isLinkTag } from '../utils/kirbyTags';
 import { pill } from '../utils/pill';
+import Pill from './Pill.vue';
 import { compileRegistry, withRegistry } from '../utils/registry';
 import { coreButtons, coreExtensions } from '../utils/coreExtensions';
 import { tiptapContext } from '../utils/tiptapExports';
@@ -123,17 +124,16 @@ export default {
 		mountPills() {
 			this.unmountPills();
 
-			const component = this.$.appContext.components['k-tag'];
 			const model = this.$panel.view.props.api;
 
 			this.pills = [...this.$el.querySelectorAll('[data-kirbytag]')].map((slot) => ({
 				slot,
 				stop: watchEffect(() => {
 					const { title, props } = pill(slot.dataset.kirbytag, model, this.field.kirbytagAttributes);
-					const vnode = h(component, props);
+					const vnode = h(Pill, props);
 					vnode.appContext = this.$.appContext;
 					render(vnode, slot);
-					slot.title = title;
+					slot.title = title ?? '';
 				})
 			}));
 		},

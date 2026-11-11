@@ -1,15 +1,18 @@
 <template>
 	<NodeViewWrapper as="span" class="tiptap-kirbytag" :title="tag.title" data-drag-handle @mousedown="select" @click="edit">
-		<k-tag v-bind="attributes" />
+		<Pill v-bind="tag.props" :href="tag.link" tabindex="-1" draggable="false">
+			<template v-if="$slots.default" #default><slot /></template>
+		</Pill>
 	</NodeViewWrapper>
 </template>
 
 <script>
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3';
 import { pill } from '../utils/pill';
+import Pill from './Pill.vue';
 
 export default {
-	components: { NodeViewWrapper },
+	components: { NodeViewWrapper, Pill },
 
 	props: nodeViewProps,
 
@@ -18,11 +21,6 @@ export default {
 			const { endpoints, kirbytagAttributes } = this.extension.options;
 			return pill(this.node.attrs.text, endpoints.model, kirbytagAttributes);
 		},
-
-		attributes() {
-			const { props, link } = this.tag;
-			return link ? { ...props, element: "a", href: link, tabindex: -1, draggable: "false" } : props;
-		}
 	},
 
 	methods: {

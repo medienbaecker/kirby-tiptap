@@ -348,28 +348,8 @@ export default {
 	cursor: pointer;
 }
 
-.tiptap-kirbytag .k-tag {
-	--tag-height: 1lh;
-	max-width: 16em;
-	position: static;
-	display: inline-flex;
-	vertical-align: top;
-	font-size: inherit;
-	line-height: inherit;
-}
-
-.tiptap-kirbytag .k-tag-text {
-	padding-inline-end: var(--spacing-1);
-}
-
-.tiptap-kirbytag .k-tag-image + .k-tag-text {
-	padding-inline-start: var(--spacing-1);
-}
-
-.ProseMirror-focused .tiptap-kirbytag.ProseMirror-selectednode .k-tag,
-:root:has(.k-dialog) .tiptap-kirbytag.ProseMirror-selectednode .k-tag {
-	position: relative;
-	z-index: 1;
+.ProseMirror-focused .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill,
+:root:has(.k-dialog) .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill {
 	outline: var(--outline);
 }
 

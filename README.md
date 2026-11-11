@@ -60,7 +60,7 @@ With `inline: true` the field has no paragraphs and hides the block buttons. Ren
 
 Image, file, video, link, email and tel tags show as pills, like in Kirby's link field. A pill turns red when its page or file is gone. Other tags, such as `(date: year)` or tags from your own plugins, stay text.
 
-<img src=".github/panel-pill-states.png" width="772" alt="Pills for a short URL, a shortened long URL, an email address, a missing image in red and a phone number.">
+<img src=".github/panel-pill-states.png" width="772" alt="Pills for a short URL, a long URL shortened to its host and last segment, an email address, a missing image in red and a phone number.">
 
 Click a pill to edit it. Drag it to move it. Right-click it to open the link, or the page or file in the Panel. With the keyboard, select it with the arrow keys and press Enter.
 
@@ -243,7 +243,7 @@ window.kirbyTiptap.registry.extensions.push({
 | `pm` | `state`: `Plugin`, `PluginKey`, `NodeSelection`, `TextSelection`. `view`: `Decoration`, `DecorationSet` |
 | `field` | The field's `endpoints` and `uploads`, undefined in previews |
 | `extensions` | The built-in extensions by name, e.g. `kirbytag`, `bold`, `paragraph` |
-| `components` | `KirbytagView`, the pill. `this.tag.item` is the page or file it shows |
+| `components` | `KirbytagView`, the pill. `this.tag.item` is the page or file it shows; its default slot adds to the end of the label |
 | `kirbytags` | `parse(text)` reads a tag, `target(text, model)` finds its page or file |
 
 Custom nodes need a snippet to render on the frontend, see [JSON format](#json-format).
