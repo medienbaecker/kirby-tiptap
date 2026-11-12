@@ -2,7 +2,7 @@
 
 A rich text field for [Kirby](https://getkirby.com), built on [Tiptap](https://tiptap.dev). Editors write with formatting, links, images and files in one place. The content file gets Markdown with KirbyTags, like a textarea field.
 
-<img src=".github/panel-overview.png" width="772" alt="A focused Tiptap field with a heading, bold and italic text, inline code, KirbyTags shown as pills for a page, an image, a PDF, an email address and a link, and a visible soft hyphen and non-breaking spaces.">
+<img src=".github/panel-overview.png" width="907" alt="A focused Tiptap field with a heading, bold and italic text, inline code, KirbyTags shown as pills for a page, an image, a PDF, an email address and a link, and a visible soft hyphen and non-breaking spaces.">
 
 ## Installation
 
