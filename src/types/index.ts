@@ -175,6 +175,8 @@ export interface RegistryExtension {
 
 export interface RegistryField {
 	endpoints?: EndpointsConfig
+	files?: FilesConfig
+	links?: LinksConfig
 	uploads?: UploadsConfig | false
 }
 

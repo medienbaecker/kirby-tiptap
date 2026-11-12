@@ -135,6 +135,8 @@ export function useEditor(
 			const { extensions: registryExtensions, buttons: registryButtons } =
 				compileRegistry({
 					endpoints: props.endpoints,
+					files: props.files,
+					links: props.links,
 					uploads: props.uploads,
 				});
 			if (registryButtons.length > 0) {
