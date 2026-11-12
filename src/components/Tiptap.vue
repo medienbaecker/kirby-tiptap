@@ -30,15 +30,6 @@ export default {
 		}
 	},
 
-	created() {
-		if (this.inline === true && this.format === 'markdown') {
-			console.warn(
-				`kirby-tiptap: field "${this.name}" has inline: true and format: markdown, ` +
-				`so tiptapText() will wrap it in <p>. Use tiptapTextInline() in your template.`
-			);
-		}
-	},
-
 	mounted() {
 		this.$el.querySelector('label')?.addEventListener('click', this.focus);
 	},
