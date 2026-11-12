@@ -26,7 +26,7 @@ fields:
 
 ## Toolbar
 
-<img src=".github/panel-toolbar.png" width="772" alt="A Tiptap field with every toolbar button: headings, bold, italic, strike, code, link, file, lists, blockquote, code block, horizontal rule and remove formatting.">
+<img src=".github/panel-toolbar.png" width="907" alt="A Tiptap field with every toolbar button: headings, bold, italic, strike, code, link, file, lists, blockquote, code block, horizontal rule and remove formatting.">
 
 ```yml
 buttons:
@@ -54,21 +54,21 @@ buttons:
 
 With `inline: true` the field has no paragraphs and hides the block buttons. Render it with `kirbytextInline()`.
 
-<img src=".github/panel-inline.png" width="772" alt="An inline field: only bold, italic, link and file buttons.">
+<img src=".github/panel-inline.png" width="907" alt="An inline field: only bold, italic, link and file buttons.">
 
 ## KirbyTags as pills
 
 Image, file, video, link, email and tel tags show as pills, like in Kirby's link field. A pill turns red when its page or file is gone. Other tags, such as `(date: year)` or tags from your own plugins, stay text.
 
-<img src=".github/panel-pill-states.png" width="772" alt="Pills for a short URL, a long URL shortened to its host and last segment, an email address, a missing image in red and a phone number.">
+<img src=".github/panel-pill-states.png" width="907" alt="Pills for a short URL, a long URL shortened to its host and last segment, an email address, a missing image in red and a phone number.">
 
 Click a pill to edit it. Drag it to move it. Right-click it to open the link, or the page or file in the Panel. With the keyboard, select it with the arrow keys and press Enter.
 
-<img src=".github/panel-pill-selected.png" width="772" alt="The image pill selected, with an outline.">
+<img src=".github/panel-pill-selected.png" width="907" alt="The image pill selected, with an outline.">
 
 To edit the tags as text, set `kirbytags: true` on the field, or `'medienbaecker.tiptap.kirbytags' => true` in the config. Cmd+Click on a tag then opens its page or file.
 
-<img src=".github/panel-kirbytags-true.png" width="772" alt="The same text with kirbytags: true, the tags shown as highlighted text.">
+<img src=".github/panel-kirbytags-true.png" width="907" alt="The same text with kirbytags: true, the tags shown as highlighted text.">
 
 ## Link and file dialogs
 
@@ -116,17 +116,17 @@ uploads: false
 
 Structure and object fields preview the text with pills.
 
-<img src=".github/panel-preview.png" width="772" alt="A structure field whose table preview shows formatted text with pills.">
+<img src=".github/panel-preview.png" width="907" alt="A structure field whose table preview shows formatted text with pills.">
 
 The plugin adds a `tiptap` block for the blocks field.
 
-<img src=".github/panel-blocks.png" width="772" alt="A blocks field with a tiptap block with pills.">
+<img src=".github/panel-blocks.png" width="907" alt="A blocks field with a tiptap block with pills.">
 
 ## Special characters
 
 Type `(-)` for a soft hyphen and `(_)` for a non-breaking space. The editor shows both.
 
-<img src=".github/panel-special.png" width="772" alt="Soft hyphens shown as thin marks inside a long German compound, and a visible non-breaking space.">
+<img src=".github/panel-special.png" width="907" alt="Soft hyphens shown as thin marks inside a long German compound, and a visible non-breaking space.">
 
 ## Keyboard shortcuts
 
@@ -195,7 +195,7 @@ text:
 
 Plugins can add buttons, shortcuts and Tiptap extensions, and change the built-in ones. [`extension-examples/`](extension-examples) has working examples.
 
-<img src=".github/panel-extensions.png" width="772" alt="A field with the callout example button and node, and a long word underlined by the long-words example.">
+<img src=".github/panel-extensions.png" width="907" alt="A field with the callout example button and node, and a long word underlined by the long-words example.">
 
 Register everything in your plugin's `index.js`:
 
