@@ -21,7 +21,7 @@ fields:
 ```
 
 ```php
-<?= $page->text()->kt() ?>
+<?= $page->text()->kirbytext() ?>
 ```
 
 ## Toolbar
@@ -52,7 +52,7 @@ buttons:
   - "|"      # divider
 ```
 
-With `inline: true` the field has no paragraphs and hides the block buttons. Render it with `kti()`.
+With `inline: true` the field has no paragraphs and hides the block buttons. Render it with `kirbytextInline()`.
 
 <img src=".github/panel-inline.png" width="772" alt="An inline field: only bold, italic, link and file buttons.">
 
