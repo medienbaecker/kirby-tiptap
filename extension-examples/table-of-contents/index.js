@@ -1,12 +1,8 @@
 /**
  * Example: Table of contents
  *
- * A button shows a list of the field's headings.
+ * A button toggles a sidebar that lists the field's headings.
  * Click a heading to jump to it.
- *
- * Demonstrates:
- *   - A plugin view that adds its own element next to the editor
- *   - A button that toggles plugin state
  *
  * Usage in blueprint:
  *   buttons:
