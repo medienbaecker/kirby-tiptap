@@ -83,6 +83,7 @@
 			if (event.target !== nav) markCurrent();
 		}
 
+		nav.addEventListener("mousedown", (event) => event.preventDefault());
 		document.addEventListener("scroll", scroll, { capture: true, passive: true });
 		view.dom.before(nav);
 
