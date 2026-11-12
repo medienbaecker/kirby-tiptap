@@ -34,7 +34,6 @@ export default {
 			disabled: false,
 			updateTimer: null,
 			shortcutPluginKey: null,
-			onSelectionUpdate: null,
 			onTransaction: null
 		}
 	},
@@ -105,20 +104,12 @@ export default {
 				// Initial state
 				updateState()
 
-				// Named (not inline) so detachEditor can remove them. Throttled to 50ms.
-				this.onSelectionUpdate = () => {
+				// Named (not inline) so detachEditor can remove it. Throttled to 50ms.
+				this.onTransaction = () => {
 					clearTimeout(this.updateTimer)
 					this.updateTimer = setTimeout(updateState, 50)
 				}
 
-				this.onTransaction = ({ transaction }) => {
-					if (transaction.docChanged || transaction.selectionSet) {
-						clearTimeout(this.updateTimer)
-						this.updateTimer = setTimeout(updateState, 50)
-					}
-				}
-
-				editor.on('selectionUpdate', this.onSelectionUpdate)
 				editor.on('transaction', this.onTransaction)
 
 				this.registerShortcut()
@@ -186,7 +177,6 @@ export default {
 		detachEditor(editor) {
 			if (!editor) return
 
-			if (this.onSelectionUpdate) editor.off('selectionUpdate', this.onSelectionUpdate)
 			if (this.onTransaction) editor.off('transaction', this.onTransaction)
 
 			if (this.shortcutPluginKey && !editor.isDestroyed) {
