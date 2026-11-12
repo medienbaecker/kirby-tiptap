@@ -1,13 +1,12 @@
 /**
  * Example: Table of contents
  *
- * The toolbar button shows the field's headings next to the text, or
- * above it in narrow fields. The section at the top of the screen is
- * marked, and a click jumps to its heading.
+ * A button shows a list of the field's headings.
+ * Click a heading to jump to it.
  *
  * Demonstrates:
- *   - ProseMirror plugin view that renders its own element next to the editor
- *   - Plugin state that a toolbar button toggles
+ *   - A plugin view that adds its own element next to the editor
+ *   - A button that toggles plugin state
  *
  * Usage in blueprint:
  *   buttons:

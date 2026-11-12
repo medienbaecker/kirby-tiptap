@@ -1,10 +1,22 @@
 .k-tiptap-input-wrapper:has(.table-of-contents) {
 	--table-of-contents-top: calc(var(--header-sticky-offset) + var(--toolbar-size) + 1px);
+
 	container-type: inline-size;
 }
 
 .k-tiptap-editor-container:has(> .table-of-contents:not([hidden])) {
 	grid-template-areas: "outline" "content";
+
+	@container (min-width: 40rem) {
+		grid-template-columns: minmax(0, 1fr) 14rem;
+		grid-template-areas: "content outline";
+	}
+}
+
+.k-tiptap-editor-container:has(> .table-of-contents:not([hidden])) > .tiptap {
+	@container (min-width: 40rem) {
+		border-inline-end: 1px solid var(--color-border);
+	}
 }
 
 .k-tiptap-editor-container:has(> .table-of-contents) :is(h1, h2, h3, h4, h5, h6) {
@@ -19,6 +31,21 @@
 	border-block-end: 1px solid var(--color-border);
 	font-size: var(--text-xs);
 	line-height: var(--leading-normal);
+
+	@container (min-width: 40rem) {
+		align-self: start;
+		border-block-end: 0;
+	}
+
+	.k-tiptap-editor-container:focus-within > & {
+		@container (min-width: 40rem) {
+			position: sticky;
+			top: var(--table-of-contents-top);
+			max-block-size: calc(100dvh - var(--table-of-contents-top));
+			overflow-y: auto;
+			overscroll-behavior: contain;
+		}
+	}
 }
 
 .table-of-contents button {
@@ -26,32 +53,8 @@
 	text-align: start;
 	color: var(--color-text-dimmed);
 	overflow-wrap: anywhere;
-}
 
-.table-of-contents button:is(:hover, :focus-visible, [aria-current]) {
-	color: var(--color-text);
-}
-
-@container (min-width: 40rem) {
-	.k-tiptap-editor-container:has(> .table-of-contents:not([hidden])) {
-		grid-template-columns: minmax(0, 1fr) 14rem;
-		grid-template-areas: "content outline";
-	}
-
-	.k-tiptap-editor-container:has(> .table-of-contents:not([hidden])) > .tiptap {
-		border-inline-end: 1px solid var(--color-border);
-	}
-
-	.table-of-contents {
-		align-self: start;
-		border-block-end: 0;
-	}
-
-	.k-tiptap-editor-container:focus-within > .table-of-contents {
-		position: sticky;
-		top: var(--table-of-contents-top);
-		max-block-size: calc(100dvh - var(--table-of-contents-top));
-		overflow-y: auto;
-		overscroll-behavior: contain;
+	&:is(:hover, :focus-visible, [aria-current]) {
+		color: var(--color-text);
 	}
 }
