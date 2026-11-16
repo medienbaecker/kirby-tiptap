@@ -24,8 +24,8 @@
 		]
 	},
 	"extra": {
+		"installer-name": "tiptap",
 		"kirby": {
-			"installer-name": "tiptap",
 			"compatible": "^6.0"
 		}
 	},
