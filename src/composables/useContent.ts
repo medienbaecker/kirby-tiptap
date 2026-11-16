@@ -20,7 +20,18 @@ interface UseContentReturn {
 	parseContent: (value: string | TiptapDocument) => TiptapDocument | string;
 	isContentEmpty: (content: TiptapDocument) => boolean;
 	emitContent: (editorInstance: Editor | null) => void;
+	isEditorContent: (editorInstance: Editor, doc: TiptapDocument) => boolean;
 }
+
+const comparable = (editorInstance: Editor, doc: TiptapDocument): ProseMirrorNode => {
+	const withoutRawMarks = (node: TiptapNode): TiptapNode => ({
+		...node,
+		...(node.marks ? { marks: node.marks.filter((mark) => mark.type !== "kirbytagRaw") } : {}),
+		...(node.content ? { content: node.content.map(withoutRawMarks) } : {}),
+	});
+
+	return editorInstance.schema.nodeFromJSON(withoutRawMarks(doc as TiptapNode));
+};
 
 /**
  * Composable for managing Tiptap content parsing and emission
@@ -43,14 +54,19 @@ export function useContent(
 			if (publishedCache?.source !== source) {
 				const doc = JSON.parse(source);
 				if (doc?.type !== "doc") return json;
-				publishedCache = { source, node: editorInstance.schema.nodeFromJSON(doc) };
+				publishedCache = { source, node: comparable(editorInstance, doc) };
 			}
 		} catch {
 			return json;
 		}
 
-		return editorInstance.schema.nodeFromJSON(content).eq(publishedCache.node) ? source : json;
+		return comparable(editorInstance, content).eq(publishedCache.node) ? source : json;
 	};
+
+	const isEditorContent = (editorInstance: Editor, doc: TiptapDocument): boolean =>
+		comparable(editorInstance, kirbytagsToText(editorInstance.getJSON() as TiptapDocument)).eq(
+			comparable(editorInstance, doc)
+		);
 
 	/**
 	 * Parse content from various input formats
@@ -174,5 +190,6 @@ export function useContent(
 		parseContent,
 		isContentEmpty,
 		emitContent,
+		isEditorContent,
 	};
 }

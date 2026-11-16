@@ -26,7 +26,7 @@ export default {
 		const lastEmittedJson = ref(null)
 		const isEmpty = ref(true)
 
-		const { parseContent, emitContent } = useContent(
+		const { parseContent, emitContent, isEditorContent } = useContent(
 			props,
 			emit,
 			lastEmittedJson,
@@ -51,7 +51,7 @@ export default {
 			try {
 				const doc = typeof value === 'string' ? JSON.parse(value) : value
 				if (doc?.type !== 'doc' || !editor.value) return false
-				return editor.value.state.doc.eq(editor.value.schema.nodeFromJSON(doc))
+				return isEditorContent(editor.value, doc)
 			} catch {
 				return false
 			}
