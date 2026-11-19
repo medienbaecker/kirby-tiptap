@@ -58,7 +58,19 @@ With `inline: true` the field has no paragraphs and hides the block buttons. Ren
 
 ## KirbyTags as pills
 
-Image, file, video, link, email and tel tags show as pills, like in Kirby's link field. A pill turns red when its page or file is gone. Other tags, such as `(date: year)` or tags from your own plugins, stay text.
+Image, file, video, link, email and tel tags show as pills, like in Kirby's link field. A pill turns red when its page or file is gone. Other tags, such as `(date: year)` or tags from your own plugins, stay text unless you list them:
+
+```yaml
+text:
+  type: tiptap
+  extensions:
+    kirbytag:
+      tags:
+        - gist
+        - years-since
+```
+
+These pills show the tag's `text:` or its value. A click only selects them; an extension that overrides the `editKirbytag` command can open its own dialog.
 
 <img src=".github/panel-pill-states.png" width="907" alt="Pills for a short URL, a long URL shortened to its host and last segment, an email address, a missing image in red and a phone number.">
 

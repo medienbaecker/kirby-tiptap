@@ -48,8 +48,7 @@ export const parseKirbyTag = (
 	tags?: KirbytagsMap
 ): ParsedKirbyTag => {
 	// Get tag type
-	const typeMatch = tagString.match(/^\((\w+):/);
-	const tagType = typeMatch ? typeMatch[1].toLowerCase() : "";
+	const tagType = tagName(tagString) ?? "";
 	const result: ParsedKirbyTag = {
 		// Store the tag type in a property that won't be used as an attribute
 		_type: tagType,
@@ -484,7 +483,7 @@ export const findReferenceRange = (
 	tagString: string,
 	tags?: KirbytagsMap
 ): [number, number] | null => {
-	const typeMatch = tagString.match(/^\((\w+):\s*/);
+	const typeMatch = tagString.match(/^\(([a-z0-9_-]+):\s*/i);
 	if (!typeMatch) return null;
 
 	const type = typeMatch[1].toLowerCase();
@@ -536,6 +535,12 @@ export const checkKirbyTagReferences = async (
 
 	return response.results;
 };
+
+/**
+ * The name of a KirbyTag, in the characters Kirby allows
+ */
+export const tagName = (text: string): string | undefined =>
+	text.match(/^\(([a-z0-9_-]+):/i)?.[1].toLowerCase();
 
 /**
  * Checks if text is a media KirbyTag (image, file, or video)

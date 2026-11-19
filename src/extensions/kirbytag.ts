@@ -7,7 +7,7 @@ import { VueNodeViewRenderer } from "@tiptap/vue-3";
 import type { NodeViewProps } from "@tiptap/vue-3";
 import type { Component } from "vue";
 import KirbytagView from "../components/KirbytagView.vue";
-import { findKirbyTagRanges, isFileTag, isLinkTag } from "../utils/kirbyTags";
+import { findKirbyTagRanges, isFileTag, isLinkTag, tagName } from "../utils/kirbyTags";
 import { seedModelItem } from "../utils/items";
 import { target } from "../utils/pill";
 import type { ModelItem } from "../utils/items";
@@ -17,9 +17,10 @@ interface KirbytagOptions {
 	endpoints?: EndpointsConfig;
 	kirbytagAttributes?: KirbytagsMap;
 	items?: Record<string, ModelItem>;
+	tags?: string[];
 }
 
-const tagsToNodes = (state: EditorState): Transaction | null => {
+const tagsToNodes = (state: EditorState, tags: string[] = []): Transaction | null => {
 	const replacements: { from: number; to: number; text: string; marks: readonly Mark[] }[] = [];
 
 	state.doc.descendants((node, pos) => {
@@ -28,7 +29,7 @@ const tagsToNodes = (state: EditorState): Transaction | null => {
 
 		for (const [start, end] of findKirbyTagRanges(node.text)) {
 			const text = node.text.slice(start, end);
-			if (isFileTag(text) || isLinkTag(text)) {
+			if (isFileTag(text) || isLinkTag(text) || tags.includes(tagName(text)!)) {
 				replacements.push({ from: pos + start, to: pos + end, text, marks: node.marks });
 			}
 		}
@@ -115,7 +116,7 @@ declare module "@tiptap/core" {
 	interface Commands<ReturnType> {
 		kirbytag: {
 			/**
-			 * Opens the link or file dialog for the selected kirbytag
+			 * Opens the link or file dialog for the selected kirbytag; other tags stay selected
 			 */
 			editKirbytag: () => ReturnType;
 		};
@@ -170,7 +171,9 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 					const { selection } = state;
 					if (!(selection instanceof NodeSelection) || selection.node.type.name !== this.name) return false;
 
-					return isLinkTag(selection.node.attrs.text) ? commands.openLinkDialog() : commands.openFileDialog();
+					if (isLinkTag(selection.node.attrs.text)) return commands.openLinkDialog();
+					if (isFileTag(selection.node.attrs.text)) return commands.openFileDialog();
+					return true;
 				},
 		};
 	},
@@ -200,7 +203,7 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 				key: new PluginKey("kirbytag"),
 				view: (view) => {
 					queueMicrotask(() => {
-						const transaction = tagsToNodes(view.state);
+						const transaction = tagsToNodes(view.state, this.options.tags);
 						if (transaction) {
 							view.dispatch(transaction.setMeta("addToHistory", false).setMeta("preventUpdate", true));
 						}
@@ -209,7 +212,7 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 				},
 				appendTransaction: (transactions, _, state) => {
 					if (!transactions.some((transaction) => transaction.docChanged)) return null;
-					return tidySpacesAfterMove(transactions[transactions.length - 1], state) ?? tagsToNodes(state);
+					return tidySpacesAfterMove(transactions[transactions.length - 1], state) ?? tagsToNodes(state, this.options.tags);
 				},
 			}),
 		];

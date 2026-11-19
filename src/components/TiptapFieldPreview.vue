@@ -11,14 +11,14 @@ import { getHTMLFromFragment, getSchema } from '@tiptap/core';
 import { Fragment, Node } from '@tiptap/pm/model';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { h, render, watchEffect } from 'vue';
-import { findKirbyTagRanges, isFileTag, isLinkTag } from '../utils/kirbyTags';
+import { findKirbyTagRanges, isFileTag, isLinkTag, tagName } from '../utils/kirbyTags';
 import { pill } from '../utils/pill';
 import Pill from './Pill.vue';
 import { compileRegistry, withRegistry } from '../utils/registry';
 import { coreButtons, coreExtensions } from '../utils/coreExtensions';
 import { tiptapContext } from '../utils/tiptapExports';
 
-const decorateKirbyTags = (html, visual = false) => {
+const decorateKirbyTags = (html, visual, tags) => {
 	const ranges = findKirbyTagRanges(html);
 	if (ranges.length === 0) return html;
 	let out = '';
@@ -26,7 +26,7 @@ const decorateKirbyTags = (html, visual = false) => {
 	for (const [start, end] of ranges) {
 		const tag = html.substring(start, end);
 		out += html.substring(cursor, start);
-		out += visual && (isFileTag(tag) || isLinkTag(tag)) && !tag.includes('<')
+		out += visual && (isFileTag(tag) || isLinkTag(tag) || tags.includes(tagName(tag))) && !tag.includes('<')
 			? `<span class="tiptap-kirbytag" data-kirbytag="${tag.replaceAll('"', '&quot;')}"></span>`
 			: `<span class="kirbytag">${tag}</span>`;
 		cursor = end;
@@ -93,15 +93,18 @@ export default {
 	},
 	computed: {
 		html() {
+			const visual = this.field.kirbytags === false;
+			const [kirbytag] = withRegistry([tiptapContext.extensions.kirbytag], compileRegistry().extensions, this.field.extensions);
+			const tags = kirbytag.options.tags ?? [];
 			let json;
 			try {
 				json = JSON.parse(this.value);
 			} catch {
 				// Markdown (format: markdown) or legacy plain-text value
-				return decorateKirbyTags(excerpt(this.value ?? ''), this.field.kirbytags === false);
+				return decorateKirbyTags(excerpt(this.value ?? ''), visual, tags);
 			}
 			try {
-				return decorateKirbyTags(renderLine(json, this.field.extensions), this.field.kirbytags === false);
+				return decorateKirbyTags(renderLine(json, this.field.extensions), visual, tags);
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.
 				return this.value;
