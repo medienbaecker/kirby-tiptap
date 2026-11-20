@@ -3,7 +3,8 @@
  *
  * Fetches KirbyTags that define a `dialog` key from a PHP API
  * endpoint and builds a dialog with tag-specific attribute fields
- * shown via `when` conditions.
+ * shown via `when` conditions. The tags in `pillTags` show as pills;
+ * clicking one opens the same dialog to edit it.
  *
  * Usage in blueprint:
  *   buttons:
@@ -19,8 +20,21 @@
 		shortcuts: [],
 	};
 
+	const pillTags = ["note"];
+
 	// Cache the tag schemas after first fetch
 	let tagSchemas = null;
+
+	async function loadTagSchemas() {
+		if (!tagSchemas) {
+			try {
+				tagSchemas = await window.panel.api.get("kirbytag-picker/tags");
+			} catch (error) {
+				console.warn("[kirbytag-picker] Failed to fetch tags:", error);
+			}
+		}
+		return tagSchemas;
+	}
 
 	function buildFields(schemas) {
 		const fields = {
@@ -65,21 +79,36 @@
 		return str;
 	}
 
+	function openPicker(value, submitButton, apply) {
+		window.panel.dialog.open({
+			component: "k-form-dialog",
+			props: {
+				fields: buildFields(tagSchemas),
+				value: value,
+				submitButton: submitButton,
+			},
+			on: {
+				submit: (values) => {
+					const tagName = values.tag;
+					if (!tagName || !values[tagName + "_value"]) return;
+
+					const tag = tagSchemas.find((t) => t.name === tagName);
+					apply(buildTagString(tag, values));
+					window.panel.dialog.close();
+				},
+			},
+		});
+	}
+
 	window.kirbyTiptap.registry.buttons.push({
 		name: "kirbytagPicker",
 		label: "Insert KirbyTag",
 		icon: "box",
 		command: async ({ editor }) => {
-			if (!tagSchemas) {
-				try {
-					tagSchemas = await window.panel.api.get("kirbytag-picker/tags");
-				} catch (error) {
-					console.warn("[kirbytag-picker] Failed to fetch tags:", error);
-					return;
-				}
-			}
+			const schemas = await loadTagSchemas();
+			if (!schemas) return;
 
-			if (tagSchemas.length === 0) {
+			if (schemas.length === 0) {
 				window.panel.dialog.open({
 					component: "k-text-dialog",
 					props: {
@@ -91,25 +120,54 @@
 				return;
 			}
 
-			const fields = buildFields(tagSchemas);
+			openPicker({ tag: schemas[0].name }, "Insert", (tagString) =>
+				editor.chain().focus().insertContent(tagString).run()
+			);
+		},
+	});
 
-			window.panel.dialog.open({
-				component: "k-form-dialog",
-				props: {
-					fields: fields,
-					value: { tag: tagSchemas[0].name },
-					submitButton: "Insert",
+	window.kirbyTiptap.registry.extensions.push({
+		name: "kirbytag",
+		create({ extensions, kirbytags }) {
+			return extensions.kirbytag.extend({
+				addOptions() {
+					return { ...this.parent?.(), tags: pillTags };
 				},
-				on: {
-					submit: (values) => {
-						const tagName = values.tag;
-						if (!tagName || !values[tagName + "_value"]) return;
 
-						const tag = tagSchemas.find((t) => t.name === tagName);
-						const str = buildTagString(tag, values);
-						editor.chain().focus().insertContent(str).run();
-						window.panel.dialog.close();
-					},
+				addCommands() {
+					const parent = this.parent?.();
+
+					return {
+						...parent,
+						editKirbytag: () => (props) => {
+							const { node, from } = props.state.selection;
+							const parsed = node?.type.name === "kirbytag" ? kirbytags.parse(node.attrs.text) : null;
+							if (!parsed || !pillTags.includes(parsed._type)) return parent.editKirbytag()(props);
+
+							loadTagSchemas().then((schemas) => {
+								const tag = schemas?.find((t) => t.name === parsed._type);
+								if (!tag) return;
+
+								const value = { tag: tag.name, [tag.name + "_value"]: parsed.value };
+								for (const attr of tag.attrs) {
+									value[tag.name + "_" + attr.name] = parsed[attr.name];
+								}
+
+								openPicker(value, "Save", (tagString) =>
+									props.editor
+										.chain()
+										.focus()
+										.command(({ tr }) => {
+											tr.setNodeMarkup(from, undefined, { text: tagString });
+											return true;
+										})
+										.run()
+								);
+							});
+
+							return true;
+						},
+					};
 				},
 			});
 		},
