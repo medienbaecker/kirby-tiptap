@@ -36,7 +36,7 @@ export default {
 	user-select: none;
 }
 
-.k-tiptap-pill[data-theme="negative"] {
+.k-tiptap-pill[data-theme] {
 	--pill-color-back: light-dark(var(--theme-color-300), var(--theme-color-850));
 	--pill-color-icon: var(--theme-color-icon);
 }
