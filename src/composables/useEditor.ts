@@ -10,7 +10,7 @@ import {
 import type { ModelItem } from "../utils/items";
 import { compileRegistry, withRegistry } from "../utils/registry";
 import { buttonRegistry } from "../utils/buttonRegistry";
-import { transformLinksToKirbyTags } from "../utils/pasteTransform";
+import { splitParagraphsAtBreakRuns, transformLinksToKirbyTags } from "../utils/pasteTransform";
 import { coreExtensions } from "../utils/coreExtensions";
 import { tiptapContext } from "../utils/tiptapExports";
 import type {
@@ -208,7 +208,8 @@ export function useEditor(
 				editorProps: {
 					handlePaste: eventHandlers.handlePaste,
 					handleDrop: eventHandlers.handleDrop,
-					transformPastedHTML: (html: string) => transformLinksToKirbyTags(html),
+					transformPastedHTML: (html: string) =>
+						transformLinksToKirbyTags(splitParagraphsAtBreakRuns(html)),
 				},
 				onCreate: ({ editor: editorInstance }) => {
 					editorInstance.view.dom.setAttribute(
