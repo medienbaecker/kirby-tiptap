@@ -1,4 +1,4 @@
-import { isFileTag, isLinkTag, parseKirbyTag, tagName } from "./kirbyTags";
+import { isFileTag, isLinkTag, parseKirbyTag } from "./kirbyTags";
 import { fileId, modelItem } from "./items";
 import type { ItemEndpoint } from "./items";
 import type { KirbytagsMap } from "../types";
@@ -51,7 +51,7 @@ export const target = (
  * Pill props, the full text when the pill shortens it (for the title) and the link of a visual KirbyTag
  */
 export const pill = (text: string, model: string, attributes?: KirbytagsMap) => {
-	const type = tagName(text);
+	const { _type: type, uuid = "", href = "", value = "", text: label } = parseKirbyTag(text, attributes);
 	const linked = target(text, model, attributes);
 	const item = linked ? modelItem(linked.endpoint, linked.id) : undefined;
 	const panelLink = item ? window.panel.url(item.link).toString() : undefined;
@@ -60,17 +60,14 @@ export const pill = (text: string, model: string, attributes?: KirbytagsMap) => 
 	let link: string | undefined;
 
 	if (isFileTag(text)) {
-		const { uuid: value = "" } = parseKirbyTag(text, attributes);
 		icon = linked ? "loader" : type;
-		full = item?.filename ?? value;
-		link = panelLink ?? webUrl(value);
+		full = item?.filename ?? uuid;
+		link = panelLink ?? webUrl(uuid);
 	} else if (isLinkTag(text)) {
-		const { href = "", text: label } = parseKirbyTag(text, attributes);
 		icon = linkIcon(type, href);
 		full = label || (item ? plain(item.text) : href);
 		link = panelLink ?? { email: `mailto:${href}`, tel: `tel:${href}` }[type] ?? webUrl(href);
 	} else {
-		const { value = "", text: label } = parseKirbyTag(text, attributes);
 		icon = "tag";
 		full = label || value;
 	}
