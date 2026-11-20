@@ -4,7 +4,8 @@
  * Fetches KirbyTags that define a `dialog` key from a PHP API
  * endpoint and builds a dialog with tag-specific attribute fields
  * shown via `when` conditions. The tags in `pillTags` show as pills;
- * clicking one opens the same dialog to edit it.
+ * clicking one opens the same dialog to edit it. Note pills take the
+ * theme and icon of their type.
  *
  * Usage in blueprint:
  *   buttons:
@@ -21,6 +22,12 @@
 	};
 
 	const pillTags = ["note"];
+
+	const noteTypes = {
+		info: { theme: "info", icon: "info" },
+		warning: { theme: "notice", icon: "alert" },
+		error: { theme: "negative", icon: "cancel" },
+	};
 
 	// Cache the tag schemas after first fetch
 	let tagSchemas = null;
@@ -128,8 +135,26 @@
 
 	window.kirbyTiptap.registry.extensions.push({
 		name: "kirbytag",
-		create({ extensions, kirbytags }) {
+		create({ tiptap, extensions, kirbytags, components }) {
+			const NoteView = {
+				extends: components.KirbytagView,
+				computed: {
+					tag() {
+						const tag = components.KirbytagView.computed.tag.call(this);
+						const parsed = kirbytags.parse(this.node.attrs.text);
+						if (parsed._type !== "note") return tag;
+
+						const { theme, icon } = noteTypes[parsed.type] ?? noteTypes.info;
+						return { ...tag, props: { ...tag.props, theme, image: { icon } } };
+					},
+				},
+			};
+
 			return extensions.kirbytag.extend({
+				addNodeView() {
+					return tiptap.vue3.VueNodeViewRenderer(NoteView);
+				},
+
 				addOptions() {
 					return { ...this.parent?.(), tags: pillTags };
 				},
