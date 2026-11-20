@@ -265,7 +265,16 @@ window.kirbyTiptap.registry.extensions.push({
 
 A pill is a `kirbytag` node with the tag in `attrs.text`. When two plugins change the same extension, the second gets the first one's version in `extensions`.
 
-To show other tags as pills, add them in `addOptions` (`{ ...this.parent?.(), tags: ["gist"] }`) and override the `editKirbytag` command to open your own dialog for them. [`kirbytag-picker`](extension-examples/kirbytag-picker) does both.
+To show other tags as pills, add them to the `tags` option and override the `editKirbytag` command to open your own dialog for them. Keep the tags of other extensions:
+
+```js
+addOptions() {
+	const parent = this.parent?.();
+	return { ...parent, tags: [...(parent?.tags ?? []), "gist"] };
+},
+```
+
+[`kirbytag-dialog`](extension-examples/kirbytag-dialog) builds a dialog from the attributes a tag registers in PHP. [`kirbytag-picker`](extension-examples/kirbytag-picker) builds its own.
 
 ### Options per field
 
@@ -278,6 +287,8 @@ text:
     wordCount:
       max: 500
 ```
+
+A `fields` map in the options becomes dialog fields like `links.fields`: Kirby resolves shorthands, translated labels and options. Field names come out lowercase.
 
 ### Commands
 

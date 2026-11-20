@@ -156,7 +156,8 @@
 				},
 
 				addOptions() {
-					return { ...this.parent?.(), tags: pillTags };
+					const parent = this.parent?.();
+					return { ...parent, tags: [...(parent?.tags ?? []), ...pillTags] };
 				},
 
 				addCommands() {
