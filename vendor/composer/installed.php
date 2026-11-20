@@ -1,8 +1,8 @@
 <?php return array(
     'root' => array(
         'name' => 'medienbaecker/kirby-tiptap',
-        'pretty_version' => '6.0.0-rc.11',
-        'version' => '6.0.0.0-RC11',
+        'pretty_version' => '6.0.0-rc.12',
+        'version' => '6.0.0.0-RC12',
         'reference' => null,
         'type' => 'kirby-plugin',
         'install_path' => __DIR__ . '/../../',
@@ -20,8 +20,8 @@
             'dev_requirement' => false,
         ),
         'medienbaecker/kirby-tiptap' => array(
-            'pretty_version' => '6.0.0-rc.11',
-            'version' => '6.0.0.0-RC11',
+            'pretty_version' => '6.0.0-rc.12',
+            'version' => '6.0.0.0-RC12',
             'reference' => null,
             'type' => 'kirby-plugin',
             'install_path' => __DIR__ . '/../../',
