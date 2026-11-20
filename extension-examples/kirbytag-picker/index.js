@@ -48,7 +48,7 @@
 			tag: {
 				type: "select",
 				label: "KirbyTag",
-				options: schemas.map((t) => ({ text: t.label, value: t.name })),
+				options: schemas.map((schema) => ({ text: schema.label, value: schema.name })),
 				required: true,
 			},
 		};
@@ -61,8 +61,8 @@
 				when: { tag: tag.name },
 			};
 
-			for (const attr of tag.attrs) {
-				const { name, ...fieldProps } = attr;
+			for (const attribute of tag.attrs) {
+				const { name, ...fieldProps } = attribute;
 				fields[tag.name + "_" + name] = {
 					type: "text",
 					when: { tag: tag.name },
@@ -77,9 +77,9 @@
 	function buildTagString(tag, values) {
 		let str = "(" + tag.name + ": " + values[tag.name + "_value"];
 
-		for (const attr of tag.attrs) {
-			const val = values[tag.name + "_" + attr.name];
-			if (val) str += " " + attr.name + ": " + val;
+		for (const attribute of tag.attrs) {
+			const value = values[tag.name + "_" + attribute.name];
+			if (value) str += " " + attribute.name + ": " + value;
 		}
 
 		str += ")";
@@ -99,7 +99,7 @@
 					const tagName = values.tag;
 					if (!tagName || !values[tagName + "_value"]) return;
 
-					const tag = tagSchemas.find((t) => t.name === tagName);
+					const tag = tagSchemas.find((schema) => schema.name === tagName);
 					apply(buildTagString(tag, values));
 					window.panel.dialog.close();
 				},
@@ -141,7 +141,7 @@
 				computed: {
 					tag() {
 						const tag = components.KirbytagView.computed.tag.call(this);
-						const parsed = kirbytags.parse(this.node.attrs.text);
+						const parsed = kirbytags.parse(this.node.attrs.text, this.extension.options.kirbytagAttributes);
 						if (parsed._type !== "note") return tag;
 
 						const { theme, icon } = noteTypes[parsed.type] ?? noteTypes.info;
@@ -165,17 +165,20 @@
 					return {
 						...parent,
 						editKirbytag: () => (props) => {
-							const { node, from } = props.state.selection;
-							const parsed = node?.type.name === "kirbytag" ? kirbytags.parse(node.attrs.text) : null;
+							const { node } = props.state.selection;
+							const parsed =
+								node?.type.name === "kirbytag"
+									? kirbytags.parse(node.attrs.text, this.options.kirbytagAttributes)
+									: null;
 							if (!parsed || !pillTags.includes(parsed._type)) return parent.editKirbytag()(props);
 
 							loadTagSchemas().then((schemas) => {
-								const tag = schemas?.find((t) => t.name === parsed._type);
+								const tag = schemas?.find((schema) => schema.name === parsed._type);
 								if (!tag) return;
 
 								const value = { tag: tag.name, [tag.name + "_value"]: parsed.value };
-								for (const attr of tag.attrs) {
-									value[tag.name + "_" + attr.name] = parsed[attr.name];
+								for (const attribute of tag.attrs) {
+									value[tag.name + "_" + attribute.name] = parsed[attribute.name];
 								}
 
 								openPicker(value, "Save", (tagString) =>
@@ -183,7 +186,8 @@
 										.chain()
 										.focus()
 										.command(({ tr }) => {
-											tr.setNodeMarkup(from, undefined, { text: tagString });
+											if (tr.selection.node !== node) return false;
+											tr.setNodeMarkup(tr.selection.from, undefined, { text: tagString });
 											return true;
 										})
 										.run()
