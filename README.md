@@ -58,9 +58,17 @@ With `inline: true` the field has no paragraphs and hides the block buttons. Ren
 
 ## KirbyTags as pills
 
-Image, file, video, link, email and tel tags show as pills, like in Kirby's link field. A pill turns red when its page or file is gone. Other tags, such as `(date: year)` or tags from your own plugins, stay text unless you list them:
+Image, file, video, link, email and tel tags show as pills, like in Kirby's link field. A pill turns red when its page or file is gone. Other tags, such as `(date: year)` or tags from your own plugins, stay text.
 
-```yaml
+<img src=".github/panel-pill-states.png" width="907" alt="Pills for a short URL, a long URL shortened to its host and last segment, an email address, a missing image in red and a phone number.">
+
+Click a file or link pill to edit it. Drag a pill to move it. Right-click it to open the link, or the page or file in the Panel. With the keyboard, select it with the arrow keys and press Enter.
+
+<img src=".github/panel-pill-selected.png" width="907" alt="The image pill selected, with an outline.">
+
+To show other tags as pills, list them:
+
+```yml
 text:
   type: tiptap
   extensions:
@@ -70,13 +78,7 @@ text:
         - years-since
 ```
 
-These pills show the tag's `text:` or its value. A click only selects them; an extension that overrides the `editKirbytag` command can open its own dialog.
-
-<img src=".github/panel-pill-states.png" width="907" alt="Pills for a short URL, a long URL shortened to its host and last segment, an email address, a missing image in red and a phone number.">
-
-Click a pill to edit it. Drag it to move it. Right-click it to open the link, or the page or file in the Panel. With the keyboard, select it with the arrow keys and press Enter.
-
-<img src=".github/panel-pill-selected.png" width="907" alt="The image pill selected, with an outline.">
+They show the tag's `text` attribute, or its value when there is none. A click selects them.
 
 To edit the tags as text, set `kirbytags: true` on the field, or `'medienbaecker.tiptap.kirbytags' => true` in the config. Cmd+Click on a tag then opens its page or file.
 
@@ -277,6 +279,8 @@ window.kirbyTiptap.registry.extensions.push({
 
 A pill is a `kirbytag` node with the tag in `attrs.text`. When two plugins change the same extension, the second gets the first one's version in `extensions`.
 
+To make other tags pills for every field, add them in `addOptions` (`{ ...this.parent?.(), tags: ["gist"] }`). To open your own dialog for them, override the `editKirbytag` command.
+
 ### Options per field
 
 Set options by extension name. The extension reads them from `this.options`:
@@ -295,5 +299,5 @@ text:
 | --- | --- |
 | `openLinkDialog()` | Edits the link tag under the cursor, or inserts one |
 | `openFileDialog()` | Edits the file tag under the cursor, or inserts one |
-| `editKirbytag()` | Edits the selected pill |
+| `editKirbytag()` | Opens the dialog of the selected file or link pill |
 | `uploadFiles(files?)` | Uploads files, or opens the file picker, and inserts the tags |

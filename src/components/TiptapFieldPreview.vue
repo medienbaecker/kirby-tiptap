@@ -11,7 +11,7 @@ import { getHTMLFromFragment, getSchema } from '@tiptap/core';
 import { Fragment, Node } from '@tiptap/pm/model';
 import FieldPreview from "@/mixins/forms/fieldPreview.js";
 import { h, render, watchEffect } from 'vue';
-import { findKirbyTagRanges, isFileTag, isLinkTag, tagName } from '../utils/kirbyTags';
+import { findKirbyTagRanges, isPillTag } from '../utils/kirbyTags';
 import { pill } from '../utils/pill';
 import Pill from './Pill.vue';
 import { compileRegistry, withRegistry } from '../utils/registry';
@@ -26,7 +26,7 @@ const decorateKirbyTags = (html, visual, tags) => {
 	for (const [start, end] of ranges) {
 		const tag = html.substring(start, end);
 		out += html.substring(cursor, start);
-		out += visual && (isFileTag(tag) || isLinkTag(tag) || tags.includes(tagName(tag))) && !tag.includes('<')
+		out += visual && isPillTag(tag, tags) && !tag.includes('<')
 			? `<span class="tiptap-kirbytag" data-kirbytag="${tag.replaceAll('"', '&quot;')}"></span>`
 			: `<span class="kirbytag">${tag}</span>`;
 		cursor = end;
@@ -34,27 +34,31 @@ const decorateKirbyTags = (html, visual, tags) => {
 	return out + html.substring(cursor);
 };
 
-// The registry doesn't change at runtime: one schema per set of field
-// options instead of per table cell.
-const schemas = new Map();
-const previewSchema = (options = {}) => {
+// The registry doesn't change at runtime: one schema and tag list per set
+// of field options instead of per table cell.
+const previews = new Map();
+const preview = (options = {}) => {
 	const key = JSON.stringify(options);
-	if (!schemas.has(key)) {
+	if (!previews.has(key)) {
 		const { extensions } = compileRegistry();
-		const { kirbytagRaw, rawSource, taskItem, taskList } = tiptapContext.extensions;
-		schemas.set(key, getSchema(withRegistry([
-			...coreExtensions(coreButtons),
-			taskList,
-			taskItem,
-			kirbytagRaw,
-			rawSource
-		], extensions, options)));
+		const { kirbytag, kirbytagRaw, rawSource, taskItem, taskList } = tiptapContext.extensions;
+		const [configuredKirbytag] = withRegistry([kirbytag], extensions, options);
+		previews.set(key, {
+			schema: getSchema(withRegistry([
+				...coreExtensions(coreButtons),
+				taskList,
+				taskItem,
+				kirbytagRaw,
+				rawSource
+			], extensions, options)),
+			tags: configuredKirbytag.options.tags ?? []
+		});
 	}
-	return schemas.get(key);
+	return previews.get(key);
 };
 
 const renderLine = (json, options) => {
-	const schema = previewSchema(options);
+	const { schema } = preview(options);
 	const inline = [];
 	Node.fromJSON(schema, json).descendants((node) => {
 		if (!node.isTextblock) return true;
@@ -94,8 +98,7 @@ export default {
 	computed: {
 		html() {
 			const visual = this.field.kirbytags === false;
-			const [kirbytag] = withRegistry([tiptapContext.extensions.kirbytag], compileRegistry().extensions, this.field.extensions);
-			const tags = kirbytag.options.tags ?? [];
+			const { tags } = preview(this.field.extensions);
 			let json;
 			try {
 				json = JSON.parse(this.value);

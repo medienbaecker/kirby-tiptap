@@ -7,7 +7,7 @@ import { VueNodeViewRenderer } from "@tiptap/vue-3";
 import type { NodeViewProps } from "@tiptap/vue-3";
 import type { Component } from "vue";
 import KirbytagView from "../components/KirbytagView.vue";
-import { findKirbyTagRanges, isFileTag, isLinkTag, tagName } from "../utils/kirbyTags";
+import { findKirbyTagRanges, isFileTag, isLinkTag, isPillTag } from "../utils/kirbyTags";
 import { seedModelItem } from "../utils/items";
 import { target } from "../utils/pill";
 import type { ModelItem } from "../utils/items";
@@ -29,7 +29,7 @@ const tagsToNodes = (state: EditorState, tags: string[] = []): Transaction | nul
 
 		for (const [start, end] of findKirbyTagRanges(node.text)) {
 			const text = node.text.slice(start, end);
-			if (isFileTag(text) || isLinkTag(text) || tags.includes(tagName(text)!)) {
+			if (isPillTag(text, tags)) {
 				replacements.push({ from: pos + start, to: pos + end, text, marks: node.marks });
 			}
 		}

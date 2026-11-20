@@ -51,7 +51,7 @@ export const target = (
  * Pill props, the full text when the pill shortens it (for the title) and the link of a visual KirbyTag
  */
 export const pill = (text: string, model: string, attributes?: KirbytagsMap) => {
-	const type = tagName(text)!;
+	const type = tagName(text);
 	const linked = target(text, model, attributes);
 	const item = linked ? modelItem(linked.endpoint, linked.id) : undefined;
 	const panelLink = item ? window.panel.url(item.link).toString() : undefined;

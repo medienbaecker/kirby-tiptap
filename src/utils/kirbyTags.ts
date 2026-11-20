@@ -47,8 +47,7 @@ export const parseKirbyTag = (
 	tagString: string,
 	tags?: KirbytagsMap
 ): ParsedKirbyTag => {
-	// Get tag type
-	const tagType = tagName(tagString) ?? "";
+	const tagType = tagName(tagString);
 	const result: ParsedKirbyTag = {
 		// Store the tag type in a property that won't be used as an attribute
 		_type: tagType,
@@ -483,11 +482,10 @@ export const findReferenceRange = (
 	tagString: string,
 	tags?: KirbytagsMap
 ): [number, number] | null => {
-	const typeMatch = tagString.match(/^\(([a-z0-9_-]+):\s*/i);
-	if (!typeMatch) return null;
+	const type = tagName(tagString);
+	if (!type) return null;
 
-	const type = typeMatch[1].toLowerCase();
-	const valueStart = typeMatch[0].length;
+	const valueStart = tagString.match(/^[^:]*:\s*/)![0].length;
 
 	const fieldPattern = new RegExp(fieldBoundarySource(type, tags?.[type]), "gi");
 	fieldPattern.lastIndex = valueStart;
@@ -537,10 +535,10 @@ export const checkKirbyTagReferences = async (
 };
 
 /**
- * The name of a KirbyTag, in the characters Kirby allows
+ * The lowercased name of a KirbyTag, empty for other text
  */
-export const tagName = (text: string): string | undefined =>
-	text.match(/^\(([a-z0-9_-]+):/i)?.[1].toLowerCase();
+export const tagName = (text: string): string =>
+	text.match(/^\(([a-z0-9_-]+):/i)?.[1].toLowerCase() ?? "";
 
 /**
  * Checks if text is a media KirbyTag (image, file, or video)
@@ -558,6 +556,12 @@ export const isLinkTag = (text: string | null): boolean => {
 	const lower = text.toLowerCase();
 	return LINK_TAG_PREFIXES.some((prefix) => lower.startsWith(prefix));
 };
+
+/**
+ * Checks if a KirbyTag shows as a pill: file and link tags, and the listed ones
+ */
+export const isPillTag = (text: string, tags: string[]): boolean =>
+	isFileTag(text) || isLinkTag(text) || tags.includes(tagName(text));
 
 /**
  * Replaces a tag the dialogs edited (unless nothing changed); in fields with pills the pill stays selected
