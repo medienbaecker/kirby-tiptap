@@ -561,7 +561,7 @@ export const isLinkTag = (text: string | null): boolean => {
  * Checks if a KirbyTag shows as a pill: file and link tags, and the listed ones
  */
 export const isPillTag = (text: string, tags: string[]): boolean =>
-	isFileTag(text) || isLinkTag(text) || tags.includes(tagName(text));
+	isFileTag(text) || isLinkTag(text) || tags.some((tag) => tag.toLowerCase() === tagName(text));
 
 /**
  * Replaces a tag the dialogs edited (unless nothing changed); in fields with pills the pill stays selected

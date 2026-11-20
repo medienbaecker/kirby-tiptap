@@ -98,16 +98,16 @@ export default {
 	computed: {
 		html() {
 			const visual = this.field.kirbytags === false;
-			const { tags } = preview(this.field.extensions);
 			let json;
 			try {
 				json = JSON.parse(this.value);
 			} catch {
 				// Markdown (format: markdown) or legacy plain-text value
-				return decorateKirbyTags(excerpt(this.value ?? ''), visual, tags);
+				json = null;
 			}
 			try {
-				return decorateKirbyTags(renderLine(json, this.field.extensions), visual, tags);
+				const { tags } = preview(this.field.extensions);
+				return decorateKirbyTags(json ? renderLine(json, this.field.extensions) : excerpt(this.value ?? ''), visual, tags);
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.
 				return this.value;
