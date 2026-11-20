@@ -10,7 +10,7 @@ import {
 	processKirbyTagApi,
 	replaceTag,
 } from "../utils/kirbyTags";
-import { buildDialogFields, processFieldValues } from "../utils/dialogFields";
+import { processFieldValues } from "../utils/dialogFields";
 import { buildUploadOptions } from "../utils/upload";
 import type { EndpointsConfig, FilesConfig, KirbytagsMap, ParsedKirbyTag, DialogFieldConfig, UploadsConfig } from "../types";
 
@@ -168,7 +168,7 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 	}
 
 	const { _type, uuid, href, value: tagValue, ...attributes } = initial;
-	const fields = buildDialogFields({}, files?.fields as Record<string, DialogFieldConfig>);
+	const fields = { ...(files?.fields as Record<string, DialogFieldConfig>) };
 
 	editor.view.dom.blur();
 

@@ -5,6 +5,7 @@ namespace Medienbaecker\Tiptap;
 use Kirby\Blueprint\Blueprint;
 use Kirby\Exception\InvalidArgumentException;
 use Kirby\Form\Field\StringField;
+use Kirby\Form\Form;
 use Kirby\Form\Mixin;
 use Kirby\Panel\Collector\FilesCollector;
 use Kirby\Reflection\Attributes\Prop;
@@ -53,6 +54,25 @@ class TiptapField extends StringField
 		return Field::buttons($this->buttons);
 	}
 
+	/**
+	 * Resolves blueprint fields for a dialog the way Kirby's own dialogs do:
+	 * shorthands, translated labels and options
+	 */
+	protected function dialogFields(array $fields): array
+	{
+		$form = new Form(
+			fields: Blueprint::fieldsProps($fields),
+			model:  $this->model()
+		);
+
+		return $form->fields()->toProps(defaults: true);
+	}
+
+	public function extensions(): array|null
+	{
+		return $this->extensions === null ? null : $this->withDialogFields($this->extensions);
+	}
+
 	public function fill(mixed $value): static
 	{
 		return parent::fill(
@@ -69,7 +89,7 @@ class TiptapField extends StringField
 		}
 
 		if (isset($files['fields']) === true && is_array($files['fields']) === true) {
-			$files['fields'] = Blueprint::fieldsProps($files['fields']);
+			$files['fields'] = $this->dialogFields($files['fields']);
 		}
 
 		return $files;
@@ -127,7 +147,7 @@ class TiptapField extends StringField
 		$links = $this->links ?? [];
 
 		if (isset($links['fields']) === true && is_array($links['fields']) === true) {
-			$links['fields'] = Blueprint::fieldsProps($links['fields']);
+			$links['fields'] = $this->dialogFields($links['fields']);
 		}
 
 		return $links;
@@ -167,5 +187,21 @@ class TiptapField extends StringField
 	protected function validations(): array
 	{
 		return Validations::rules();
+	}
+
+	/**
+	 * Resolves every `fields` map in extension options as dialog fields
+	 */
+	protected function withDialogFields(array $options): array
+	{
+		foreach ($options as $key => $value) {
+			if (is_array($value) === true) {
+				$options[$key] = $key === 'fields' && array_is_list($value) === false
+					? $this->dialogFields($value)
+					: $this->withDialogFields($value);
+			}
+		}
+
+		return $options;
 	}
 }

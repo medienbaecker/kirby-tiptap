@@ -3,7 +3,7 @@ import type { Editor } from "@tiptap/core";
 import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag } from "../utils/kirbyTags";
 import type { TagEditingContext } from "../utils/kirbyTags";
 import { validateInput, generateLinkTag } from "../utils/inputValidation";
-import { buildDialogFields, processFieldValues } from "../utils/dialogFields";
+import { processFieldValues } from "../utils/dialogFields";
 import type { DialogFieldConfig, EndpointsConfig, KirbytagsMap, LinksConfig } from "../types";
 
 interface LinkDialogOptions {
@@ -35,10 +35,11 @@ const buildFields = (links: LinksConfig = {}): Record<string, DialogFieldConfig>
 		href.options = links.options;
 	}
 
-	return buildDialogFields(
-		{ href, text: { label: panel.t("link.text"), type: "text" } },
-		links.fields as Record<string, DialogFieldConfig>
-	);
+	return {
+		href,
+		text: { label: panel.t("link.text"), type: "text" },
+		...(links.fields as Record<string, DialogFieldConfig>),
+	};
 };
 
 const initialValues = (
