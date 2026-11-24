@@ -1,6 +1,7 @@
 import { shallowRef, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
 import { Editor } from "@tiptap/vue-3";
-import type { AnyExtension } from "@tiptap/core";
+import { Extension, type AnyExtension } from "@tiptap/core";
+import { NodeSelection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
 import {
@@ -200,6 +201,22 @@ export function useEditor(
 
 			if (isMarkdown) {
 				builtIns.push(kirbytagRaw, rawSource);
+			}
+
+			if (props.inline) {
+				builtIns.push(
+					Extension.create({
+						name: "inlineEnter",
+						priority: 101,
+						addKeyboardShortcuts() {
+							return {
+								Enter: ({ editor }) =>
+									!(editor.state.selection instanceof NodeSelection) &&
+									editor.commands.setHardBreak(),
+							};
+						},
+					})
+				);
 			}
 
 			const newEditor = new Editor({
