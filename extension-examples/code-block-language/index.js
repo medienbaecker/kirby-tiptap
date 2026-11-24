@@ -91,7 +91,7 @@
 		buttons: () => [
 			{
 				name: "codeBlock",
-				label: "Code Block",
+				label: "Code block",
 				icon: "code-block",
 				shortcut: "Mod-Alt-c",
 				command: ({ editor }) => editor.chain().focus().toggleCodeBlock().run(),
