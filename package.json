@@ -8,7 +8,7 @@
 	},
 	"devDependencies": {
 		"kirby-types": "^2.0.0-beta.2",
-		"kirbyup": "^4.0.0-beta.1",
+		"kirbyup": "^4.0.0",
 		"typescript": "^5.9.0"
 	},
 	"dependencies": {
