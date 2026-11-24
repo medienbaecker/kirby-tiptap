@@ -167,8 +167,9 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 		return {
 			editKirbytag:
 				() =>
-				({ state, commands }) => {
+				({ editor, state, commands }) => {
 					const { selection } = state;
+					if (!editor.isEditable) return false;
 					if (!(selection instanceof NodeSelection) || selection.node.type.name !== this.name) return false;
 
 					if (isLinkTag(selection.node.attrs.text)) return commands.openLinkDialog();
