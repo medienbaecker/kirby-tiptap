@@ -1,7 +1,6 @@
 import { shallowRef, computed, onUnmounted, type Ref, type ComputedRef } from "vue";
 import { Editor } from "@tiptap/vue-3";
-import { Extension, type AnyExtension } from "@tiptap/core";
-import { NodeSelection } from "@tiptap/pm/state";
+import type { AnyExtension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
 import {
@@ -27,6 +26,7 @@ import type {
 const {
 	fileDialog,
 	highlights,
+	inlineEnter,
 	insertionGuards,
 	invisibleCharacters,
 	kirbytag,
@@ -204,19 +204,7 @@ export function useEditor(
 			}
 
 			if (props.inline) {
-				builtIns.push(
-					Extension.create({
-						name: "inlineEnter",
-						priority: 101,
-						addKeyboardShortcuts() {
-							return {
-								Enter: ({ editor }) =>
-									!(editor.state.selection instanceof NodeSelection) &&
-									editor.commands.setHardBreak(),
-							};
-						},
-					})
-				);
+				builtIns.push(inlineEnter);
 			}
 
 			const newEditor = new Editor({

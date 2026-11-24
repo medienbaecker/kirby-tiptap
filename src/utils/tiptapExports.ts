@@ -21,6 +21,7 @@ import { Dropcursor, Gapcursor, UndoRedo } from "@tiptap/extensions";
 import { Blockquote } from "../extensions/blockquote";
 import { FileDialog } from "../extensions/fileDialog";
 import { Highlights } from "../extensions/highlights";
+import { InlineEnter } from "../extensions/inlineEnter";
 import { InsertionGuards } from "../extensions/insertionGuards";
 import { Kirbytag } from "../extensions/kirbytag";
 import KirbytagView from "../components/KirbytagView.vue";
@@ -55,6 +56,7 @@ export const tiptapContext: TiptapContext = {
 			Heading,
 			Highlights,
 			HorizontalRule,
+			InlineEnter,
 			InsertionGuards,
 			InvisibleCharacters,
 			Italic,
