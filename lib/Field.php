@@ -34,7 +34,14 @@ class Field
 			return [];
 		}
 
-		return is_array($buttons) ? $buttons : static::DEFAULT_BUTTONS;
+		if (is_array($buttons) === false) {
+			return static::DEFAULT_BUTTONS;
+		}
+
+		return array_map(
+			fn ($button) => $button === 'headings' ? ['headings' => [1, 2, 3]] : $button,
+			$buttons
+		);
 	}
 
 	/**
