@@ -10,7 +10,7 @@ A rich text field for [Kirby](https://getkirby.com), built on [Tiptap](https://t
 composer require medienbaecker/kirby-tiptap
 ```
 
-Requires Kirby 6+ and PHP 8.3+. For Kirby 5, use version 1 (`composer require medienbaecker/kirby-tiptap:^1`). Without Composer, copy this repository to `site/plugins/kirby-tiptap`.
+Requires Kirby 6+ and PHP 8.3+. For Kirby 5, use version 1 (`composer require medienbaecker/kirby-tiptap:^1`). Without Composer, copy this repository to `site/plugins/tiptap`.
 
 ## Quick start
 
