@@ -19,8 +19,7 @@ Kirby::plugin('my/kirbytag-picker', [
 				]
 			],
 			'html' => function ($tag) {
-				$type = $tag->type ?? 'info';
-				return '<div class="note note--' . $type . '">' . $tag->value . '</div>';
+				return '<span class="note note--' . ($tag->attrs['type'] ?? 'info') . '">' . $tag->value . '</span>';
 			}
 		]
 	],
