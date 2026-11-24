@@ -66,7 +66,6 @@ const openDialog = (editor: Editor, options: LinkDialogOptions): void => {
 	const context = getTagEditingContext(editor, isLinkTag);
 	const fields = buildFields(options.links);
 
-	editor.view.dom.blur();
 
 	panel.dialog.open({
 		component: "tiptap-link-dialog",

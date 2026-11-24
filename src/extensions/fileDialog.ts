@@ -170,7 +170,6 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 	const { _type, uuid, href, value: tagValue, ...attributes } = initial;
 	const fields = { ...(files?.fields as Record<string, DialogFieldConfig>) };
 
-	editor.view.dom.blur();
 
 	panel.dialog.open({
 		component: "tiptap-file-dialog",
