@@ -72,6 +72,10 @@ export default {
 			isEmpty.value = editor.value.isEmpty
 		})
 
+		watch(() => props.disabled, (disabled) => {
+			editor.value?.setEditable(!disabled, false)
+		})
+
 		onMounted(() => {
 			const eventHandlers = {
 				handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url'], instance.proxy.$panel, props.endpoints, props.uploads),

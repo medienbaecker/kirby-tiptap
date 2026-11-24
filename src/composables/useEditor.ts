@@ -43,6 +43,7 @@ interface EditorProps {
 	format?: "json" | "markdown";
 	kirbytagAttributes?: KirbytagsMap;
 	spellcheck?: boolean;
+	disabled?: boolean;
 	endpoints?: EndpointsConfig;
 	uploads?: UploadsConfig | false;
 	files?: FilesConfig;
@@ -203,6 +204,7 @@ export function useEditor(
 
 			const newEditor = new Editor({
 				content: initialContent,
+				editable: !props.disabled,
 				...(isMarkdown ? { contentType: "markdown" as const } : {}),
 				extensions: withRegistry(builtIns, registryExtensions, props.extensions),
 				editorProps: {
