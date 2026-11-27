@@ -124,6 +124,7 @@ export default {
 	width: 100%;
 	min-height: var(--tiptap-size);
 	line-height: var(--leading-normal);
+	--tiptap-selection: color-mix(in srgb, var(--color-focus) 30%, transparent);
 }
 
 /* Sizes to be configured with the size option */
@@ -359,9 +360,12 @@ export default {
 	outline: var(--outline);
 }
 
+.tiptap ::selection {
+	background: var(--tiptap-selection);
+}
+
 .ProseMirror-focused:not(.ProseMirror-hideselection) .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill {
-	--pill-color-back: Highlight;
-	color: HighlightText;
+	--pill-color-back: var(--tiptap-selection);
 }
 
 /* Override Kirby's pointer-events: none on block contents when Cmd/Ctrl is held (multiselect) */
