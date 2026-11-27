@@ -110,6 +110,7 @@ export default {
 
 /* Grid container for editor and placeholder */
 .k-tiptap-editor-container {
+	position: relative;
 	display: grid;
 	grid-template-areas: "content";
 }
@@ -355,17 +356,32 @@ export default {
 	cursor: pointer;
 }
 
-.ProseMirror-focused.ProseMirror-hideselection .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill,
-:root:has(.k-dialog) .ProseMirror-hideselection .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill {
-	outline: var(--outline);
-}
-
 .tiptap ::selection {
 	background: var(--tiptap-selection);
 }
 
-.ProseMirror-focused:not(.ProseMirror-hideselection) .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill {
+.tiptap:not(.ProseMirror-focused) ::selection {
+	background: transparent;
+}
+
+.tiptap .tiptap-selection:not(.tiptap-kirbytag) {
+	background: var(--tiptap-selection);
+}
+
+.tiptap-kirbytag:is(.ProseMirror-selectednode, .tiptap-selection) .k-tiptap-pill {
 	--pill-color-back: var(--tiptap-selection);
+}
+
+.tiptap-kirbytag:is(.ProseMirror-selectednode, .tiptap-selection) .k-tiptap-pill-start::after {
+	content: '';
+	position: absolute;
+	top: -2px;
+	inset-inline-start: 0;
+	inline-size: 1lh;
+	block-size: 1lh;
+	background: var(--tiptap-selection);
+	border-start-start-radius: var(--rounded-sm);
+	border-end-start-radius: var(--rounded-sm);
 }
 
 /* Override Kirby's pointer-events: none on block contents when Cmd/Ctrl is held (multiselect) */
@@ -379,26 +395,14 @@ export default {
 
 .tiptap-pill-caret {
 	display: none;
-	position: relative;
-	height: 1lh;
-	vertical-align: top;
-
-	&::after {
-		content: '';
-		position: absolute;
-		inset-block: 0;
-		inset-inline-start: 0;
-		border-inline-start: 1px solid currentColor;
-		animation: tiptap-pill-caret-blink 1.1s steps(2, start) infinite;
-	}
-
-	&[data-side=before]::after {
-		inset-inline-start: -1px;
-	}
+	position: absolute;
+	border-inline-start: 1px solid currentColor;
+	pointer-events: none;
+	animation: tiptap-pill-caret-blink 1.1s steps(2, start) infinite;
 }
 
-.ProseMirror-focused .tiptap-pill-caret {
-	display: inline-block;
+.ProseMirror-focused + .tiptap-pill-caret:not([hidden]) {
+	display: block;
 }
 
 @keyframes tiptap-pill-caret-blink {

@@ -1,9 +1,8 @@
 import { Node, mergeAttributes } from "@tiptap/core";
-import { NodeSelection, Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
+import { NodeSelection, Plugin, PluginKey, Selection, TextSelection } from "@tiptap/pm/state";
 import { ReplaceStep } from "@tiptap/pm/transform";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { Mark, Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { EditorView } from "@tiptap/pm/view";
 import { VueNodeViewRenderer } from "@tiptap/vue-3";
 import type { NodeViewProps } from "@tiptap/vue-3";
@@ -122,11 +121,21 @@ const caretBesidePill = (state: EditorState): { position: number; side: "before"
 	return null;
 };
 
-const pillCaret = (side: "before" | "after") => () => {
-	const caret = document.createElement("span");
-	caret.className = "tiptap-pill-caret";
-	caret.dataset.side = side;
-	return caret;
+const drawPillCaret = (view: EditorView, caret: HTMLElement) => {
+	const beside = caretBesidePill(view.state);
+	const pill = beside && view.nodeDOM(beside.side === "before" ? beside.position : beside.position - 1);
+	caret.hidden = !(pill instanceof HTMLElement);
+	if (!(pill instanceof HTMLElement) || !beside) return;
+
+	const rects = pill.getClientRects();
+	const rect = beside.side === "before" ? rects[0] : rects[rects.length - 1];
+	const container = caret.offsetParent?.getBoundingClientRect();
+	if (!rect || !container) return;
+
+	const lineHeight = parseFloat(getComputedStyle(view.dom).lineHeight);
+	caret.style.left = `${(beside.side === "before" ? rect.left - 1 : rect.right) - container.left}px`;
+	caret.style.top = `${rect.top + rect.height / 2 - lineHeight / 2 - container.top}px`;
+	caret.style.height = `${lineHeight}px`;
 };
 
 const scrollEdge = 24;
@@ -141,25 +150,48 @@ const scrollContainer = (element: HTMLElement): Element => {
 const visibleArea = (container: Element) =>
 	container === document.scrollingElement ? { top: 0, bottom: window.innerHeight } : container.getBoundingClientRect();
 
+const gapAround = (view: EditorView, position: number, top: number): { above: number; below: number } | null => {
+	const { doc } = view.state;
+	const $position = doc.resolve(position);
+	const block = view.nodeDOM($position.before());
+	if (!(block instanceof HTMLElement)) return null;
+
+	const { top: blockTop, bottom: blockBottom } = block.getBoundingClientRect();
+	if (top >= blockTop && top <= blockBottom) return null;
+	if (top < blockTop) {
+		return { above: Selection.findFrom(doc.resolve($position.before()), -1, true)?.head ?? $position.start(), below: $position.start() };
+	}
+	return { above: $position.end(), below: Selection.findFrom(doc.resolve($position.after()), 1, true)?.head ?? $position.end() };
+};
+
 // https://discuss.prosemirror.net/t/cursor-appears-in-the-wrong-position-in-chrome-98/4409
 const selectByDragging = (view: EditorView, event: MouseEvent): boolean => {
-	if (!view.editable || event.button !== 0 || event.detail > 1 || event.shiftKey || event.altKey || event.metaKey || event.ctrlKey) return false;
-	if ((event.target as Element).closest("[contenteditable]")?.getAttribute("contenteditable") === "false") return false;
+	if (!view.editable || event.button !== 0 || event.detail > 1 || event.altKey || event.metaKey || event.ctrlKey) return false;
+	const extend = event.shiftKey && view.hasFocus() && view.state.selection instanceof TextSelection;
+	const pill = extend ? (event.target as Element).closest(".tiptap-kirbytag") : null;
+	if (!pill && (event.target as Element).closest("[contenteditable]")?.getAttribute("contenteditable") === "false") return false;
 
-	const anchor = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
-	if (anchor === undefined || !view.state.doc.resolve(anchor).parent.inlineContent) return false;
+	const pillPosition = pill ? view.posAtDOM(pill, 0) : null;
+	const clicked = pillPosition === null
+		? view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos
+		: pillPosition < view.state.selection.anchor ? pillPosition : pillPosition + 1;
+	if (clicked === undefined || !view.state.doc.resolve(clicked).parent.inlineContent) return false;
 
+	const gap = extend ? null : gapAround(view, clicked, event.clientY);
 	const { empty, from, to } = view.state.selection;
-	if (!empty && anchor > from && anchor < to) return false;
+	if (!extend && !gap && !empty && clicked > from && clicked < to) return false;
+
+	const anchor = extend ? view.state.selection.anchor : clicked;
 
 	const container = scrollContainer(view.dom);
 	let pointer = { left: event.clientX, top: event.clientY };
 	let frame = 0;
 
 	const select = (head: number) => {
+		const from = gap && head !== clicked ? (head > gap.below ? gap.below : gap.above) : anchor;
 		const { selection } = view.state;
-		if (selection.anchor === anchor && selection.head === head) return;
-		view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, anchor, head)));
+		if (selection.anchor === from && selection.head === head) return;
+		view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, from, head)));
 	};
 	const follow = () => {
 		const { top, bottom } = visibleArea(container);
@@ -182,7 +214,7 @@ const selectByDragging = (view: EditorView, event: MouseEvent): boolean => {
 
 	event.preventDefault();
 	view.focus();
-	select(anchor);
+	select(clicked);
 	window.addEventListener("mousemove", move);
 	window.addEventListener("mouseup", up);
 	return true;
@@ -285,7 +317,21 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 							view.dispatch(transaction.setMeta("addToHistory", false).setMeta("preventUpdate", true));
 						}
 					});
-					return {};
+
+					const caret = document.createElement("div");
+					caret.className = "tiptap-pill-caret";
+					caret.hidden = true;
+					view.dom.after(caret);
+					const resize = new ResizeObserver(() => drawPillCaret(view, caret));
+					resize.observe(view.dom);
+
+					return {
+						update: () => drawPillCaret(view, caret),
+						destroy: () => {
+							resize.disconnect();
+							caret.remove();
+						},
+					};
 				},
 				appendTransaction: (transactions, _, state) => {
 					if (!transactions.some((transaction) => transaction.docChanged)) return null;
@@ -293,12 +339,6 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 				},
 				props: {
 					attributes: (state): Record<string, string> => (caretBesidePill(state) ? { "data-pill-caret": "" } : {}),
-					decorations: (state) => {
-						const caret = caretBesidePill(state);
-						if (!caret) return null;
-						const widget = Decoration.widget(caret.position, pillCaret(caret.side), { key: `pill-caret-${caret.side}`, side: caret.side === "before" ? 1 : -1 });
-						return DecorationSet.create(state.doc, [widget]);
-					},
 					handleDOMEvents: {
 						mousedown: selectByDragging,
 					},

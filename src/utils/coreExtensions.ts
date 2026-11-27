@@ -18,6 +18,7 @@ const {
 	listKeymap,
 	orderedList,
 	paragraph,
+	selection,
 	strike,
 	text,
 	undoRedo,
@@ -41,6 +42,7 @@ const definitions: [AnyExtension, string?][] = [
 	[listKeymap],
 	[orderedList, "orderedList"],
 	[paragraph],
+	[selection.configure({ className: "tiptap-selection" })],
 	[strike, "strike"],
 	[text],
 ];

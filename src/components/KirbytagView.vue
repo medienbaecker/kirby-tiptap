@@ -24,7 +24,8 @@ export default {
 	},
 
 	methods: {
-		select() {
+		select(event) {
+			if (event.shiftKey) return;
 			this.editor.chain().setNodeSelection(this.getPos()).focus(undefined, { scrollIntoView: false }).run();
 		},
 

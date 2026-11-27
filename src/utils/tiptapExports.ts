@@ -17,7 +17,7 @@ import { Strike } from "@tiptap/extension-strike";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import { Text } from "@tiptap/extension-text";
-import { Dropcursor, Gapcursor, UndoRedo } from "@tiptap/extensions";
+import { Dropcursor, Gapcursor, Selection, UndoRedo } from "@tiptap/extensions";
 import { Blockquote } from "../extensions/blockquote";
 import { FileDialog } from "../extensions/fileDialog";
 import { Highlights } from "../extensions/highlights";
@@ -69,6 +69,7 @@ export const tiptapContext: TiptapContext = {
 			Paragraph,
 			RawMarkdownTable,
 			Replacements,
+			Selection,
 			Strike,
 			TaskItem,
 			TaskList,
