@@ -208,7 +208,8 @@ export const getTagEditingContext = (
 	const selectedText = state.doc.textBetween(from, to).trim();
 
 	// Selection is a complete tag
-	if (matches(selectedText) && selectedText.endsWith(")")) {
+	const [tag, ...others] = findKirbyTagRanges(selectedText);
+	if (matches(selectedText) && !others.length && tag?.[0] === 0 && tag[1] === selectedText.length) {
 		return { isEditing: true, tagText: selectedText, replaceRange: { from, to } };
 	}
 
