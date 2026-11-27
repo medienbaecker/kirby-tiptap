@@ -1,5 +1,5 @@
 <template>
-	<TiptapInput ref="input" :value="textValue" :disabled="disabled" v-bind="fieldConfig" class="k-tiptap-input"
+	<TiptapInput ref="input" v-bind="fieldConfig" :value="textValue" :disabled="disabled" class="k-tiptap-input"
 		@input="update({ text: $event.json })" />
 </template>
 
