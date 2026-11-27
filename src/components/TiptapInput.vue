@@ -387,13 +387,13 @@ export default {
 		content: '';
 		position: absolute;
 		inset-block: 0;
-		inset-inline-start: 2px;
+		inset-inline-start: 0;
 		border-inline-start: 1px solid currentColor;
 		animation: tiptap-pill-caret-blink 1.1s steps(2, start) infinite;
 	}
 
 	&[data-side=before]::after {
-		inset-inline-start: -3px;
+		inset-inline-start: -1px;
 	}
 }
 
