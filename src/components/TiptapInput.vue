@@ -30,7 +30,9 @@ export default {
 			props,
 			emit,
 			lastEmittedJson,
-			() => instance.proxy.$panel.content?.version?.('latest')?.[props.name]
+			() => props.endpoints?.field === `${props.endpoints?.model}/fields/${props.name}`
+				? instance.proxy.$panel.content.version('latest')[props.name]
+				: undefined
 		)
 
 		const { editor, allowedButtons, createEditor } = useEditor(
