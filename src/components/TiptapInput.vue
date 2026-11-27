@@ -354,14 +354,53 @@ export default {
 	cursor: pointer;
 }
 
-.ProseMirror-focused .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill,
-:root:has(.k-dialog) .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill {
+.ProseMirror-focused.ProseMirror-hideselection .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill,
+:root:has(.k-dialog) .ProseMirror-hideselection .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill {
 	outline: var(--outline);
+}
+
+.ProseMirror-focused:not(.ProseMirror-hideselection) .tiptap-kirbytag.ProseMirror-selectednode .k-tiptap-pill {
+	--pill-color-back: Highlight;
+	color: HighlightText;
 }
 
 /* Override Kirby's pointer-events: none on block contents when Cmd/Ctrl is held (multiselect) */
 .k-blocks-list[data-multi-select-key="true"] .kirbytag-ref {
 	pointer-events: all;
+}
+
+.tiptap[data-pill-caret] {
+	caret-color: transparent;
+}
+
+.tiptap-pill-caret {
+	display: none;
+	position: relative;
+	height: 1lh;
+	vertical-align: top;
+
+	&::after {
+		content: '';
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: 2px;
+		border-inline-start: 1px solid currentColor;
+		animation: tiptap-pill-caret-blink 1.1s steps(2, start) infinite;
+	}
+
+	&[data-side=before]::after {
+		inset-inline-start: -3px;
+	}
+}
+
+.ProseMirror-focused .tiptap-pill-caret {
+	display: inline-block;
+}
+
+@keyframes tiptap-pill-caret-blink {
+	to {
+		visibility: hidden;
+	}
 }
 
 /* Gap cursor */

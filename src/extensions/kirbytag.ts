@@ -3,6 +3,7 @@ import { NodeSelection, Plugin, PluginKey, TextSelection } from "@tiptap/pm/stat
 import { ReplaceStep } from "@tiptap/pm/transform";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { Mark, Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { EditorView } from "@tiptap/pm/view";
 import { VueNodeViewRenderer } from "@tiptap/vue-3";
 import type { NodeViewProps } from "@tiptap/vue-3";
@@ -113,23 +114,68 @@ const tidySpacesAfterMove = (transaction: Transaction, state: EditorState): Tran
 	return tidy.setSelection(NodeSelection.create(tidy.doc, tidy.mapping.map(selection.from)));
 };
 
+const caretBesidePill = (state: EditorState): { position: number; side: "before" | "after" } | null => {
+	const { empty, $from } = state.selection;
+	if (!empty) return null;
+	if ($from.nodeAfter?.type.name === "kirbytag") return { position: $from.pos, side: "before" };
+	if ($from.nodeBefore?.type.name === "kirbytag") return { position: $from.pos, side: "after" };
+	return null;
+};
+
+const pillCaret = (side: "before" | "after") => () => {
+	const caret = document.createElement("span");
+	caret.className = "tiptap-pill-caret";
+	caret.dataset.side = side;
+	return caret;
+};
+
+const scrollEdge = 24;
+
+const scrollContainer = (element: HTMLElement): Element => {
+	for (let parent: HTMLElement | null = element; parent; parent = parent.parentElement) {
+		if (/auto|scroll/.test(getComputedStyle(parent).overflowY) && parent.scrollHeight > parent.clientHeight) return parent;
+	}
+	return document.scrollingElement as Element;
+};
+
+const visibleArea = (container: Element) =>
+	container === document.scrollingElement ? { top: 0, bottom: window.innerHeight } : container.getBoundingClientRect();
+
 // https://discuss.prosemirror.net/t/cursor-appears-in-the-wrong-position-in-chrome-98/4409
-const extendSelectionWhileDragging = (view: EditorView, event: MouseEvent): boolean => {
-	if (event.button !== 0 || event.shiftKey || event.detail > 1 || (event.target as Element).closest(".tiptap-kirbytag")) return false;
+const selectByDragging = (view: EditorView, event: MouseEvent): boolean => {
+	if (!view.editable || event.button !== 0 || event.detail > 1 || event.shiftKey || event.altKey || event.metaKey || event.ctrlKey) return false;
+	if ((event.target as Element).closest("[contenteditable]")?.getAttribute("contenteditable") === "false") return false;
 
 	const anchor = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
-	if (anchor === undefined || view.state.doc.resolve(anchor).nodeBefore?.type.name !== "kirbytag") return false;
+	if (anchor === undefined || !view.state.doc.resolve(anchor).parent.inlineContent) return false;
+
+	const { empty, from, to } = view.state.selection;
+	if (!empty && anchor > from && anchor < to) return false;
+
+	const container = scrollContainer(view.dom);
+	let pointer = { left: event.clientX, top: event.clientY };
+	let frame = 0;
 
 	const select = (head: number) => {
 		const { selection } = view.state;
 		if (selection.anchor === anchor && selection.head === head) return;
 		view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, anchor, head)));
 	};
-	const move = (moveEvent: MouseEvent) => {
-		const head = view.posAtCoords({ left: moveEvent.clientX, top: moveEvent.clientY })?.pos;
+	const follow = () => {
+		const { top, bottom } = visibleArea(container);
+		const overshoot = Math.min(pointer.top - top - scrollEdge, 0) || Math.max(pointer.top - bottom + scrollEdge, 0);
+		container.scrollTop += Math.max(-20, Math.min(20, overshoot));
+		const head = view.posAtCoords({ left: pointer.left, top: Math.min(Math.max(pointer.top, top + 1), bottom - 1) })?.pos;
 		if (head !== undefined) select(head);
+		frame = overshoot ? requestAnimationFrame(follow) : 0;
+	};
+	const move = (moveEvent: MouseEvent) => {
+		if (moveEvent.buttons === 0) return up();
+		pointer = { left: moveEvent.clientX, top: moveEvent.clientY };
+		if (!frame) follow();
 	};
 	const up = () => {
+		cancelAnimationFrame(frame);
 		window.removeEventListener("mousemove", move);
 		window.removeEventListener("mouseup", up);
 	};
@@ -246,8 +292,15 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 					return tidySpacesAfterMove(transactions[transactions.length - 1], state) ?? tagsToNodes(state, this.options.tags);
 				},
 				props: {
+					attributes: (state): Record<string, string> => (caretBesidePill(state) ? { "data-pill-caret": "" } : {}),
+					decorations: (state) => {
+						const caret = caretBesidePill(state);
+						if (!caret) return null;
+						const widget = Decoration.widget(caret.position, pillCaret(caret.side), { key: `pill-caret-${caret.side}`, side: caret.side === "before" ? 1 : -1 });
+						return DecorationSet.create(state.doc, [widget]);
+					},
 					handleDOMEvents: {
-						mousedown: extendSelectionWhileDragging,
+						mousedown: selectByDragging,
 					},
 				},
 			}),
