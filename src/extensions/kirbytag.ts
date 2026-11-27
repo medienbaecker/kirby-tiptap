@@ -132,25 +132,27 @@ const textRects = (element: HTMLElement): DOMRect[] => {
 	return rects;
 };
 
-const drawPillCaret = (view: EditorView, caret: HTMLElement) => {
+const drawPillCaret = (view: EditorView, caret: HTMLElement): HTMLElement | null => {
 	const beside = caretBesidePill(view.state);
 	const pill = beside && view.nodeDOM(beside.side === "before" ? beside.position : beside.position - 1);
 	caret.hidden = !(pill instanceof HTMLElement);
-	if (!(pill instanceof HTMLElement) || !beside) return;
+	if (!(pill instanceof HTMLElement) || !beside) return null;
 
 	const pillRects = pill.getClientRects();
 	const letters = textRects(pill);
 	const edge = beside.side === "before" ? pillRects[0] : pillRects[pillRects.length - 1];
 	const line = (beside.side === "before" ? letters[0] : letters[letters.length - 1]) ?? edge;
 	const container = caret.offsetParent?.getBoundingClientRect();
-	if (!edge || !line || !container) return;
+	if (!edge || !line || !container) return pill;
 
-	const left = `${(beside.side === "before" ? edge.left - 1 : edge.right) - container.left}px`;
+	const atLeft = (beside.side === "before") !== (getComputedStyle(pill).direction === "rtl");
+	const left = `${(atLeft ? edge.left - 1 : edge.right) - container.left}px`;
 	const top = `${line.top - container.top}px`;
 	if (caret.style.left !== left || caret.style.top !== top) caret.getAnimations().forEach((animation) => (animation.currentTime = 0));
 	caret.style.left = left;
 	caret.style.top = top;
 	caret.style.height = `${line.height}px`;
+	return pill;
 };
 
 const scrollEdge = 24;
@@ -179,10 +181,13 @@ const gapAround = (view: EditorView, position: number, top: number): { above: nu
 	return { above: $position.end(), below: Selection.findFrom(doc.resolve($position.after()), 1, true)?.head ?? $position.end() };
 };
 
+export const extendsSelection = (view: EditorView, event: MouseEvent): boolean =>
+	event.shiftKey && view.hasFocus() && view.state.selection.$anchor.parent.inlineContent;
+
 // https://discuss.prosemirror.net/t/cursor-appears-in-the-wrong-position-in-chrome-98/4409
 const selectByDragging = (view: EditorView, event: MouseEvent): boolean => {
 	if (!view.editable || event.button !== 0 || event.detail > 1 || event.altKey || event.metaKey || event.ctrlKey) return false;
-	const extend = event.shiftKey && view.hasFocus() && view.state.selection instanceof TextSelection;
+	const extend = extendsSelection(view, event);
 	const pill = extend ? (event.target as Element).closest(".tiptap-kirbytag") : null;
 	if (!pill && (event.target as Element).closest("[contenteditable]")?.getAttribute("contenteditable") === "false") return false;
 
@@ -201,12 +206,14 @@ const selectByDragging = (view: EditorView, event: MouseEvent): boolean => {
 	const container = scrollContainer(view.dom);
 	let pointer = { left: event.clientX, top: event.clientY };
 	let frame = 0;
+	let moved = false;
 
 	const select = (head: number) => {
+		moved ||= head !== clicked;
+		const { doc, selection } = view.state;
 		const from = gap && head !== clicked ? (head > gap.below ? gap.below : gap.above) : anchor;
-		const { selection } = view.state;
-		if (selection.anchor === from && selection.head === head) return;
-		view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, from, head)));
+		const next = TextSelection.between(doc.resolve(from), doc.resolve(head));
+		if (!selection.eq(next)) view.dispatch(view.state.tr.setSelection(next));
 	};
 	const follow = () => {
 		const { top, bottom } = visibleArea(container);
@@ -221,10 +228,11 @@ const selectByDragging = (view: EditorView, event: MouseEvent): boolean => {
 		pointer = { left: moveEvent.clientX, top: moveEvent.clientY };
 		if (!frame) follow();
 	};
-	const up = () => {
+	const up = (upEvent?: MouseEvent) => {
 		cancelAnimationFrame(frame);
 		window.removeEventListener("mousemove", move);
 		window.removeEventListener("mouseup", up);
+		if (upEvent && !moved && !extend) view.someProp("handleClick", (handleClick) => handleClick(view, clicked, upEvent));
 	};
 
 	event.preventDefault();
@@ -337,11 +345,19 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 					caret.className = "tiptap-pill-caret";
 					caret.hidden = true;
 					view.dom.after(caret);
-					const resize = new ResizeObserver(() => drawPillCaret(view, caret));
+					let pill: HTMLElement | null = null;
+					const draw = () => {
+						const next = drawPillCaret(view, caret);
+						if (next === pill) return;
+						if (pill) resize.unobserve(pill);
+						if (next) resize.observe(next);
+						pill = next;
+					};
+					const resize = new ResizeObserver(draw);
 					resize.observe(view.dom);
 
 					return {
-						update: () => drawPillCaret(view, caret),
+						update: draw,
 						destroy: () => {
 							resize.disconnect();
 							caret.remove();

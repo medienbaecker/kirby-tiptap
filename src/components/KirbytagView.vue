@@ -8,6 +8,7 @@
 
 <script>
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3';
+import { extendsSelection } from '../extensions/kirbytag';
 import { pill } from '../utils/pill';
 import Pill from './Pill.vue';
 
@@ -25,7 +26,7 @@ export default {
 
 	methods: {
 		select(event) {
-			if (event.shiftKey) return;
+			if (extendsSelection(this.editor.view, event)) return;
 			this.editor.chain().setNodeSelection(this.getPos()).focus(undefined, { scrollIntoView: false }).run();
 		},
 
