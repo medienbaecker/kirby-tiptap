@@ -36,13 +36,14 @@ const decorateKirbyTags = (html, visual, tags) => {
 
 // The registry doesn't change at runtime: one schema and tag list per field
 // instead of per table cell.
-const previews = new WeakMap();
+const previews = new Map();
 const preview = (field) => {
-	if (!previews.has(field)) {
+	const key = JSON.stringify(field);
+	if (!previews.has(key)) {
 		const { extensions } = compileRegistry(field);
 		const { kirbytag, kirbytagRaw, rawSource, taskItem, taskList } = tiptapContext.extensions;
 		const [configuredKirbytag] = withRegistry([kirbytag], extensions, field.extensions);
-		previews.set(field, {
+		previews.set(key, {
 			schema: getSchema(withRegistry([
 				...coreExtensions(coreButtons),
 				taskList,
@@ -53,7 +54,7 @@ const preview = (field) => {
 			tags: configuredKirbytag.options.tags ?? []
 		});
 	}
-	return previews.get(field);
+	return previews.get(key);
 };
 
 const renderLine = (json, field) => {

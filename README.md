@@ -241,7 +241,7 @@ window.kirbyTiptap.registry.extensions.push({
 | --- | --- |
 | `tiptap` | `core`: `Extension`, `Node`, `Mark`, `mergeAttributes`. `vue3`: `VueNodeViewRenderer`, `NodeViewWrapper` |
 | `pm` | `state`: `Plugin`, `PluginKey`, `NodeSelection`, `TextSelection`. `view`: `Decoration`, `DecorationSet` |
-| `field` | The field's props, such as `name`, `buttons` and `extensions` |
+| `field` | The field's props, such as `name`, `buttons` and `extensions`. In a pages or files section, the column's options; in a table block, empty |
 | `extensions` | The built-in extensions by name, e.g. `kirbytag`, `bold`, `paragraph` |
 | `components` | `KirbytagView`, the pill. `this.tag.item` is the page or file it shows; its default slot adds to the end of the label |
 | `kirbytags` | `parse(text)` reads a tag, `target(text, model)` finds its page or file |
