@@ -349,17 +349,19 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 					const draw = () => {
 						const next = drawPillCaret(view, caret);
 						if (next === pill) return;
-						if (pill) resize.unobserve(pill);
-						if (next) resize.observe(next);
 						pill = next;
+						pillChanges.disconnect();
+						if (pill) pillChanges.observe(pill, { subtree: true, childList: true, characterData: true, attributes: true });
 					};
 					const resize = new ResizeObserver(draw);
+					const pillChanges = new MutationObserver(() => drawPillCaret(view, caret));
 					resize.observe(view.dom);
 
 					return {
 						update: draw,
 						destroy: () => {
 							resize.disconnect();
+							pillChanges.disconnect();
 							caret.remove();
 						},
 					};
