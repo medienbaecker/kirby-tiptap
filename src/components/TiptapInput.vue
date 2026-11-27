@@ -398,7 +398,7 @@ export default {
 	position: absolute;
 	border-inline-start: 1px solid currentColor;
 	pointer-events: none;
-	animation: tiptap-pill-caret-blink 1.1s steps(2, start) infinite;
+	animation: tiptap-pill-caret-blink 1s step-end infinite;
 }
 
 .ProseMirror-focused + .tiptap-pill-caret:not([hidden]) {
@@ -406,7 +406,7 @@ export default {
 }
 
 @keyframes tiptap-pill-caret-blink {
-	to {
+	50% {
 		visibility: hidden;
 	}
 }

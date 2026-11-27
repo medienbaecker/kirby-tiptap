@@ -121,21 +121,36 @@ const caretBesidePill = (state: EditorState): { position: number; side: "before"
 	return null;
 };
 
+const textRects = (element: HTMLElement): DOMRect[] => {
+	const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+	const rects: DOMRect[] = [];
+	for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+		const range = document.createRange();
+		range.selectNodeContents(text);
+		rects.push(...[...range.getClientRects()].filter((rect) => rect.width > 0));
+	}
+	return rects;
+};
+
 const drawPillCaret = (view: EditorView, caret: HTMLElement) => {
 	const beside = caretBesidePill(view.state);
 	const pill = beside && view.nodeDOM(beside.side === "before" ? beside.position : beside.position - 1);
 	caret.hidden = !(pill instanceof HTMLElement);
 	if (!(pill instanceof HTMLElement) || !beside) return;
 
-	const rects = pill.getClientRects();
-	const rect = beside.side === "before" ? rects[0] : rects[rects.length - 1];
+	const pillRects = pill.getClientRects();
+	const letters = textRects(pill);
+	const edge = beside.side === "before" ? pillRects[0] : pillRects[pillRects.length - 1];
+	const line = (beside.side === "before" ? letters[0] : letters[letters.length - 1]) ?? edge;
 	const container = caret.offsetParent?.getBoundingClientRect();
-	if (!rect || !container) return;
+	if (!edge || !line || !container) return;
 
-	const lineHeight = parseFloat(getComputedStyle(view.dom).lineHeight);
-	caret.style.left = `${(beside.side === "before" ? rect.left - 1 : rect.right) - container.left}px`;
-	caret.style.top = `${rect.top + rect.height / 2 - lineHeight / 2 - container.top}px`;
-	caret.style.height = `${lineHeight}px`;
+	const left = `${(beside.side === "before" ? edge.left - 1 : edge.right) - container.left}px`;
+	const top = `${line.top - container.top}px`;
+	if (caret.style.left !== left || caret.style.top !== top) caret.getAnimations().forEach((animation) => (animation.currentTime = 0));
+	caret.style.left = left;
+	caret.style.top = top;
+	caret.style.height = `${line.height}px`;
 };
 
 const scrollEdge = 24;
