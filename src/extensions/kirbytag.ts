@@ -3,6 +3,7 @@ import { NodeSelection, Plugin, PluginKey, Selection, TextSelection } from "@tip
 import { ReplaceStep } from "@tiptap/pm/transform";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { Mark, Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { EditorView } from "@tiptap/pm/view";
 import { VueNodeViewRenderer } from "@tiptap/vue-3";
 import type { NodeViewProps } from "@tiptap/vue-3";
@@ -372,6 +373,15 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 				},
 				props: {
 					attributes: (state): Record<string, string> => (caretBesidePill(state) ? { "data-pill-caret": "" } : {}),
+					decorations: (state) => {
+						const { empty, from, to } = state.selection;
+						if (empty) return null;
+						const pills: Decoration[] = [];
+						state.doc.nodesBetween(from, to, (node, position) => {
+							if (node.type.name === this.name && position >= from && position + node.nodeSize <= to) pills.push(Decoration.node(position, position + node.nodeSize, { class: "tiptap-kirbytag-in-selection" }));
+						});
+						return DecorationSet.create(state.doc, pills);
+					},
 					handleDOMEvents: {
 						mousedown: selectByDragging,
 					},

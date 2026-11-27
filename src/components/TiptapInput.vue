@@ -368,11 +368,11 @@ export default {
 	background: var(--tiptap-selection);
 }
 
-.tiptap-kirbytag:is(.ProseMirror-selectednode, .tiptap-selection) .k-tiptap-pill {
+.tiptap-kirbytag-in-selection .k-tiptap-pill {
 	--pill-color-back: var(--tiptap-selection);
 }
 
-.tiptap-kirbytag:is(.ProseMirror-selectednode, .tiptap-selection) .k-tiptap-pill-start::after {
+.tiptap-kirbytag-in-selection .k-tiptap-pill-start::after {
 	content: '';
 	position: absolute;
 	top: -2px;
