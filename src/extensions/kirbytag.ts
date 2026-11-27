@@ -1,8 +1,9 @@
 import { Node, mergeAttributes } from "@tiptap/core";
-import { NodeSelection, Plugin, PluginKey } from "@tiptap/pm/state";
+import { NodeSelection, Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { ReplaceStep } from "@tiptap/pm/transform";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { Mark, Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { EditorView } from "@tiptap/pm/view";
 import { VueNodeViewRenderer } from "@tiptap/vue-3";
 import type { NodeViewProps } from "@tiptap/vue-3";
 import type { Component } from "vue";
@@ -112,6 +113,35 @@ const tidySpacesAfterMove = (transaction: Transaction, state: EditorState): Tran
 	return tidy.setSelection(NodeSelection.create(tidy.doc, tidy.mapping.map(selection.from)));
 };
 
+// https://discuss.prosemirror.net/t/cursor-appears-in-the-wrong-position-in-chrome-98/4409
+const extendSelectionWhileDragging = (view: EditorView, event: MouseEvent): boolean => {
+	if (event.button !== 0 || event.shiftKey || event.detail > 1 || (event.target as Element).closest(".tiptap-kirbytag")) return false;
+
+	const anchor = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
+	if (anchor === undefined || view.state.doc.resolve(anchor).nodeBefore?.type.name !== "kirbytag") return false;
+
+	const select = (head: number) => {
+		const { selection } = view.state;
+		if (selection.anchor === anchor && selection.head === head) return;
+		view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, anchor, head)));
+	};
+	const move = (moveEvent: MouseEvent) => {
+		const head = view.posAtCoords({ left: moveEvent.clientX, top: moveEvent.clientY })?.pos;
+		if (head !== undefined) select(head);
+	};
+	const up = () => {
+		window.removeEventListener("mousemove", move);
+		window.removeEventListener("mouseup", up);
+	};
+
+	event.preventDefault();
+	view.focus();
+	select(anchor);
+	window.addEventListener("mousemove", move);
+	window.addEventListener("mouseup", up);
+	return true;
+};
+
 declare module "@tiptap/core" {
 	interface Commands<ReturnType> {
 		kirbytag: {
@@ -214,6 +244,11 @@ export const Kirbytag = Node.create<KirbytagOptions>({
 				appendTransaction: (transactions, _, state) => {
 					if (!transactions.some((transaction) => transaction.docChanged)) return null;
 					return tidySpacesAfterMove(transactions[transactions.length - 1], state) ?? tagsToNodes(state, this.options.tags);
+				},
+				props: {
+					handleDOMEvents: {
+						mousedown: extendSelectionWhileDragging,
+					},
 				},
 			}),
 		];
