@@ -16,11 +16,8 @@ import { tiptapContext } from "../utils/tiptapExports";
 import type {
 	TiptapDocument,
 	ButtonItem,
-	EndpointsConfig,
 	KirbytagsMap,
-	UploadsConfig,
-	FilesConfig,
-	LinksConfig,
+	RegistryField,
 } from "../types";
 
 const {
@@ -38,20 +35,15 @@ const {
 	taskList,
 } = tiptapContext.extensions;
 
-interface EditorProps {
+interface EditorProps extends RegistryField {
 	buttons: ButtonItem[];
 	inline?: boolean;
 	format?: "json" | "markdown";
 	kirbytagAttributes?: KirbytagsMap;
 	spellcheck?: boolean;
 	disabled?: boolean;
-	endpoints?: EndpointsConfig;
-	uploads?: UploadsConfig | false;
-	files?: FilesConfig;
-	links?: LinksConfig;
 	kirbytags?: boolean;
 	kirbytagItems?: Record<string, ModelItem>;
-	extensions?: Record<string, Record<string, unknown>>;
 }
 
 interface EventHandlers {
@@ -135,12 +127,7 @@ export function useEditor(
 	) => {
 		try {
 			const { extensions: registryExtensions, buttons: registryButtons } =
-				compileRegistry({
-					endpoints: props.endpoints,
-					files: props.files,
-					links: props.links,
-					uploads: props.uploads,
-				});
+				compileRegistry(props);
 			if (registryButtons.length > 0) {
 				buttonRegistry.registerRegistryButtons(registryButtons);
 			}

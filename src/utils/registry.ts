@@ -8,7 +8,7 @@ interface CompileResult {
 	buttons: RegistryButton[];
 }
 
-export function compileRegistry(field?: RegistryField): CompileResult {
+export function compileRegistry(field: RegistryField): CompileResult {
 	const registry = window.kirbyTiptap?.registry;
 	if (!registry) {
 		return { extensions: [], buttons: [] };
@@ -88,7 +88,7 @@ function compileExtensions(
 	entries: RegistryExtension[],
 	extensions: AnyExtension[],
 	buttons: RegistryButton[],
-	field?: RegistryField,
+	field: RegistryField,
 ): void {
 	const available = { ...tiptapContext.extensions };
 

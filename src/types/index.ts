@@ -175,9 +175,11 @@ export interface RegistryExtension {
 
 export interface RegistryField {
 	endpoints?: EndpointsConfig
+	extensions?: Record<string, Record<string, unknown>>
 	files?: FilesConfig
 	links?: LinksConfig
 	uploads?: UploadsConfig | false
+	[key: string]: unknown
 }
 
 export interface TiptapContext {

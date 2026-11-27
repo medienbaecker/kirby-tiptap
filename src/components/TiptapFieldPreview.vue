@@ -34,31 +34,30 @@ const decorateKirbyTags = (html, visual, tags) => {
 	return out + html.substring(cursor);
 };
 
-// The registry doesn't change at runtime: one schema and tag list per set
-// of field options instead of per table cell.
-const previews = new Map();
-const preview = (options = {}) => {
-	const key = JSON.stringify(options);
-	if (!previews.has(key)) {
-		const { extensions } = compileRegistry();
+// The registry doesn't change at runtime: one schema and tag list per field
+// instead of per table cell.
+const previews = new WeakMap();
+const preview = (field) => {
+	if (!previews.has(field)) {
+		const { extensions } = compileRegistry(field);
 		const { kirbytag, kirbytagRaw, rawSource, taskItem, taskList } = tiptapContext.extensions;
-		const [configuredKirbytag] = withRegistry([kirbytag], extensions, options);
-		previews.set(key, {
+		const [configuredKirbytag] = withRegistry([kirbytag], extensions, field.extensions);
+		previews.set(field, {
 			schema: getSchema(withRegistry([
 				...coreExtensions(coreButtons),
 				taskList,
 				taskItem,
 				kirbytagRaw,
 				rawSource
-			], extensions, options)),
+			], extensions, field.extensions)),
 			tags: configuredKirbytag.options.tags ?? []
 		});
 	}
-	return previews.get(key);
+	return previews.get(field);
 };
 
-const renderLine = (json, options) => {
-	const { schema } = preview(options);
+const renderLine = (json, field) => {
+	const { schema } = preview(field);
 	const inline = [];
 	Node.fromJSON(schema, json).descendants((node) => {
 		if (!node.isTextblock) return true;
@@ -106,8 +105,8 @@ export default {
 				json = null;
 			}
 			try {
-				const { tags } = preview(this.field.extensions);
-				return decorateKirbyTags(json ? renderLine(json, this.field.extensions) : excerpt(this.value ?? ''), visual, tags);
+				const { tags } = preview(this.field);
+				return decorateKirbyTags(json ? renderLine(json, this.field) : excerpt(this.value ?? ''), visual, tags);
 			} catch {
 				// Unknown node or broken extension — show raw value, don't crash the table.
 				return this.value;
