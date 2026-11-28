@@ -1,7 +1,9 @@
 <template>
 	<k-dialog v-bind="$props" class="tiptap-file-dialog" v-on="dropListeners" @cancel="$emit('cancel')"
 		@submit="submit">
-		<k-dialog-search v-if="hasSearch" :value="query" @search="query = $event" />
+		<header v-if="hasSearch" class="k-model-picker-dialog-header">
+			<k-dialog-search :value="query" class="k-model-picker-dialog-search" @search="query = $event" />
+		</header>
 
 		<k-collection :empty="{
 			icon: 'image',
