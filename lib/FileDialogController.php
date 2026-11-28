@@ -29,18 +29,20 @@ class FileDialogController extends FilePickerDialogController
 	{
 		$editing = $this->request->get('editing') === 'true';
 		$field   = $this->request->get('field');
+		$values  = $this->request->get('values', '{}');
 		$props   = parent::props();
 		$id      = $props['value'][0] ?? null;
 		$file    = $id ? $this->find($id) : null;
 
 		return [
 			...$props,
-			'component'    => 'tiptap-file-dialog',
-			'fields'       => $this->fields,
-			'file'         => $file ? $this->item($file) : null,
-			'payload'      => ['editing' => $editing, 'field' => $field],
-			'submitButton' => $this->i18n($editing ? 'change' : 'insert'),
-			'tags'         => Field::kirbytagAttributes($this->kirby),
+			'component'     => 'tiptap-file-dialog',
+			'fields'        => $this->fields,
+			'file'          => $file ? $this->item($file) : null,
+			'initialValues' => json_decode($values, true) ?: [],
+			'payload'       => ['editing' => $editing, 'field' => $field, 'values' => $values],
+			'submitButton'  => $this->i18n($editing ? 'change' : 'insert'),
+			'tags'          => Field::kirbytagAttributes($this->kirby),
 		];
 	}
 }

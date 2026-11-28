@@ -203,11 +203,9 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 			editing: context.isEditing,
 			field: endpoints.field,
 			value,
+			values: JSON.stringify(initialValues),
 		},
 		on: {
-			open: () => {
-				panel.dialog.props.initialValues = initialValues;
-			},
 			cancel: () => {
 				cancelled = true;
 				restoreSelection();
