@@ -22,7 +22,7 @@
 		</k-collection>
 
 		<!-- Form fields section -->
-		<k-dialog-fields v-if="hasFields" :fields="fieldsWithTag" :value="{ ...fieldValues, tag }" @input="input" />
+		<k-dialog-fields v-if="hasFields" :fields="fieldsForTag" :value="fieldValues" @input="fieldValues = $event" />
 
 		<template v-if="removable" #footer>
 			<DialogFooterWithRemove :submit-button="submitButton" @cancel="$emit('cancel')" @remove="$emit('remove')" />
@@ -34,7 +34,7 @@
 import Dialog from "@/mixins/dialog.js";
 import Search from "@/mixins/search.js";
 import DialogFooterWithRemove from "./DialogFooterWithRemove.vue";
-import { visibleValues, withTagField } from "../../utils/dialogFields";
+import { fieldsForTag, valuesForTag } from "../../utils/dialogFields";
 import { tagName } from "../../utils/kirbyTags";
 
 export default {
@@ -78,6 +78,7 @@ export default {
 			type: String,
 			default: "medium"
 		},
+		tags: Object,
 		value: {
 			type: Array,
 			default: () => []
@@ -111,8 +112,8 @@ export default {
 		dropListeners() {
 			return this.uploads ? { drop: this.emitDrop } : {};
 		},
-		fieldsWithTag() {
-			return withTagField(this.fields);
+		fieldsForTag() {
+			return fieldsForTag(this.fields, this.tag, this.tags);
 		},
 		hasFields() {
 			return this.$helper.object.length(this.fields) > 0;
@@ -167,9 +168,6 @@ export default {
 				this.$panel.dialog.isLoading = false;
 			}
 		},
-		input({ tag, ...values }) {
-			this.fieldValues = values;
-		},
 		emitDrop(files) {
 			this.$emit("drop", files);
 		},
@@ -188,7 +186,7 @@ export default {
 			this.$emit(
 				"submit",
 				selectedFiles,
-				visibleValues(this.fields, this.fieldValues, this.tag, this.$helper.field.isVisible)
+				valuesForTag(this.fieldValues, this.tag, this.tags)
 			);
 		},
 		async search() {

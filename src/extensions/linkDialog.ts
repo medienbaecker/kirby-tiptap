@@ -74,6 +74,7 @@ const openDialog = (editor: Editor, options: LinkDialogOptions): void => {
 			value: processFieldValues(initialValues(context, options), fields),
 			submitButton: panel.t(context.isEditing ? "change" : "insert"),
 			removable: context.isEditing,
+			tags: options.kirbytagAttributes,
 		},
 		on: {
 			cancel: () => {

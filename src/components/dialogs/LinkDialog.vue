@@ -1,9 +1,9 @@
 <template>
 	<k-dialog v-bind="$props" class="tiptap-link-dialog" @cancel="$emit('cancel')" @submit="submit">
 		<k-dialog-fields
-			:fields="fieldsWithTag"
-			:value="{ ...values, tag }"
-			@input="input"
+			:fields="fieldsForTag"
+			:value="values"
+			@input="values = $event"
 			@submit="submit"
 		/>
 		<template v-if="removable" #footer>
@@ -16,7 +16,7 @@
 import Dialog from "@/mixins/dialog.js";
 import { props as FieldsProps } from "@/components/Dialogs/Elements/Fields.vue";
 import DialogFooterWithRemove from "./DialogFooterWithRemove.vue";
-import { visibleValues, withTagField } from "../../utils/dialogFields";
+import { fieldsForTag, valuesForTag } from "../../utils/dialogFields";
 import { splitHref } from "../../utils/inputValidation";
 
 export default {
@@ -37,7 +37,8 @@ export default {
 		removable: {
 			type: Boolean,
 			default: false
-		}
+		},
+		tags: Object
 	},
 	emits: ["cancel", "input", "submit", "remove"],
 	data() {
@@ -46,19 +47,18 @@ export default {
 		};
 	},
 	computed: {
-		fieldsWithTag() {
-			return withTagField(this.fields);
+		fieldsForTag() {
+			const { href, ...attributes } = this.fields;
+			return { href, ...fieldsForTag(attributes, this.tag, this.tags) };
 		},
 		tag() {
 			return splitHref(this.values.href ?? "").type;
 		}
 	},
 	methods: {
-		input({ tag, ...values }) {
-			this.values = values;
-		},
 		submit() {
-			this.$emit("submit", visibleValues(this.fields, this.values, this.tag, this.$helper.field.isVisible));
+			const { href, ...attributes } = this.values;
+			this.$emit("submit", { href, ...valuesForTag(attributes, this.tag, this.tags) });
 		}
 	}
 };

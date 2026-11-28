@@ -207,6 +207,7 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 			fields,
 			initialFieldValues,
 			initialTag: initial._type,
+			tags: kirbytagAttributes,
 			submitButton: panel.t(context.isEditing ? "change" : "insert"),
 			uploads: options.uploads,
 		},

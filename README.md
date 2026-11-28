@@ -76,7 +76,7 @@ The link dialog picks the right tag: `link`, `email`, `file` or `tel`. The file 
 
 Add your own fields to the dialogs. Their names must be attributes of the tag, such as `alt`, `caption` or `class`.
 
-Each tag takes its own attributes: only images have `alt`, and a phone link has no `target`. The dialogs hand Kirby's `when` the tag they write, as `tag`: `image`, `video` or `file` in the file dialog, `link`, `email` or `tel` in the link dialog. A field `when` hides is not written.
+Each tag takes its own attributes: only images have `alt`, and a phone link has no `target`. A field the tag can't hold is disabled and not written, so picking a PDF disables `alt`. Attributes that plugins add to a tag count too.
 
 A `tiptap` field in the file dialog writes inline Markdown, for a caption. The link dialog can't use one: Kirby escapes link attributes. A value Kirby would read back differently, such as a parenthesis without its partner, marks its field as invalid.
 
@@ -95,12 +95,11 @@ links:
         border: Border
         shadow: Shadow
 files:
+  query: page.images
   fields:
     caption:
       label: Caption
       type: textarea
-      when:
-        tag: image
 ```
 
 ## Drag, drop and paste

@@ -1,4 +1,4 @@
-import type { DialogFieldConfig, EndpointsConfig } from "../types";
+import type { DialogFieldConfig, EndpointsConfig, KirbytagsMap } from "../types";
 import { getFieldApiPath } from "./kirbyTags";
 
 /**
@@ -122,26 +122,31 @@ export const openOnce = async (editor: object, open: () => Promise<void>): Promi
 	}
 };
 
-/**
- * The dialog's fields plus the tag it writes, as a hidden value: a
- * blueprint field shows for some tags only with Kirby's `when: { tag: image }`
- */
-export const withTagField = (
-	fields: Record<string, DialogFieldConfig>
-): Record<string, DialogFieldConfig> => ({ ...fields, tag: { type: "hidden" } });
+const takes = (name: string, tag: string, tags?: KirbytagsMap): boolean =>
+	!tag || !tags || (Object.prototype.hasOwnProperty.call(tags, tag) && tags[tag].includes(name));
 
 /**
- * The values of the fields `when` shows for the tag. Kirby hides the
- * others but still submits them, and the tag couldn't read them
+ * Disables the fields the tag can't hold, such as `alt` once a PDF is
+ * picked: Kirby would read them as part of the tag's value
  */
-export const visibleValues = (
+export const fieldsForTag = (
 	fields: Record<string, DialogFieldConfig>,
+	tag: string,
+	tags?: KirbytagsMap
+): Record<string, DialogFieldConfig> =>
+	Object.fromEntries(
+		Object.entries(fields).map(([name, field]) => [
+			name,
+			takes(name, tag, tags) ? field : { ...field, disabled: true },
+		])
+	);
+
+/**
+ * The values of the fields the tag can hold
+ */
+export const valuesForTag = (
 	values: Record<string, unknown>,
 	tag: string,
-	isVisible: (field: DialogFieldConfig, values: Record<string, unknown>) => boolean
+	tags?: KirbytagsMap
 ): Record<string, unknown> =>
-	Object.fromEntries(
-		Object.entries(values).filter(
-			([name]) => name !== "tag" && (!fields[name] || isVisible(fields[name], { ...values, tag }))
-		)
-	);
+	Object.fromEntries(Object.entries(values).filter(([name]) => takes(name, tag, tags)));
