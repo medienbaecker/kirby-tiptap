@@ -13,10 +13,6 @@ import type { Panel } from "kirby-types";
 const escapeRegex = (value: string): string =>
 	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// Kirby reads unescaped parens as the tag boundary
-export const escapeParens = (value: string): string =>
-	value.replace(/[()]/g, "\\$&");
-
 // Writer stores /@/page/<uuid>, but only the scheme form resolves inline:
 // the (link:) tag gates on Uuid::is(), which does not match the permalink path
 const PERMALINK = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?@\/(page|file)\//i;
@@ -296,49 +292,36 @@ export const findParentWithClass = (
 	return null;
 };
 
-// Regex for balanced parentheses parsing in KirbyTags
-// Group 1: tag starts like "(image:" or "(tel:"
-// Group 2: opening parentheses "("
-// Group 3: closing parentheses ")"
-const KIRBYTAG_COMPONENT_REGEX = /(\([a-z0-9_-]+:)|(\()|(\))/gi;
+const TAG_START = /\([a-z0-9_-]+:/iy;
+
+const balancedEnd = (text: string, start: number): number => {
+	let level = 0;
+	for (let index = start; index < text.length; index++) {
+		if (text[index] === "(") level++;
+		else if (text[index] === ")" && --level === 0) return index + 1;
+	}
+	return -1;
+};
 
 /**
- * Finds all KirbyTag positions in a text string using balanced parentheses parsing.
+ * Finds all KirbyTag positions in a text string the way Kirby's
+ * KirbyTags::parse() does: a tag runs to its balanced closing parenthesis,
+ * and a tag start that never closes is skipped. Backslashes escape nothing.
  * Returns an array of [start, end] tuples.
  */
 export const findKirbyTagRanges = (text: string): [number, number][] => {
 	const positions: [number, number][] = [];
+	let start = text.indexOf("(");
 
-	// Reset regex state
-	KIRBYTAG_COMPONENT_REGEX.lastIndex = 0;
+	while (start !== -1) {
+		TAG_START.lastIndex = start;
+		const end = TAG_START.test(text) ? balancedEnd(text, start) : -1;
 
-	let level = 0;
-	let inTag = false;
-	let tagStart = -1;
-	let match: RegExpExecArray | null;
-
-	while ((match = KIRBYTAG_COMPONENT_REGEX.exec(text))) {
-		if (!inTag && match[1]) {
-			// Tag start: begin tracking this KirbyTag
-			inTag = true;
-			level = 1;
-			tagStart = match.index;
-		} else if (inTag && (match[1] || match[2])) {
-			// Opening parenthesis: increase nesting level
-			level += 1;
-		} else if (inTag && match[3]) {
-			// Closing parenthesis: decrease nesting level
-			level -= 1;
-
-			if (level === 0) {
-				// All parentheses balanced: complete the KirbyTag
-				const start = tagStart;
-				const end = match.index + match[0].length;
-				positions.push([start, end]);
-
-				inTag = false;
-				tagStart = -1;
-			}
+		if (end === -1) {
+			start = text.indexOf("(", start + 1);
+		} else {
+			positions.push([start, end]);
+			start = text.indexOf("(", end);
 		}
 	}
 

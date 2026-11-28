@@ -1,4 +1,4 @@
-import { escapeParens, generateKirbyTag, normalizeHref } from "./kirbyTags";
+import { generateKirbyTag, normalizeHref } from "./kirbyTags";
 import type { ValidationResult } from "../types";
 
 /**
@@ -80,6 +80,6 @@ export function buildLinkTag(
 	return generateLinkTag({
 		...attrs,
 		href: normalized,
-		text: labelled ? escapeParens(text) : undefined,
+		text: labelled ? text : undefined,
 	});
 }
