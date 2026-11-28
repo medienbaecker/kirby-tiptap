@@ -60,8 +60,25 @@ class TiptapField extends StringField
 	 */
 	protected function dialogFields(array $fields): array
 	{
+		$fields = Blueprint::fieldsProps($fields);
+
+		foreach ($fields as $name => $field) {
+			$ignored = array_filter([
+				'format' => ($field['format'] ?? 'markdown') !== 'markdown',
+				'inline' => ($field['inline'] ?? true) !== true,
+			]);
+
+			if (($field['type'] ?? null) === 'tiptap' && $ignored !== [] && $this->kirby()->option('debug') === true) {
+				throw new InvalidArgumentException(
+					message: 'The ' . implode(' and ', array_keys($ignored)) .
+						(count($ignored) === 1 ? ' option has' : ' options have') .
+						' no effect on the tiptap field "' . $name . '" in a dialog, which always writes inline Markdown'
+				);
+			}
+		}
+
 		$form = new Form(
-			fields: Blueprint::fieldsProps($fields),
+			fields: $fields,
 			model:  $this->model()
 		);
 
