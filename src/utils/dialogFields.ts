@@ -121,3 +121,27 @@ export const openOnce = async (editor: object, open: () => Promise<void>): Promi
 		opening.delete(editor);
 	}
 };
+
+/**
+ * The dialog's fields plus the tag it writes, as a hidden value: a
+ * blueprint field shows for some tags only with Kirby's `when: { tag: image }`
+ */
+export const withTagField = (
+	fields: Record<string, DialogFieldConfig>
+): Record<string, DialogFieldConfig> => ({ ...fields, tag: { type: "hidden" } });
+
+/**
+ * The values of the fields `when` shows for the tag. Kirby hides the
+ * others but still submits them, and the tag couldn't read them
+ */
+export const visibleValues = (
+	fields: Record<string, DialogFieldConfig>,
+	values: Record<string, unknown>,
+	tag: string,
+	isVisible: (field: DialogFieldConfig, values: Record<string, unknown>) => boolean
+): Record<string, unknown> =>
+	Object.fromEntries(
+		Object.entries(values).filter(
+			([name]) => name !== "tag" && (!fields[name] || isVisible(fields[name], { ...values, tag }))
+		)
+	);

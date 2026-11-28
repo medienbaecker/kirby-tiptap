@@ -206,6 +206,7 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 			value,
 			fields,
 			initialFieldValues,
+			initialTag: initial._type,
 			submitButton: panel.t(context.isEditing ? "change" : "insert"),
 			uploads: options.uploads,
 		},

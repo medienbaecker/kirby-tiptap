@@ -22,7 +22,7 @@
 		</k-collection>
 
 		<!-- Form fields section -->
-		<k-dialog-fields v-if="hasFields" :fields="fields" :value="fieldValues" @input="fieldValues = $event" />
+		<k-dialog-fields v-if="hasFields" :fields="fieldsWithTag" :value="{ ...fieldValues, tag }" @input="input" />
 
 		<template v-if="removable" #footer>
 			<DialogFooterWithRemove :submit-button="submitButton" @cancel="$emit('cancel')" @remove="$emit('remove')" />
@@ -34,6 +34,8 @@
 import Dialog from "@/mixins/dialog.js";
 import Search from "@/mixins/search.js";
 import DialogFooterWithRemove from "./DialogFooterWithRemove.vue";
+import { visibleValues, withTagField } from "../../utils/dialogFields";
+import { tagName } from "../../utils/kirbyTags";
 
 export default {
 	components: { DialogFooterWithRemove },
@@ -58,6 +60,10 @@ export default {
 		initialFieldValues: {
 			type: Object,
 			default: () => ({})
+		},
+		initialTag: {
+			type: String,
+			default: ""
 		},
 		item: {
 			type: Function,
@@ -105,8 +111,16 @@ export default {
 		dropListeners() {
 			return this.uploads ? { drop: this.emitDrop } : {};
 		},
+		fieldsWithTag() {
+			return withTagField(this.fields);
+		},
 		hasFields() {
 			return this.$helper.object.length(this.fields) > 0;
+		},
+		tag() {
+			const file = Object.values(this.selected)[0];
+			if (!file) return "";
+			return file.dragText ? tagName(file.dragText) : this.initialTag;
 		},
 		items() {
 			return this.models.map(this.item);
@@ -153,6 +167,9 @@ export default {
 				this.$panel.dialog.isLoading = false;
 			}
 		},
+		input({ tag, ...values }) {
+			this.fieldValues = values;
+		},
 		emitDrop(files) {
 			this.$emit("drop", files);
 		},
@@ -168,7 +185,11 @@ export default {
 			// Read from `selected` so a pick made on another page isn't dropped.
 			const selectedFiles = Object.values(this.selected);
 
-			this.$emit("submit", selectedFiles, this.fieldValues);
+			this.$emit(
+				"submit",
+				selectedFiles,
+				visibleValues(this.fields, this.fieldValues, this.tag, this.$helper.field.isVisible)
+			);
 		},
 		async search() {
 			this.pagination.page = 1;
