@@ -118,28 +118,7 @@ class MarkdownSerializer
 		$markdown = static::renderInline($protected['content'] ?? [], $protected, "\n\n");
 		$markdown = static::isEmptyOutput($markdown) ? '' : $markdown;
 
-		if (static::tagCrossesBlocks($markdown)) {
-			return null;
-		}
-
 		return static::readsBackAs($markdown, $doc, $buttons, $options) ? $markdown : null;
-	}
-
-	/**
-	 * Kirby parses tags across the whole value: one that runs over an empty
-	 * line would swallow the blocks in between, which code can't escape
-	 */
-	private static function tagCrossesBlocks(string $markdown): bool
-	{
-		preg_match_all(self::KIRBYTAG, $markdown, $matches);
-
-		foreach ($matches[0] as $tag) {
-			if (preg_match('/\n[ \t]*\n/', $tag) === 1) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	private static function readsBackAs(string $markdown, array $doc, array $buttons, array $options): bool
