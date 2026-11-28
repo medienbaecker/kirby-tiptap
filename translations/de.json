@@ -7,5 +7,6 @@
 	"upload.error.noData": "Keine Dateien vom Upload erhalten",
 	"upload.error.failed": "Upload fehlgeschlagen",
 	"navigate.error": "Diese Referenz konnte nicht geöffnet werden",
+	"kirbytag.unpairedParens": "„{field}“ enthält eine Klammer ohne Gegenstück. Ergänze die fehlende oder entferne sie.",
 	"kirbytag.missing": "Nicht gefunden"
 }

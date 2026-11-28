@@ -292,6 +292,33 @@ export const findParentWithClass = (
 	return null;
 };
 
+/**
+ * Kirby has no escape for parentheses: one without its partner ends a
+ * KirbyTag early or keeps it from closing
+ */
+export const hasUnpairedParens = (value: string): boolean => {
+	let level = 0;
+	for (const char of value) {
+		if (char === "(") level++;
+		else if (char === ")" && --level < 0) return true;
+	}
+	return level !== 0;
+};
+
+/**
+ * The label of the first dialog field whose value can't go into a KirbyTag
+ */
+export const unpairedParensField = (
+	values: Record<string, unknown>,
+	fields: Record<string, { label?: string }>
+): string | null => {
+	for (const [name, value] of Object.entries(values)) {
+		const text = Array.isArray(value) ? value.join(" ") : value;
+		if (typeof text === "string" && hasUnpairedParens(text)) return fields[name]?.label ?? name;
+	}
+	return null;
+};
+
 const TAG_START = /\([a-z0-9_-]+:/iy;
 
 const balancedEnd = (text: string, start: number): number => {

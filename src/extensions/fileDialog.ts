@@ -9,6 +9,7 @@ import {
 	isFileTag,
 	processKirbyTagApi,
 	replaceTag,
+	unpairedParensField,
 } from "../utils/kirbyTags";
 import { processFieldValues } from "../utils/dialogFields";
 import { buildUploadOptions } from "../utils/upload";
@@ -188,6 +189,12 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 			submit: (picked: PickedFile[], fieldValues?: Record<string, unknown>) => {
 				if (!picked?.length) {
 					panel.notification.error(panel.t("error.validation.required"));
+					return;
+				}
+
+				const unpaired = unpairedParensField(fieldValues ?? {}, fields);
+				if (unpaired) {
+					panel.notification.error(panel.t("tiptap.kirbytag.unpairedParens", { field: unpaired }));
 					return;
 				}
 

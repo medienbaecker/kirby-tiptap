@@ -1,6 +1,6 @@
 import { Extension } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
-import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag } from "../utils/kirbyTags";
+import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag, unpairedParensField } from "../utils/kirbyTags";
 import type { TagEditingContext } from "../utils/kirbyTags";
 import { validateInput, generateLinkTag } from "../utils/inputValidation";
 import { processFieldValues } from "../utils/dialogFields";
@@ -94,6 +94,12 @@ const openDialog = (editor: Editor, options: LinkDialogOptions): void => {
 			submit: async (values: { href: string; [key: string]: string }) => {
 				if (!values.href) {
 					panel.notification.error(panel.t("error.validation.required"));
+					return;
+				}
+
+				const unpaired = unpairedParensField(values, fields);
+				if (unpaired) {
+					panel.notification.error(panel.t("tiptap.kirbytag.unpairedParens", { field: unpaired }));
 					return;
 				}
 

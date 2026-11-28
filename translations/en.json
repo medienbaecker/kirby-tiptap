@@ -7,5 +7,6 @@
 	"upload.error.noData": "No file data received from upload",
 	"upload.error.failed": "Upload failed",
 	"navigate.error": "Could not open this reference",
+	"kirbytag.unpairedParens": "“{field}” has a parenthesis without its partner. Add the missing one or remove it.",
 	"kirbytag.missing": "Not found"
 }

@@ -1,4 +1,5 @@
 import { buildLinkTag, isBareUrlAnchor } from "./inputValidation";
+import { hasUnpairedParens } from "./kirbyTags";
 
 /**
  * Replaces <a> elements in HTML with KirbyTag text equivalents.
@@ -22,7 +23,7 @@ export function transformLinksToKirbyTags(html: string): string {
 			continue;
 		}
 
-		anchor.replaceWith(doc.createTextNode(buildLinkTag(href, text)));
+		anchor.replaceWith(doc.createTextNode(hasUnpairedParens(href + text) ? text : buildLinkTag(href, text)));
 	}
 
 	return doc.body.innerHTML;

@@ -7,7 +7,7 @@ import { validateInput, generateLinkTag } from "./inputValidation";
 import { processPlainTextParagraphs } from "./contentProcessing";
 import { canInsertKirbyTag } from "../extensions/insertionGuards";
 import { buildUploadOptions } from "./upload";
-import { processKirbyTagApi } from "./kirbyTags";
+import { hasUnpairedParens, processKirbyTagApi } from "./kirbyTags";
 import type { UploadsConfig, EndpointsConfig } from "../types";
 
 interface Coordinates {
@@ -51,6 +51,12 @@ export function createPasteHandler(
 		if (selectedText) {
 			const validation = validateInput(plainText, allowedTypes);
 			if (validation.type !== "unknown") {
+				if (hasUnpairedParens(validation.href + selectedText)) {
+					panel.notification.error(panel.t("tiptap.kirbytag.unpairedParens", { field: panel.t("link.text") }));
+					event.preventDefault();
+					return true;
+				}
+
 				const kirbyTag = generateLinkTag({
 					href: validation.href,
 					text: selectedText,
