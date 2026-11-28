@@ -1,4 +1,4 @@
-import { generateKirbyTag, normalizeHref, valueProblem } from "./kirbyTags";
+import { generateKirbyTag, normalizeHref, isUnsavable } from "./kirbyTags";
 import type { KirbytagsMap, ValidationResult } from "../types";
 
 /**
@@ -81,7 +81,7 @@ export function buildLinkTag(
 	const { type, mainValue } = splitHref(normalized);
 	const labelled = text !== "" && text !== normalized && text !== mainValue;
 
-	if (valueProblem(type, mainValue, tags) || (labelled && valueProblem(type, text, tags))) {
+	if (isUnsavable(type, mainValue, tags) || (labelled && isUnsavable(type, text, tags))) {
 		return null;
 	}
 

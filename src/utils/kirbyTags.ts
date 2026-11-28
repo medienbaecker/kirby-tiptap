@@ -294,20 +294,19 @@ export const hasUnpairedParens = (value: string): boolean => {
 };
 
 /**
- * Why Kirby would read a value differently once it is written into a
- * KirbyTag of the given type, as a translation key and its placeholders
+ * Whether Kirby would read a value differently once it is written into a
+ * KirbyTag of the given type: it has no escape for parentheses or
+ * attribute names, and an empty line splits a Markdown paragraph
  */
-export const valueProblem = (
+export const isUnsavable = (
 	type: string,
 	value: string,
 	tags?: KirbytagsMap,
 	format?: "json" | "markdown"
-): { key: string; word?: string } | null => {
-	if (format === "markdown" && /\n\s*\n/.test(value)) return { key: "emptyLine" };
-	if (hasUnpairedParens(value)) return { key: "unpairedParens" };
-	const attribute = attributePattern(type, tags).exec(value);
-	return attribute ? { key: "attribute", word: `${attribute[1]}:` } : null;
-};
+): boolean =>
+	hasUnpairedParens(value) ||
+	attributePattern(type, tags).test(value) ||
+	(format === "markdown" && /\n\s*\n/.test(value));
 
 /**
  * The warning for the first value that can't be saved in a KirbyTag
@@ -322,12 +321,8 @@ export const unsavableValue = (
 ): string | null => {
 	for (const [name, value] of Object.entries(values)) {
 		const text = Array.isArray(value) ? value.join(" ") : value;
-		const problem = typeof text === "string" ? valueProblem(type, text, tags, format) : null;
-		if (problem) {
-			return window.panel.t(`tiptap.kirbytag.${problem.key}`, {
-				field: fields[name]?.label ?? name,
-				word: problem.word,
-			});
+		if (typeof text === "string" && isUnsavable(type, text, tags, format)) {
+			return `${fields[name]?.label ?? name}: ${window.panel.t("field.invalid")}`;
 		}
 	}
 	return null;
