@@ -13,7 +13,8 @@ import {
 	tagName,
 	unsavableValue,
 } from "../utils/kirbyTags";
-import { dialogFields, processFieldValues, tiptapValuesFromMarkdown, tiptapValuesToMarkdown } from "../utils/dialogFields";
+import type { TagEditingContext } from "../utils/kirbyTags";
+import { dialogFields, openOnce, processFieldValues, tiptapValuesFromMarkdown, tiptapValuesToMarkdown } from "../utils/dialogFields";
 import { buildUploadOptions } from "../utils/upload";
 import type { EndpointsConfig, FilesConfig, KirbytagsMap, ParsedKirbyTag, DialogFieldConfig, UploadsConfig } from "../types";
 
@@ -154,17 +155,25 @@ const upload = async (editor: Editor, options: FileDialogOptions, files?: FileLi
 	}
 };
 
-const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<void> => {
-	const panel = window.panel;
-	const { endpoints = { field: "" }, files, kirbytagAttributes } = options;
+const prepare = async (
+	editor: Editor,
+	options: FileDialogOptions,
+	fields: Record<string, DialogFieldConfig>,
+	endpoints: EndpointsConfig
+): Promise<{
+	context: TagEditingContext;
+	initial: ParsedKirbyTag;
+	value: string[];
+	fieldValues: Record<string, unknown>;
+}> => {
+	const doc = editor.state.doc;
 	const context = getTagEditingContext(editor, isFileTag);
-	const restoreSelection = restoreSelectionAt(editor);
 
 	let initial: ParsedKirbyTag = { _type: "" };
 	let value: string[] = [];
 
 	if (context.isEditing && context.tagText) {
-		initial = parseKirbyTag(context.tagText, kirbytagAttributes);
+		initial = parseKirbyTag(context.tagText, options.kirbytagAttributes);
 		const fileId = initial.uuid
 			? await findFileByReference(initial.uuid, initial._type, endpoints)
 			: null;
@@ -172,7 +181,21 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 	}
 
 	const { _type, uuid, href, value: tagValue, ...attributes } = initial;
+	const fieldValues = await tiptapValuesFromMarkdown(processFieldValues(attributes, fields), fields, endpoints);
+
+	return editor.state.doc === doc
+		? { context, initial, value, fieldValues }
+		: prepare(editor, options, fields, endpoints);
+};
+
+const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<void> => {
+	const panel = window.panel;
+	const { endpoints = { field: "" }, files, kirbytagAttributes } = options;
 	const fields = dialogFields(files?.fields as Record<string, DialogFieldConfig>, endpoints);
+	const { context, initial, value, fieldValues: initialFieldValues } = await prepare(editor, options, fields, endpoints);
+	const restoreSelection = restoreSelectionAt(editor);
+	let submitting = false;
+	let cancelled = false;
 
 
 	panel.dialog.open({
@@ -182,12 +205,15 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 			endpoint: `${endpoints.field}/files`,
 			value,
 			fields,
-			initialFieldValues: await tiptapValuesFromMarkdown(processFieldValues(attributes, fields), fields, endpoints),
+			initialFieldValues,
 			submitButton: panel.t(context.isEditing ? "change" : "insert"),
 			uploads: options.uploads,
 		},
 		on: {
-			cancel: () => restoreSelection(),
+			cancel: () => {
+				cancelled = true;
+				restoreSelection();
+			},
 			drop: (files: FileList) => upload(editor, options, files),
 			submit: async (picked: PickedFile[], submitted?: Record<string, unknown>) => {
 				if (!picked?.length) {
@@ -195,7 +221,12 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 					return;
 				}
 
-				const fieldValues = await tiptapValuesToMarkdown(submitted ?? {}, fields, endpoints);
+				if (submitting) return;
+				submitting = true;
+				const fieldValues = await tiptapValuesToMarkdown(submitted ?? {}, fields, endpoints).finally(() => {
+					submitting = false;
+				});
+				if (cancelled) return;
 				if (typeof fieldValues === "string") {
 					panel.notification.error(invalidField(fieldValues, fields));
 					return;
@@ -252,7 +283,7 @@ export const FileDialog = Extension.create<FileDialogOptions>({
 			openFileDialog:
 				() =>
 				({ editor, dispatch }) => {
-					if (dispatch) openDialog(editor, this.options);
+					if (dispatch) openOnce(editor, () => openDialog(editor, this.options));
 					return true;
 				},
 			uploadFiles:

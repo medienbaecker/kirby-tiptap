@@ -29,6 +29,11 @@ trait ParsedownTreeTrait
 		return $this->textElements($text);
 	}
 
+	public function inlines(string $text): array
+	{
+		return $this->lineElements($text);
+	}
+
 	public function call(string $function, mixed $argument): mixed
 	{
 		return $this->$function($argument);

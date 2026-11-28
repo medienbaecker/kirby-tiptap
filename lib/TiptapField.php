@@ -58,22 +58,24 @@ class TiptapField extends StringField
 	 * Resolves blueprint fields for a dialog the way Kirby's own dialogs do:
 	 * shorthands, translated labels and options
 	 */
-	protected function dialogFields(array $fields): array
+	protected function dialogFields(array $fields, bool $writesTag = false): array
 	{
 		$fields = Blueprint::fieldsProps($fields);
 
-		foreach ($fields as $name => $field) {
-			$ignored = array_filter([
-				'format' => ($field['format'] ?? 'markdown') !== 'markdown',
-				'inline' => ($field['inline'] ?? true) !== true,
-			]);
+		if ($writesTag === true) {
+			foreach ($fields as $name => $field) {
+				$ignored = array_filter([
+					'format' => ($field['format'] ?? 'markdown') !== 'markdown',
+					'inline' => ($field['inline'] ?? true) !== true,
+				]);
 
-			if (($field['type'] ?? null) === 'tiptap' && $ignored !== [] && $this->kirby()->option('debug') === true) {
-				throw new InvalidArgumentException(
-					message: 'The ' . implode(' and ', array_keys($ignored)) .
-						(count($ignored) === 1 ? ' option has' : ' options have') .
-						' no effect on the tiptap field "' . $name . '" in a dialog, which always writes inline Markdown'
-				);
+				if (($field['type'] ?? null) === 'tiptap' && $ignored !== [] && $this->kirby()->option('debug') === true) {
+					throw new InvalidArgumentException(
+						message: 'The ' . implode(' and ', array_keys($ignored)) .
+							(count($ignored) === 1 ? ' option has' : ' options have') .
+							' no effect on the tiptap field "' . $name . '" in a dialog, which always writes inline Markdown'
+					);
+				}
 			}
 		}
 
@@ -106,7 +108,7 @@ class TiptapField extends StringField
 		}
 
 		if (isset($files['fields']) === true && is_array($files['fields']) === true) {
-			$files['fields'] = $this->dialogFields($files['fields']);
+			$files['fields'] = $this->dialogFields($files['fields'], writesTag: true);
 		}
 
 		return $files;
@@ -164,7 +166,7 @@ class TiptapField extends StringField
 		$links = $this->links ?? [];
 
 		if (isset($links['fields']) === true && is_array($links['fields']) === true) {
-			$links['fields'] = $this->dialogFields($links['fields']);
+			$links['fields'] = $this->dialogFields($links['fields'], writesTag: true);
 		}
 
 		return $links;

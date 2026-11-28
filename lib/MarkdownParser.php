@@ -40,6 +40,21 @@ class MarkdownParser
 		];
 	}
 
+	/**
+	 * Markdown that Kirby renders inline, such as a KirbyTag attribute:
+	 * no block syntax, one paragraph
+	 */
+	public static function parseInline(string $markdown, array $buttons, array $options = []): array
+	{
+		$parser = new static(static::parsedown(static::disabled($buttons), $options));
+		$content = $parser->plain($parser->breaks($parser->decodeEntities($parser->inline($parser->parsedown->inlines($markdown)))));
+
+		return [
+			'type' => 'doc',
+			'content' => $content === [] ? [] : [['type' => 'paragraph', 'content' => $content]],
+		];
+	}
+
 	// Kirby's defaults, not Parsedown's: breaks is true
 	private static function parsedown(array $disabled, array $options): ParsedownTree
 	{

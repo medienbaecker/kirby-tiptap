@@ -72,7 +72,8 @@ class Api
 				'method' => 'POST',
 				'action' => function () {
 					$document = $this->requestBody('document');
-					$markdown = Field::store($document, 'markdown', true, $this->requestBody('buttons') ?? [], $this->kirby());
+					$buttons = $this->requestBody('buttons');
+					$markdown = Field::store($document, 'markdown', true, Field::buttons(is_array($buttons) ? $buttons : []), $this->kirby());
 
 					return ['markdown' => $markdown === $document ? null : $markdown];
 				}
@@ -81,7 +82,15 @@ class Api
 				'pattern' => 'from-markdown',
 				'method' => 'POST',
 				'action' => function () {
-					return ['document' => Field::load($this->requestBody('markdown'), 'markdown', $this->requestBody('buttons') ?? [], $this->kirby())];
+					$markdown = $this->requestBody('markdown');
+					$buttons = $this->requestBody('buttons');
+					$document = MarkdownParser::parseInline(
+						is_string($markdown) ? $markdown : '',
+						Field::buttons(is_array($buttons) ? $buttons : []),
+						Field::markdownOptions($this->kirby())
+					);
+
+					return ['document' => json_encode($document, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)];
 				}
 			],
 			[
