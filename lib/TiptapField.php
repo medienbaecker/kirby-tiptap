@@ -7,7 +7,6 @@ use Kirby\Exception\InvalidArgumentException;
 use Kirby\Form\Field\StringField;
 use Kirby\Form\Form;
 use Kirby\Form\Mixin;
-use Kirby\Panel\Collector\FilesCollector;
 use Kirby\Reflection\Attributes\Prop;
 
 class TiptapField extends StringField
@@ -104,6 +103,13 @@ class TiptapField extends StringField
 		return $form->fields()->toProps(defaults: true);
 	}
 
+	public function dialogs(): array
+	{
+		return [
+			'files' => fn () => new FileDialogController($this)
+		];
+	}
+
 	public function extensions(): array|null
 	{
 		return $this->extensions === null ? null : $this->withDialogFields($this->extensions);
@@ -130,30 +136,6 @@ class TiptapField extends StringField
 		}
 
 		return $files;
-	}
-
-	public function filepicker(array $params = []): array
-	{
-		$collector = new FilesCollector(
-			limit:  $params['limit']  ?? 20,
-			page:   $params['page']   ?? 1,
-			parent: $this->model(),
-			query:  $params['query']  ?? null,
-			search: $params['search'] ?? null
-		);
-
-		$files = $collector->models(paginated: true);
-
-		return [
-			'data' => $files->values(fn ($file) => $file->panel()->pickerData([
-				'image'  => $params['image']  ?? [],
-				'info'   => $params['info']   ?? false,
-				'layout' => $params['layout'] ?? 'list',
-				'model'  => $this->model(),
-				'text'   => $params['text']   ?? '{{ file.filename }}'
-			])),
-			'pagination' => $collector->pagination()->toArray()
-		];
 	}
 
 	public function format(): string

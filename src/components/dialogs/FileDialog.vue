@@ -1,241 +1,75 @@
 <template>
-	<k-dialog v-bind="$props" class="tiptap-file-dialog" v-on="dropListeners" @cancel="$emit('cancel')"
+	<k-dialog v-bind="$props" class="k-model-picker-dialog" v-on="dropListeners" @cancel="$emit('cancel')"
 		@submit="submit">
-		<header v-if="hasSearch" class="k-model-picker-dialog-header">
-			<k-dialog-search :value="query" class="k-model-picker-dialog-search" @search="query = $event" />
+		<header class="k-model-picker-dialog-header">
+			<k-dialog-search v-if="hasSearch" :value="query" class="k-model-picker-dialog-search"
+				@search="query = $event" />
 		</header>
 
-		<k-collection :empty="{
-			icon: 'image',
-			...empty,
-			text: $panel.dialog.isLoading ? $t('loading') : (empty?.text || $t('dialog.files.empty'))
-		}" :items="items" :link="false" :pagination="{
-			details: true,
-			dropdown: false,
-			align: 'center',
-			...pagination
-		}" :sortable="false" layout="list" @item="toggle" @paginate="paginate">
-			<template #options="{ item: row }">
-				<k-choice-input :checked="isSelected(row)" :type="multiple && max !== 1 ? 'checkbox' : 'radio'"
-					:title="isSelected(row) ? $t('remove') : $t('select')" @click.stop="toggle(row)" />
-			</template>
-		</k-collection>
+		<k-collection v-bind="collection" />
 
-		<!-- Form fields section -->
-		<k-dialog-fields v-if="hasFields" :fields="fieldsForTag" :value="fieldValues" @input="fieldValues = $event" />
-
-		<template v-if="removable" #footer>
-			<DialogFooterWithRemove :submit-button="submitButton" @cancel="$emit('cancel')" @remove="$emit('remove')" />
-		</template>
+		<k-dialog-fields v-if="hasFields" class="tiptap-file-dialog-fields" :fields="fieldsForTag" :value="values"
+			@input="values = $event" />
 	</k-dialog>
 </template>
 
 <script>
-import Dialog from "@/mixins/dialog.js";
-import Search from "@/mixins/search.js";
-import DialogFooterWithRemove from "./DialogFooterWithRemove.vue";
-import { fieldsForTag, valuesForTag } from "../../utils/dialogFields";
+import { dialogFields, fieldsForTag, valuesForTag } from "../../utils/dialogFields";
 import { tagName } from "../../utils/kirbyTags";
 
+/**
+ * Kirby's file picker with the dialog fields of a file tag below the files
+ */
 export default {
-	components: { DialogFooterWithRemove },
-	mixins: [Dialog, Search],
+	extends: "k-model-picker-dialog",
 	props: {
-		endpoint: String,
-		empty: {
-			type: Object,
-			default: () => ({
-				icon: "image",
-				text: window.panel.t("dialog.files.empty")
-			})
-		},
-		fetchParams: {
-			type: Object,
-			default: () => ({})
-		},
 		fields: {
 			type: Object,
 			default: () => ({})
 		},
-		initialFieldValues: {
+		file: Object,
+		initialValues: {
 			type: Object,
 			default: () => ({})
 		},
-		initialTag: {
-			type: String,
-			default: ""
-		},
-		item: {
-			type: Function,
-			default: (item) => item
-		},
-		max: Number,
-		multiple: {
-			type: Boolean,
-			default: false
-		},
-		size: {
-			type: String,
-			default: "medium"
-		},
-		tags: Object,
-		value: {
-			type: Array,
-			default: () => []
-		},
-		removable: {
-			type: Boolean,
-			default: false
-		},
-		uploads: {
-			type: [Object, Boolean],
-			default: false
-		}
+		tags: Object
 	},
-	emits: ["cancel", "drop", "fetched", "remove", "submit"],
+	emits: ["cancel", "drop", "submit"],
 	data() {
 		return {
-			models: [],
-			selected: this.value.reduce((a, id) => ({ ...a, [id]: { id } }), {}),
-			fieldValues: { ...this.initialFieldValues },
-			pagination: {
-				limit: 20,
-				page: 1,
-				total: 0
-			}
+			values: { ...this.initialValues }
 		};
 	},
 	computed: {
-		// Only wire the drop handler when uploads are enabled, so k-dialog's
-		// dropzone (auto-enabled by the presence of an @drop listener) stays off
-		// for select-only fields.
 		dropListeners() {
-			return this.uploads ? { drop: this.emitDrop } : {};
+			return this.$panel.dialog.hasEventListener("drop") ? { drop: (files) => this.$emit("drop", files) } : {};
 		},
 		fieldsForTag() {
-			return fieldsForTag(this.fields, this.tag, this.tags);
+			return fieldsForTag(dialogFields(this.fields, { field: this.payload.field }), this.tag, this.tags);
 		},
 		hasFields() {
 			return this.$helper.object.length(this.fields) > 0;
 		},
-		tag() {
-			const file = Object.values(this.selected)[0];
-			if (!file) return "";
-			return file.dragText ? tagName(file.dragText) : this.initialTag;
+		picked() {
+			return [...this.items, this.file].find((item) => item && this.isSelected(item));
 		},
-		items() {
-			return this.models.map(this.item);
+		tag() {
+			return this.picked ? tagName(this.picked.dragText) : "";
 		}
-	},
-	watch: {
-		fetchParams(newParams, oldParams) {
-			if (this.$helper.object.same(newParams, oldParams) === false) {
-				this.pagination.page = 1;
-				this.fetch();
-			}
-		}
-	},
-	mounted() {
-		this.fetch();
 	},
 	methods: {
-		async fetch() {
-			const params = {
-				page: this.pagination.page,
-				search: this.query,
-				...this.fetchParams
-			};
-
-			try {
-				this.$panel.dialog.isLoading = true;
-				const response = await this.$panel.api.get(this.endpoint, params);
-				this.models = response.data;
-				this.pagination = response.pagination;
-
-				// Upgrade preselected ids to full models as pages load, so submit()
-				// keeps them across pagination instead of resolving against this page.
-				for (const model of this.models) {
-					if (this.selected[model.id] !== undefined) {
-						this.selected[model.id] = model;
-					}
-				}
-
-				this.$emit("fetched", response);
-			} catch (e) {
-				this.$panel.error(e);
-				this.models = [];
-			} finally {
-				this.$panel.dialog.isLoading = false;
-			}
-		},
-		emitDrop(files) {
-			this.$emit("drop", files);
-		},
-		isSelected(item) {
-			return this.selected[item.id] !== undefined;
-		},
-		paginate(pagination) {
-			this.pagination.page = pagination.page;
-			this.pagination.limit = pagination.limit;
-			this.fetch();
-		},
 		submit() {
-			// Read from `selected` so a pick made on another page isn't dropped.
-			const selectedFiles = Object.values(this.selected);
-
-			this.$emit(
-				"submit",
-				selectedFiles,
-				valuesForTag(this.fieldValues, this.tag, this.tags)
-			);
-		},
-		async search() {
-			this.pagination.page = 1;
-			await this.fetch();
-		},
-		toggle(item) {
-			if (this.multiple === false || this.max === 1) {
-				this.selected = {};
-			}
-
-			if (this.isSelected(item)) {
-				delete this.selected[item.id];
-				return;
-			}
-
-			if (this.max && this.max <= this.$helper.object.length(this.selected)) {
-				return;
-			}
-
-			this.selected[item.id] = item;
+			this.$emit("submit", {
+				file: this.picked,
+				values: valuesForTag(this.values, this.tag, this.tags)
+			});
 		}
 	}
 };
 </script>
 
 <style>
-.tiptap-file-dialog .k-list-item {
-	cursor: pointer;
-}
-
-.tiptap-file-dialog .k-choice-input {
-	--choice-color-checked: var(--color-focus);
-
-	display: flex;
-	align-items: center;
-	height: var(--item-button-height);
-	margin-inline-end: var(--spacing-3);
-}
-
-.tiptap-file-dialog .k-choice-input input {
-	top: 0;
-}
-
-.tiptap-file-dialog .k-collection-footer .k-pagination {
-	margin-bottom: 0;
-}
-
-.tiptap-file-dialog .k-dialog-fields {
+.tiptap-file-dialog-fields {
 	margin-top: var(--spacing-6);
 }
 </style>

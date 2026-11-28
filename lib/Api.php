@@ -18,16 +18,6 @@ class Api
 	{
 		return [
 			[
-				'pattern' => 'files',
-				'action' => function () {
-					return $this->field()->filepicker([
-						...$this->field()->files(),
-						'page'   => $this->requestQuery('page'),
-						'search' => $this->requestQuery('search'),
-					]);
-				}
-			],
-			[
 				'pattern' => 'upload',
 				'method'  => 'POST',
 				'action'  => function () {
@@ -255,7 +245,7 @@ class Api
 					return [
 						'panelUrl' => $parentPath . '/files/' . $file->filename(),
 						'type' => 'file',
-						'id' => static::filePickerId($file, $model),
+						'id' => static::filePickerId($file),
 					];
 				}
 			} catch (\Throwable) {
@@ -272,7 +262,7 @@ class Api
 				return [
 					'panelUrl' => $parentPath . '/files/' . $file->filename(),
 					'type' => 'file',
-					'id' => static::filePickerId($file, $model),
+					'id' => static::filePickerId($file),
 				];
 			}
 			throw new Exception(message: 'File not found');
@@ -288,14 +278,10 @@ class Api
 	}
 
 	/**
-	 * The id the filepicker uses for a file: just the filename when the
-	 * file belongs to the field's model (see Panel\File::pickerData()).
+	 * The id Kirby's file picker selects a file by
 	 */
-	private static function filePickerId($file, $model): string
+	private static function filePickerId($file): string
 	{
-		if ($model && $file->parent()->is($model)) {
-			return $file->filename();
-		}
-		return $file->id();
+		return $file->uuid()?->toString() ?? $file->id();
 	}
 }

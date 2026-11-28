@@ -28,6 +28,7 @@ interface FileDialogOptions {
 
 interface PickedFile {
 	id: string;
+	uuid?: string;
 	dragText: string;
 }
 
@@ -192,40 +193,35 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 	const panel = window.panel;
 	const { endpoints = { field: "" }, files, kirbytagAttributes } = options;
 	const fields = dialogFields(files?.fields as Record<string, DialogFieldConfig>, endpoints);
-	const { context, initial, value, fieldValues: initialFieldValues } = await prepare(editor, options, fields, endpoints);
+	const { context, initial, value, fieldValues: initialValues } = await prepare(editor, options, fields, endpoints);
 	const restoreSelection = restoreSelectionAt(editor);
 	let submitting = false;
 	let cancelled = false;
 
-
-	panel.dialog.open({
-		component: "tiptap-file-dialog",
-		props: {
-			multiple: false,
-			endpoint: `${endpoints.field}/files`,
+	await panel.dialog.open(`${endpoints.field}/files`, {
+		query: {
+			editing: context.isEditing,
+			field: endpoints.field,
 			value,
-			fields,
-			initialFieldValues,
-			initialTag: initial._type,
-			tags: kirbytagAttributes,
-			submitButton: panel.t(context.isEditing ? "change" : "insert"),
-			uploads: options.uploads,
 		},
 		on: {
+			open: () => {
+				panel.dialog.props.initialValues = initialValues;
+			},
 			cancel: () => {
 				cancelled = true;
 				restoreSelection();
 			},
-			drop: (files: FileList) => upload(editor, options, files),
-			submit: async (picked: PickedFile[], submitted?: Record<string, unknown>) => {
-				if (!picked?.length) {
+			...(options.uploads ? { drop: (files: FileList) => upload(editor, options, files) } : {}),
+			submit: async ({ file, values }: { file?: PickedFile; values: Record<string, unknown> }) => {
+				if (!file) {
 					panel.notification.error(panel.t("error.validation.required"));
 					return;
 				}
 
 				if (submitting) return;
 				submitting = true;
-				const fieldValues = await tiptapValuesToMarkdown(submitted ?? {}, fields, endpoints).finally(() => {
+				const fieldValues = await tiptapValuesToMarkdown(values, fields, endpoints).finally(() => {
 					submitting = false;
 				});
 				if (cancelled) return;
@@ -235,7 +231,7 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 				}
 
 				const unsavable = unsavableValue(
-					tagName(picked[0].dragText),
+					tagName(file.dragText),
 					fieldValues,
 					fields,
 					kirbytagAttributes,
@@ -249,11 +245,10 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 				panel.dialog.close();
 
 				restoreSelection(async () => {
-					const file = picked[0];
 					// Same file as before: keep the original reference so
 					// editing attributes doesn't rewrite filename → UUID
 					const originalReference =
-						context.isEditing && initial.uuid && value[0] === file.id ? initial.uuid : null;
+						context.isEditing && initial.uuid && value[0] === (file.uuid ?? file.id) ? initial.uuid : null;
 					const content = await buildTag(file, fieldValues, originalReference, options);
 
 					if (context.isEditing && context.replaceRange) {
