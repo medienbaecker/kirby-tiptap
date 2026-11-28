@@ -1,12 +1,12 @@
 import { buildLinkTag, isBareUrlAnchor } from "./inputValidation";
-import { hasUnpairedParens } from "./kirbyTags";
+import type { KirbytagsMap } from "../types";
 
 /**
  * Replaces <a> elements in HTML with KirbyTag text equivalents.
  * E.g. <a href="https://example.com">click here</a>
  *    → (link: https://example.com text: click here)
  */
-export function transformLinksToKirbyTags(html: string): string {
+export function transformLinksToKirbyTags(html: string, tags?: KirbytagsMap): string {
 	const doc = new DOMParser().parseFromString(html, "text/html");
 
 	for (const anchor of Array.from(doc.querySelectorAll("a[href]"))) {
@@ -23,7 +23,7 @@ export function transformLinksToKirbyTags(html: string): string {
 			continue;
 		}
 
-		anchor.replaceWith(doc.createTextNode(hasUnpairedParens(href + text) ? text : buildLinkTag(href, text)));
+		anchor.replaceWith(doc.createTextNode(buildLinkTag(href, text, tags) ?? text));
 	}
 
 	return doc.body.innerHTML;

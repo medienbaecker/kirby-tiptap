@@ -80,7 +80,7 @@ export default {
 
 		onMounted(() => {
 			const eventHandlers = {
-				handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url'], instance.proxy.$panel, props.endpoints, props.uploads),
+				handlePaste: createPasteHandler(editor, props.links?.options || ['email', 'url'], instance.proxy.$panel, props.endpoints, props.uploads, props.kirbytagAttributes),
 				handleDrop: createDropHandler(editor, instance.proxy.$panel, instance.proxy.$helper, props.endpoints, props.uploads)
 			}
 

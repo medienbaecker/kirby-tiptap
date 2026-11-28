@@ -151,11 +151,13 @@ export function useEditor(
 				insertionGuards.configure({ format: props.format }),
 				linkDialog.configure({
 					endpoints: props.endpoints,
+					format: props.format,
 					links: props.links,
 					kirbytagAttributes: props.kirbytagAttributes,
 				}),
 				fileDialog.configure({
 					endpoints: props.endpoints,
+					format: props.format,
 					files: props.files,
 					kirbytagAttributes: props.kirbytagAttributes,
 					uploads: props.uploads,
@@ -203,7 +205,7 @@ export function useEditor(
 					handlePaste: eventHandlers.handlePaste,
 					handleDrop: eventHandlers.handleDrop,
 					transformPastedHTML: (html: string) =>
-						transformLinksToKirbyTags(splitParagraphsAtBreakRuns(html)),
+						transformLinksToKirbyTags(splitParagraphsAtBreakRuns(html), props.kirbytagAttributes),
 				},
 				onCreate: ({ editor: editorInstance }) => {
 					editorInstance.view.dom.setAttribute(

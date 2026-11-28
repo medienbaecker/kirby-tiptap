@@ -21,69 +21,57 @@ export const normalizeHref = (href: string): string =>
 	href.replace(PERMALINK, "$1://");
 
 /**
- * Regex source matching the next attribute boundary in a tag string.
- * When the tag's registered attributes are known, only those names split
- * fields — mirroring PHP's KirbyTag::parse(), which also treats the tag
- * type itself as an attribute. Falls back to any word otherwise.
+ * Matches the attribute names that split a KirbyTag, the way Kirby's
+ * KirbyTag::parse() does: the tag type and its registered attributes,
+ * anywhere in the tag, unless a UUID scheme follows. Without the field's
+ * attribute map, any word after whitespace splits.
  */
-const fieldBoundarySource = (tagType: string, attrs?: string[]): string => {
-	const names = attrs?.length
-		? [tagType, ...attrs].map(escapeRegex).join("|")
-		: String.raw`\w+`;
-	return String.raw`\s+(${names}):(?!\/\/)\s*`;
+export const attributePattern = (type: string, tags?: KirbytagsMap): RegExp => {
+	if (!tags) return /(?<!\S)(\w+):(?!\/\/)/gi;
+
+	const names = [type, ...(tags[type] ?? [])].map(escapeRegex).join("|");
+	return new RegExp(String.raw`(?!(?:site|page|file|user):\/\/)(${names}):`, "gi");
+};
+
+const tagBody = (tagString: string): string => {
+	const body = tagString.replace(/^\(+/, "").trim();
+	return body.endsWith(")") ? body.slice(0, -1) : body;
 };
 
 /**
  * Parse a Kirby‐tag string like "(tag: value attr1: value1 attr2: value2)"
- * into an object { type, value, attr1, attr2, ... }
- * Pass the field's kirbytagAttributes map (tag name => registered attribute names)
- * so attribute values containing colons don't split on unregistered words.
+ * into an object { type, value, attr1, attr2, ... }, splitting it exactly
+ * like Kirby's KirbyTag::parse(). Pass the field's kirbytagAttributes map
+ * (tag name => registered attribute names).
  */
 export const parseKirbyTag = (
 	tagString: string,
 	tags?: KirbytagsMap
 ): ParsedKirbyTag => {
-	const tagType = tagName(tagString);
-	const result: ParsedKirbyTag = {
-		// Store the tag type in a property that won't be used as an attribute
-		_type: tagType,
-	};
+	const body = tagBody(tagString);
+	const colon = body.indexOf(":");
+	const tagType = body.slice(0, colon > 0 ? colon : undefined).trim().toLowerCase();
+	const result: ParsedKirbyTag = { _type: tagType };
 
-	const fieldPattern = new RegExp(
-		fieldBoundarySource(tagType, tags?.[tagType]),
-		"gi"
-	);
+	const parts = body.split(attributePattern(tagType, tags)).filter((part) => part);
+	const attributes = new Map<string, string>();
+	for (let index = 0; index < parts.length; index += 2) {
+		attributes.set(parts[index], (parts[index + 1] ?? "").trim());
+	}
 
-	// Find all field positions
-	const matches = [...tagString.matchAll(fieldPattern)];
+	const [mainValue = ""] = attributes.values();
+	attributes.delete([...attributes.keys()][0]);
 
-	// Handle the main tag value
-	const firstFieldPos =
-		matches.length > 0 ? matches[0].index! : tagString.length - 1;
-	const typeColonPos = tagString.indexOf(":");
-	const mainValue = tagString.substring(typeColonPos + 1, firstFieldPos).trim();
-
-	// Store the main value with an appropriate key based on tag type
 	if (tagType === "link" || tagType === "email" || tagType === "tel") {
 		result.href = mainValue;
 	} else if (tagType === "image" || tagType === "file" || tagType === "video") {
 		result.uuid = mainValue;
 	} else {
-		result.value = mainValue; // Generic fallback
+		result.value = mainValue;
 	}
 
-	// Process each field
-	for (let i = 0; i < matches.length; i++) {
-		const match = matches[i];
-		const fieldName = match[1].toLowerCase();
-		const startPos = match.index! + match[0].length;
-		const endPos =
-			i < matches.length - 1 ? matches[i + 1].index! : tagString.length - 1;
-
-		// Skip the field if it's the same as the tag type
-		if (fieldName === tagType) continue;
-
-		result[fieldName] = tagString.substring(startPos, endPos).trim();
+	for (const [name, value] of attributes) {
+		if (name.toLowerCase() !== tagType) result[name.toLowerCase()] = value;
 	}
 
 	return result;
@@ -306,15 +294,41 @@ export const hasUnpairedParens = (value: string): boolean => {
 };
 
 /**
- * The label of the first dialog field whose value can't go into a KirbyTag
+ * Why Kirby would read a value differently once it is written into a
+ * KirbyTag of the given type, as a translation key and its placeholders
  */
-export const unpairedParensField = (
+export const valueProblem = (
+	type: string,
+	value: string,
+	tags?: KirbytagsMap,
+	format?: "json" | "markdown"
+): { key: string; word?: string } | null => {
+	if (format === "markdown" && /\n\s*\n/.test(value)) return { key: "emptyLine" };
+	if (hasUnpairedParens(value)) return { key: "unpairedParens" };
+	const attribute = attributePattern(type, tags).exec(value);
+	return attribute ? { key: "attribute", word: `${attribute[1]}:` } : null;
+};
+
+/**
+ * The warning for the first value that can't be saved in a KirbyTag
+ * as it is, or null when all of them can
+ */
+export const unsavableValue = (
+	type: string,
 	values: Record<string, unknown>,
-	fields: Record<string, { label?: string }>
+	fields: Record<string, { label?: string }>,
+	tags?: KirbytagsMap,
+	format?: "json" | "markdown"
 ): string | null => {
 	for (const [name, value] of Object.entries(values)) {
 		const text = Array.isArray(value) ? value.join(" ") : value;
-		if (typeof text === "string" && hasUnpairedParens(text)) return fields[name]?.label ?? name;
+		const problem = typeof text === "string" ? valueProblem(type, text, tags, format) : null;
+		if (problem) {
+			return window.panel.t(`tiptap.kirbytag.${problem.key}`, {
+				field: fields[name]?.label ?? name,
+				word: problem.word,
+			});
+		}
 	}
 	return null;
 };
@@ -498,9 +512,9 @@ export const findReferenceRange = (
 	const type = tagName(tagString);
 	if (!type) return null;
 
-	const valueStart = tagString.match(/^[^:]*:\s*/)![0].length;
+	const valueStart = tagString.indexOf(":") + 1;
 
-	const fieldPattern = new RegExp(fieldBoundarySource(type, tags?.[type]), "gi");
+	const fieldPattern = attributePattern(type, tags);
 	fieldPattern.lastIndex = valueStart;
 	const nextField = fieldPattern.exec(tagString);
 

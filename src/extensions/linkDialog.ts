@@ -1,13 +1,14 @@
 import { Extension } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
-import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag, unpairedParensField } from "../utils/kirbyTags";
+import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag, unsavableValue } from "../utils/kirbyTags";
 import type { TagEditingContext } from "../utils/kirbyTags";
-import { validateInput, generateLinkTag } from "../utils/inputValidation";
+import { validateInput, generateLinkTag, splitHref } from "../utils/inputValidation";
 import { processFieldValues } from "../utils/dialogFields";
 import type { DialogFieldConfig, EndpointsConfig, KirbytagsMap, LinksConfig } from "../types";
 
 interface LinkDialogOptions {
 	endpoints?: EndpointsConfig;
+	format?: "json" | "markdown";
 	links?: LinksConfig;
 	kirbytagAttributes?: KirbytagsMap;
 }
@@ -97,9 +98,16 @@ const openDialog = (editor: Editor, options: LinkDialogOptions): void => {
 					return;
 				}
 
-				const unpaired = unpairedParensField(values, fields);
-				if (unpaired) {
-					panel.notification.error(panel.t("tiptap.kirbytag.unpairedParens", { field: unpaired }));
+				const { type, mainValue } = splitHref(values.href);
+				const unsavable = unsavableValue(
+					type,
+					{ ...values, href: mainValue },
+					fields,
+					options.kirbytagAttributes,
+					options.format
+				);
+				if (unsavable) {
+					panel.notification.error(unsavable);
 					return;
 				}
 
@@ -125,6 +133,7 @@ export const LinkDialog = Extension.create<LinkDialogOptions>({
 	addOptions() {
 		return {
 			endpoints: undefined,
+			format: undefined,
 			links: undefined,
 			kirbytagAttributes: undefined,
 		};

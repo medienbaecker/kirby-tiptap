@@ -107,7 +107,7 @@ export function useContent(
 			// The schema has no link mark, so anchors must become KirbyTags
 			// before ProseMirror parses them or their hrefs are dropped
 			return containsAnchor(value)
-				? transformLinksToKirbyTags(value)
+				? transformLinksToKirbyTags(value, props.kirbytagAttributes)
 				: value;
 		}
 	};

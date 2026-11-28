@@ -1,5 +1,5 @@
-import { generateKirbyTag, normalizeHref } from "./kirbyTags";
-import type { ValidationResult } from "../types";
+import { generateKirbyTag, normalizeHref, valueProblem } from "./kirbyTags";
+import type { KirbytagsMap, ValidationResult } from "../types";
 
 /**
  * Validates input and determines its type (email, URL, or plain text)
@@ -41,22 +41,22 @@ interface LinkTagValues {
 }
 
 /**
+ * The tag a link becomes, by its href's scheme, and the tag's main value
+ */
+export const splitHref = (href: string): { type: string; mainValue: string } => {
+	const scheme = href.match(/^(mailto|tel):/)?.[1];
+	return {
+		type: scheme === "mailto" ? "email" : (scheme ?? "link"),
+		mainValue: href.replace(/^(mailto|tel):/, ""),
+	};
+};
+
+/**
  * Generates a KirbyTag for link/email based on input values
  */
 export function generateLinkTag(values: LinkTagValues): string {
 	const { href, text, _type, ...attrs } = values;
-
-	// Determine tag type based on href
-	let type = "link";
-	let mainValue = href;
-
-	if (href.startsWith("mailto:")) {
-		type = "email";
-		mainValue = href.replace("mailto:", "");
-	} else if (href.startsWith("tel:")) {
-		type = "tel";
-		mainValue = href.replace("tel:", "");
-	}
+	const { type, mainValue } = splitHref(href);
 
 	return generateKirbyTag(type, mainValue, { text, ...attrs });
 }
@@ -68,17 +68,24 @@ export function generateLinkTag(values: LinkTagValues): string {
 export const isBareUrlAnchor = (href: string, text: string): boolean =>
 	/^https?:\/\//i.test(href) && text === href;
 
+/**
+ * The link tag for an anchor, or null when Kirby couldn't read its href
+ * or text back from a tag
+ */
 export function buildLinkTag(
 	href: string,
 	text: string,
-	attrs: Record<string, unknown> = {}
-): string {
+	tags?: KirbytagsMap
+): string | null {
 	const normalized = normalizeHref(href);
-	const mainValue = normalized.replace(/^(mailto:|tel:)/, "");
+	const { type, mainValue } = splitHref(normalized);
 	const labelled = text !== "" && text !== normalized && text !== mainValue;
 
+	if (valueProblem(type, mainValue, tags) || (labelled && valueProblem(type, text, tags))) {
+		return null;
+	}
+
 	return generateLinkTag({
-		...attrs,
 		href: normalized,
 		text: labelled ? text : undefined,
 	});

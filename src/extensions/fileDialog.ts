@@ -9,7 +9,8 @@ import {
 	isFileTag,
 	processKirbyTagApi,
 	replaceTag,
-	unpairedParensField,
+	tagName,
+	unsavableValue,
 } from "../utils/kirbyTags";
 import { processFieldValues } from "../utils/dialogFields";
 import { buildUploadOptions } from "../utils/upload";
@@ -17,6 +18,7 @@ import type { EndpointsConfig, FilesConfig, KirbytagsMap, ParsedKirbyTag, Dialog
 
 interface FileDialogOptions {
 	endpoints?: EndpointsConfig;
+	format?: "json" | "markdown";
 	files?: FilesConfig;
 	kirbytagAttributes?: KirbytagsMap;
 	uploads?: UploadsConfig | false;
@@ -192,9 +194,15 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 					return;
 				}
 
-				const unpaired = unpairedParensField(fieldValues ?? {}, fields);
-				if (unpaired) {
-					panel.notification.error(panel.t("tiptap.kirbytag.unpairedParens", { field: unpaired }));
+				const unsavable = unsavableValue(
+					tagName(picked[0].dragText),
+					fieldValues ?? {},
+					fields,
+					kirbytagAttributes,
+					options.format
+				);
+				if (unsavable) {
+					panel.notification.error(unsavable);
 					return;
 				}
 
@@ -226,6 +234,7 @@ export const FileDialog = Extension.create<FileDialogOptions>({
 		return {
 			endpoints: undefined,
 			files: undefined,
+			format: undefined,
 			kirbytagAttributes: undefined,
 			uploads: false,
 		};

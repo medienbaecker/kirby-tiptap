@@ -3,12 +3,12 @@ import type { Editor } from "@tiptap/vue-3";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
 import type { Panel, PanelHelpers } from "kirby-types";
-import { validateInput, generateLinkTag } from "./inputValidation";
+import { validateInput, generateLinkTag, splitHref } from "./inputValidation";
 import { processPlainTextParagraphs } from "./contentProcessing";
 import { canInsertKirbyTag } from "../extensions/insertionGuards";
 import { buildUploadOptions } from "./upload";
-import { hasUnpairedParens, processKirbyTagApi } from "./kirbyTags";
-import type { UploadsConfig, EndpointsConfig } from "../types";
+import { processKirbyTagApi, unsavableValue } from "./kirbyTags";
+import type { UploadsConfig, EndpointsConfig, KirbytagsMap } from "../types";
 
 interface Coordinates {
 	pos: number;
@@ -23,7 +23,8 @@ export function createPasteHandler(
 	allowedTypes: string[] = [],
 	panel: Panel,
 	endpoints: EndpointsConfig | undefined,
-	uploads: UploadsConfig | false | undefined
+	uploads: UploadsConfig | false | undefined,
+	tags: KirbytagsMap | undefined
 ): (view: EditorView, event: ClipboardEvent, slice: Slice) => boolean | void {
 	return (view, event) => {
 		// Don't generate KirbyTags in forbidden contexts
@@ -51,8 +52,15 @@ export function createPasteHandler(
 		if (selectedText) {
 			const validation = validateInput(plainText, allowedTypes);
 			if (validation.type !== "unknown") {
-				if (hasUnpairedParens(validation.href + selectedText)) {
-					panel.notification.error(panel.t("tiptap.kirbytag.unpairedParens", { field: panel.t("link.text") }));
+				const { type, mainValue } = splitHref(validation.href);
+				const unsavable = unsavableValue(
+					type,
+					{ href: mainValue, text: selectedText },
+					{ href: { label: panel.t("link") }, text: { label: panel.t("link.text") } },
+					tags
+				);
+				if (unsavable) {
+					panel.notification.error(unsavable);
 					event.preventDefault();
 					return true;
 				}
