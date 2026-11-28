@@ -104,6 +104,8 @@ class MarkdownSerializer
 	private const WS_CHARS = ' \t\n\r\f\x0B\x{00a0}\x{1680}\x{2000}-\x{200a}\x{2028}\x{2029}\x{202f}\x{205f}\x{3000}\x{feff}';
 	private const WS = '[' . self::WS_CHARS . ']';
 
+	private const KIRBYTAG = '!(?=[^\]])(?=\([a-z0-9_-]+:)(\((?:[^()]+|(?1))*+\))!is';
+
 	public static function serialize(array $doc, ?array $kirbytags, bool $inline, array $buttons, array $options): ?string
 	{
 		if ($inline) {
@@ -111,9 +113,9 @@ class MarkdownSerializer
 		}
 
 		$doc = static::transform($doc);
-		$doc = static::protect($doc, $kirbytags);
+		$protected = static::protect($doc, $kirbytags);
 
-		$markdown = static::renderInline($doc['content'] ?? [], $doc, "\n\n");
+		$markdown = static::renderInline($protected['content'] ?? [], $protected, "\n\n");
 		$markdown = static::isEmptyOutput($markdown) ? '' : $markdown;
 
 		return static::readsBackAs($markdown, $doc, $buttons, $options) ? $markdown : null;
@@ -528,14 +530,22 @@ class MarkdownSerializer
 		}
 
 		$ranges = static::sourceRanges($text, $registered);
+		foreach (static::unclosedTagStarts($text) as $start) {
+			if (static::overlaps($ranges, $start[0], $start[1]) === false) {
+				$ranges[] = $start;
+			}
+		}
 
 		if ($ranges === []) {
 			return [$node];
 		}
 
+		usort($ranges, fn ($a, $b) => $a[0] <=> $b[0]);
+
 		$result = [];
 		$cursor = 0;
-		foreach ($ranges as [$start, $end]) {
+		foreach ($ranges as $range) {
+			[$start, $end] = $range;
 			if ($start > $cursor) {
 				$gap = $node;
 				$gap['text'] = substr($text, $cursor, $start - $cursor);
@@ -543,7 +553,7 @@ class MarkdownSerializer
 			}
 			$result[] = [
 				'type' => 'text',
-				'text' => substr($text, $start, $end - $start),
+				'text' => $range[2] ?? substr($text, $start, $end - $start),
 				'marks' => [...($node['marks'] ?? []), ['type' => 'kirbytagRaw']],
 			];
 			$cursor = $end;
@@ -555,6 +565,26 @@ class MarkdownSerializer
 		}
 
 		return $result;
+	}
+
+	/**
+	 * The opening parenthesis of each tag that doesn't close in its own
+	 * text, written as an entity: Kirby parses tags across the whole
+	 * Markdown value and would run it on into the next paragraphs
+	 */
+	private static function unclosedTagStarts(string $text): array
+	{
+		$tags = static::findKirbyTagRanges($text);
+		preg_match_all('/\([a-z0-9_-]+:/i', $text, $starts, PREG_OFFSET_CAPTURE);
+
+		$unclosed = [];
+		foreach ($starts[0] as [, $start]) {
+			if (static::overlaps($tags, $start, $start + 1) === false) {
+				$unclosed[] = [$start, $start + 1, '&#40;'];
+			}
+		}
+
+		return $unclosed;
 	}
 
 	public static function sourceRanges(string $text, ?array $registered): array
@@ -608,42 +638,14 @@ class MarkdownSerializer
 		return false;
 	}
 
+	/**
+	 * KirbyTag ranges as Kirby's KirbyTags::parse() finds them
+	 */
 	public static function findKirbyTagRanges(string $text): array
 	{
-		preg_match_all(
-			'/(\([a-z0-9_-]+:)|(\()|(\))/i',
-			$text,
-			$matches,
-			PREG_OFFSET_CAPTURE | PREG_SET_ORDER
-		);
+		preg_match_all(self::KIRBYTAG, $text, $matches, PREG_OFFSET_CAPTURE);
 
-		$ranges = [];
-		$level = 0;
-		$inTag = false;
-		$tagStart = -1;
-
-		foreach ($matches as $match) {
-			$isTagOpener = isset($match[1]) && $match[1][1] !== -1;
-			$isParenOpen = isset($match[2]) && $match[2][1] !== -1;
-			$isParenClose = isset($match[3]) && $match[3][1] !== -1;
-
-			if ($inTag === false && $isTagOpener) {
-				$inTag = true;
-				$level = 1;
-				$tagStart = $match[0][1];
-			} elseif ($inTag && ($isTagOpener || $isParenOpen)) {
-				$level++;
-			} elseif ($inTag && $isParenClose) {
-				$level--;
-				if ($level === 0) {
-					$ranges[] = [$tagStart, $match[0][1] + strlen($match[0][0])];
-					$inTag = false;
-					$tagStart = -1;
-				}
-			}
-		}
-
-		return $ranges;
+		return array_map(fn ($match) => [$match[1], $match[1] + strlen($match[0])], $matches[0]);
 	}
 
 	private static function renderNode(array $node, ?array $parent, int $index): string
