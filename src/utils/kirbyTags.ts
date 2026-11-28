@@ -26,15 +26,21 @@ export const normalizeHref = (href: string): string =>
  * anywhere in the tag, unless a UUID scheme follows. Without the field's
  * attribute map, any word after whitespace splits.
  */
+const registered = (type: string, tags: KirbytagsMap): string[] =>
+	Object.prototype.hasOwnProperty.call(tags, type) ? tags[type] : [];
+
+const trimLikePhp = (value: string): string =>
+	value.replace(/^[ \t\n\r\0\x0B]+|[ \t\n\r\0\x0B]+$/g, "");
+
 export const attributePattern = (type: string, tags?: KirbytagsMap): RegExp => {
 	if (!tags) return /(?<!\S)(\w+):(?!\/\/)/gi;
 
-	const names = [type, ...(tags[type] ?? [])].map(escapeRegex).join("|");
+	const names = [type, ...registered(type, tags)].map(escapeRegex).join("|");
 	return new RegExp(String.raw`(?!(?:site|page|file|user):\/\/)(${names}):`, "gi");
 };
 
 const tagBody = (tagString: string): string => {
-	const body = tagString.replace(/^\(+/, "").trim();
+	const body = trimLikePhp(tagString.replace(/^\(+/, ""));
 	return body.endsWith(")") ? body.slice(0, -1) : body;
 };
 
@@ -50,13 +56,13 @@ export const parseKirbyTag = (
 ): ParsedKirbyTag => {
 	const body = tagBody(tagString);
 	const colon = body.indexOf(":");
-	const tagType = body.slice(0, colon > 0 ? colon : undefined).trim().toLowerCase();
+	const tagType = trimLikePhp(body.slice(0, colon > 0 ? colon : undefined)).toLowerCase();
 	const result: ParsedKirbyTag = { _type: tagType };
 
 	const parts = body.split(attributePattern(tagType, tags)).filter((part) => part);
 	const attributes = new Map<string, string>();
 	for (let index = 0; index < parts.length; index += 2) {
-		attributes.set(parts[index], (parts[index + 1] ?? "").trim());
+		attributes.set(parts[index], trimLikePhp(parts[index + 1] ?? ""));
 	}
 
 	const [mainValue = ""] = attributes.values();
@@ -70,8 +76,10 @@ export const parseKirbyTag = (
 		result.value = mainValue;
 	}
 
+	const known = tags ? registered(tagType, tags) : null;
 	for (const [name, value] of attributes) {
-		if (name.toLowerCase() !== tagType) result[name.toLowerCase()] = value;
+		const key = name.toLowerCase();
+		if (key !== tagType && (!known || known.includes(key))) result[key] = value;
 	}
 
 	return result;

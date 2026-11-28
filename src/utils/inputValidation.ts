@@ -18,7 +18,7 @@ export function validateInput(
 	}
 
 	// URL validation
-	if (isAllowed("url")) {
+	if (isAllowed("url") && !/\s/.test(text)) {
 		try {
 			new URL(text);
 			if (text.startsWith("http://") || text.startsWith("https://")) {
