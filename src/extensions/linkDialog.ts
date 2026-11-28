@@ -1,19 +1,9 @@
 import { Extension } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
-import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag, unsavableValue, invalidField } from "../utils/kirbyTags";
+import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag, unsavableValue } from "../utils/kirbyTags";
 import type { TagEditingContext } from "../utils/kirbyTags";
 import { validateInput, generateLinkTag, splitHref } from "../utils/inputValidation";
-import {
-	dialogFields,
-	inlineContentFromMarkdown,
-	withSchemaMarks,
-	isTiptap,
-	openOnce,
-	processFieldValues,
-	tiptapValuesFromMarkdown,
-	tiptapValuesFromText,
-	tiptapValuesToMarkdown,
-} from "../utils/dialogFields";
+import { processFieldValues } from "../utils/dialogFields";
 import type { DialogFieldConfig, EndpointsConfig, KirbytagsMap, LinksConfig } from "../types";
 
 interface LinkDialogOptions {
@@ -72,45 +62,25 @@ const initialValues = (
 	return input.type === "unknown" ? { href: "", text: selectedText } : { href: input.href, text: "" };
 };
 
-const prepare = async (
-	editor: Editor,
-	options: LinkDialogOptions,
-	fields: Record<string, DialogFieldConfig>,
-	endpoints: EndpointsConfig
-): Promise<{ context: TagEditingContext; value: Record<string, unknown> }> => {
-	const doc = editor.state.doc;
-	const context = getTagEditingContext(editor, isLinkTag);
-	const initial = processFieldValues(initialValues(context, options), fields);
-	const value = context.isEditing
-		? await tiptapValuesFromMarkdown(initial, fields, endpoints)
-		: tiptapValuesFromText(initial, fields);
-
-	return editor.state.doc === doc ? { context, value } : prepare(editor, options, fields, endpoints);
-};
-
-const openDialog = async (editor: Editor, options: LinkDialogOptions): Promise<void> => {
+const openDialog = (editor: Editor, options: LinkDialogOptions): void => {
 	const panel = window.panel;
-	const endpoints = options.endpoints ?? { field: "" };
-	const fields = dialogFields(buildFields(options.links), endpoints);
-	const { context, value } = await prepare(editor, options, fields, endpoints);
-	let submitting = false;
-	let cancelled = false;
+	const context = getTagEditingContext(editor, isLinkTag);
+	const fields = buildFields(options.links);
 
 	panel.dialog.open({
 		component: "tiptap-link-dialog",
 		props: {
 			fields,
-			value,
+			value: processFieldValues(initialValues(context, options), fields),
 			submitButton: panel.t(context.isEditing ? "change" : "insert"),
 			removable: context.isEditing,
 		},
 		on: {
 			cancel: () => {
-				cancelled = true;
 				panel.dialog.close();
 				editor.chain().focus().run();
 			},
-			remove: async () => {
+			remove: () => {
 				panel.dialog.close();
 
 				if (!context.replaceRange || !context.tagText) {
@@ -119,30 +89,13 @@ const openDialog = async (editor: Editor, options: LinkDialogOptions): Promise<v
 				}
 
 				const { text } = parseKirbyTag(context.tagText, options.kirbytagAttributes);
-				const content = !text
-					? ""
-					: isTiptap(fields.text)
-						? withSchemaMarks(editor, await inlineContentFromMarkdown(text, fields.text, endpoints))
-						: { type: "text", text };
-				editor.chain().focus().deleteRange(context.replaceRange).insertContent(content).run();
+				editor.chain().focus().deleteRange(context.replaceRange).insertContent(text ? { type: "text", text } : "").run();
 			},
-			submit: async (submitted: { href: string; [key: string]: string }) => {
-				if (!submitted.href) {
+			submit: async (values: { href: string; [key: string]: string }) => {
+				if (!values.href) {
 					panel.notification.error(panel.t("error.validation.required"));
 					return;
 				}
-
-				if (submitting) return;
-				submitting = true;
-				const converted = await tiptapValuesToMarkdown(submitted, fields, endpoints).finally(() => {
-					submitting = false;
-				});
-				if (cancelled) return;
-				if (typeof converted === "string") {
-					panel.notification.error(invalidField(converted, fields));
-					return;
-				}
-				const values = converted as typeof submitted;
 
 				const { type, mainValue } = splitHref(values.href);
 				const unsavable = unsavableValue(
@@ -190,7 +143,7 @@ export const LinkDialog = Extension.create<LinkDialogOptions>({
 			openLinkDialog:
 				() =>
 				({ editor, dispatch }) => {
-					if (dispatch) openOnce(editor, () => openDialog(editor, this.options));
+					if (dispatch) openDialog(editor, this.options);
 					return true;
 				},
 		};

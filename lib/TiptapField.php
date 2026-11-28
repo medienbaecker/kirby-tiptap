@@ -55,32 +55,49 @@ class TiptapField extends StringField
 	}
 
 	/**
+	 * In debug mode, explains tiptap fields that a tag dialog can't use
+	 * as configured: its values are tag attributes, written as inline Markdown
+	 */
+	protected function checkTagDialogFields(array $fields, bool $tiptap): void
+	{
+		if ($this->kirby()->option('debug') !== true) {
+			return;
+		}
+
+		foreach (Blueprint::fieldsProps($fields) as $name => $field) {
+			if (($field['type'] ?? null) !== 'tiptap') {
+				continue;
+			}
+
+			if ($tiptap === false) {
+				throw new InvalidArgumentException(
+					message: 'The link dialog can\'t use the tiptap field "' . $name . '": Kirby escapes link attributes, so its Markdown would show as text'
+				);
+			}
+
+			$ignored = array_filter([
+				'format' => ($field['format'] ?? 'markdown') !== 'markdown',
+				'inline' => ($field['inline'] ?? true) !== true,
+			]);
+
+			if ($ignored !== []) {
+				throw new InvalidArgumentException(
+					message: 'The ' . implode(' and ', array_keys($ignored)) .
+						(count($ignored) === 1 ? ' option has' : ' options have') .
+						' no effect on the tiptap field "' . $name . '" in a dialog, which always writes inline Markdown'
+				);
+			}
+		}
+	}
+
+	/**
 	 * Resolves blueprint fields for a dialog the way Kirby's own dialogs do:
 	 * shorthands, translated labels and options
 	 */
-	protected function dialogFields(array $fields, bool $writesTag = false): array
+	protected function dialogFields(array $fields): array
 	{
-		$fields = Blueprint::fieldsProps($fields);
-
-		if ($writesTag === true) {
-			foreach ($fields as $name => $field) {
-				$ignored = array_filter([
-					'format' => ($field['format'] ?? 'markdown') !== 'markdown',
-					'inline' => ($field['inline'] ?? true) !== true,
-				]);
-
-				if (($field['type'] ?? null) === 'tiptap' && $ignored !== [] && $this->kirby()->option('debug') === true) {
-					throw new InvalidArgumentException(
-						message: 'The ' . implode(' and ', array_keys($ignored)) .
-							(count($ignored) === 1 ? ' option has' : ' options have') .
-							' no effect on the tiptap field "' . $name . '" in a dialog, which always writes inline Markdown'
-					);
-				}
-			}
-		}
-
 		$form = new Form(
-			fields: $fields,
+			fields: Blueprint::fieldsProps($fields),
 			model:  $this->model()
 		);
 
@@ -108,7 +125,8 @@ class TiptapField extends StringField
 		}
 
 		if (isset($files['fields']) === true && is_array($files['fields']) === true) {
-			$files['fields'] = $this->dialogFields($files['fields'], writesTag: true);
+			$this->checkTagDialogFields($files['fields'], tiptap: true);
+			$files['fields'] = $this->dialogFields($files['fields']);
 		}
 
 		return $files;
@@ -166,7 +184,8 @@ class TiptapField extends StringField
 		$links = $this->links ?? [];
 
 		if (isset($links['fields']) === true && is_array($links['fields']) === true) {
-			$links['fields'] = $this->dialogFields($links['fields'], writesTag: true);
+			$this->checkTagDialogFields($links['fields'], tiptap: false);
+			$links['fields'] = $this->dialogFields($links['fields']);
 		}
 
 		return $links;

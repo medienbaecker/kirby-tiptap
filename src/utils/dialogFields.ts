@@ -1,4 +1,3 @@
-import type { Editor, JSONContent } from "@tiptap/core";
 import type { DialogFieldConfig, EndpointsConfig } from "../types";
 import { getFieldApiPath } from "./kirbyTags";
 
@@ -31,7 +30,7 @@ export const processFieldValues = (
 	return initial;
 };
 
-export const isTiptap = (field?: DialogFieldConfig): boolean => field?.type === "tiptap";
+const isTiptap = (field?: DialogFieldConfig): boolean => field?.type === "tiptap";
 
 const withoutTagButtons = (buttons: unknown): unknown =>
 	Array.isArray(buttons) ? buttons.filter((button) => button !== "link" && button !== "file") : buttons;
@@ -106,46 +105,6 @@ export const tiptapValuesToMarkdown = (
 		);
 		return response.markdown;
 	});
-
-/**
- * Plain text, such as the selection a new link starts from, as the
- * document a tiptap dialog field edits
- */
-export const tiptapValuesFromText = (
-	values: Record<string, unknown>,
-	fields: Record<string, DialogFieldConfig>
-): Record<string, unknown> =>
-	Object.fromEntries(
-		Object.entries(values).map(([name, value]) => [
-			name,
-			isTiptap(fields[name]) && typeof value === "string" && value !== ""
-				? JSON.stringify({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: value }] }] })
-				: value,
-		])
-	);
-
-/**
- * The inline content of a tag attribute's Markdown, for putting a
- * formatted value back into the text
- */
-export const inlineContentFromMarkdown = async (
-	markdown: string,
-	field: DialogFieldConfig,
-	endpoints: EndpointsConfig
-): Promise<JSONContent[]> => {
-	const response = await window.panel.api.post<{ document: string }>(
-		`${getFieldApiPath(endpoints)}/from-markdown`,
-		{ markdown, buttons: field.buttons }
-	);
-	return JSON.parse(response.document).content[0]?.content ?? [];
-};
-
-/**
- * Drops marks the editor has no schema for, such as the raw-source mark
- * of a Markdown field inside a JSON one
- */
-export const withSchemaMarks = (editor: Editor, content: JSONContent[]): JSONContent[] =>
-	content.map((node) => ({ ...node, marks: node.marks?.filter((mark) => editor.schema.marks[mark.type]) }));
 
 const opening = new WeakSet<object>();
 
