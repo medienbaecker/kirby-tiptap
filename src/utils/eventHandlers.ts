@@ -73,7 +73,7 @@ export function createPasteHandler(
 				editorRef.value
 					?.chain()
 					.focus()
-					.insertContentAt(selection, kirbyTag)
+					.insertContentAt(selection, { type: "text", text: kirbyTag })
 					.run();
 
 				event.preventDefault();
@@ -116,9 +116,7 @@ export async function handleTextDrop(
 	editorRef.value
 		?.chain()
 		.focus()
-		.insertContentAt(pos, content, {
-			parseOptions: { preserveWhitespace: true },
-		})
+		.insertContentAt(pos, { type: "text", text: content })
 		.unsetAllMarks()
 		.run();
 }
@@ -199,7 +197,7 @@ function uploadFiles(
 		done: (tags) => {
 			if (!tags.length) return;
 			editor.chain().focus()
-				.insertContentAt(dropPosition, tags.join(" "), { parseOptions: { preserveWhitespace: true } })
+				.insertContentAt(dropPosition, { type: "text", text: tags.join(" ") })
 				.unsetAllMarks()
 				.run();
 		},

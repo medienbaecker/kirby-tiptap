@@ -1,9 +1,9 @@
 import { Extension } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
-import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag, unsavableValue } from "../utils/kirbyTags";
+import { parseKirbyTag, isLinkTag, getTagEditingContext, processKirbyTagApi, replaceTag, unsavableValue, invalidField } from "../utils/kirbyTags";
 import type { TagEditingContext } from "../utils/kirbyTags";
 import { validateInput, generateLinkTag, splitHref } from "../utils/inputValidation";
-import { processFieldValues } from "../utils/dialogFields";
+import { dialogFields, processFieldValues, tiptapValuesFromMarkdown, tiptapValuesToMarkdown } from "../utils/dialogFields";
 import type { DialogFieldConfig, EndpointsConfig, KirbytagsMap, LinksConfig } from "../types";
 
 interface LinkDialogOptions {
@@ -62,17 +62,22 @@ const initialValues = (
 	return input.type === "unknown" ? { href: "", text: selectedText } : { href: input.href, text: "" };
 };
 
-const openDialog = (editor: Editor, options: LinkDialogOptions): void => {
+const openDialog = async (editor: Editor, options: LinkDialogOptions): Promise<void> => {
 	const panel = window.panel;
+	const endpoints = options.endpoints ?? { field: "" };
 	const context = getTagEditingContext(editor, isLinkTag);
-	const fields = buildFields(options.links);
-
+	const fields = dialogFields(buildFields(options.links), endpoints);
+	const value = await tiptapValuesFromMarkdown(
+		processFieldValues(initialValues(context, options), fields),
+		fields,
+		endpoints
+	);
 
 	panel.dialog.open({
 		component: "tiptap-link-dialog",
 		props: {
 			fields,
-			value: processFieldValues(initialValues(context, options), fields),
+			value,
 			submitButton: panel.t(context.isEditing ? "change" : "insert"),
 			removable: context.isEditing,
 		},
@@ -90,13 +95,20 @@ const openDialog = (editor: Editor, options: LinkDialogOptions): void => {
 				}
 
 				const { text } = parseKirbyTag(context.tagText, options.kirbytagAttributes);
-				editor.chain().focus().deleteRange(context.replaceRange).insertContent(text || "").run();
+				editor.chain().focus().deleteRange(context.replaceRange).insertContent(text ? { type: "text", text } : "").run();
 			},
-			submit: async (values: { href: string; [key: string]: string }) => {
-				if (!values.href) {
+			submit: async (submitted: { href: string; [key: string]: string }) => {
+				if (!submitted.href) {
 					panel.notification.error(panel.t("error.validation.required"));
 					return;
 				}
+
+				const converted = await tiptapValuesToMarkdown(submitted, fields, endpoints);
+				if (typeof converted === "string") {
+					panel.notification.error(invalidField(converted, fields));
+					return;
+				}
+				const values = converted as typeof submitted;
 
 				const { type, mainValue } = splitHref(values.href);
 				const unsavable = unsavableValue(
@@ -120,7 +132,7 @@ const openDialog = (editor: Editor, options: LinkDialogOptions): void => {
 				if (context.isEditing && context.replaceRange) {
 					replaceTag(editor, context.replaceRange, kirbyTag);
 				} else {
-					editor.chain().focus().insertContent(kirbyTag).run();
+					editor.chain().focus().insertContent({ type: "text", text: kirbyTag }).run();
 				}
 			},
 		},

@@ -76,6 +76,8 @@ The link dialog picks the right tag: `link`, `email`, `file` or `tel`. The file 
 
 Add your own fields to the dialogs. Their names must be attributes of the tag, such as `alt`, `caption` or `class`.
 
+A `tiptap` field in a dialog writes inline Markdown. Kirby renders Markdown in captions, and in link text only in Markdown fields. A value Kirby would read back differently, such as a parenthesis without its partner, marks its field as invalid.
+
 <img src=".github/panel-link-dialog.png" width="380" alt="The link dialog with a custom Classes field."> <img src=".github/panel-file-dialog.png" width="380" alt="The file dialog with custom alt text and caption fields.">
 
 ```yml

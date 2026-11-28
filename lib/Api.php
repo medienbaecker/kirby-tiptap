@@ -68,6 +68,23 @@ class Api
 				}
 			],
 			[
+				'pattern' => 'to-markdown',
+				'method' => 'POST',
+				'action' => function () {
+					$document = $this->requestBody('document');
+					$markdown = Field::store($document, 'markdown', true, $this->requestBody('buttons') ?? [], $this->kirby());
+
+					return ['markdown' => $markdown === $document ? null : $markdown];
+				}
+			],
+			[
+				'pattern' => 'from-markdown',
+				'method' => 'POST',
+				'action' => function () {
+					return ['document' => Field::load($this->requestBody('markdown'), 'markdown', $this->requestBody('buttons') ?? [], $this->kirby())];
+				}
+			],
+			[
 				'pattern' => 'check-kirbytags',
 				'method' => 'POST',
 				'action' => function () {

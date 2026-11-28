@@ -9,10 +9,11 @@ import {
 	isFileTag,
 	processKirbyTagApi,
 	replaceTag,
+	invalidField,
 	tagName,
 	unsavableValue,
 } from "../utils/kirbyTags";
-import { processFieldValues } from "../utils/dialogFields";
+import { dialogFields, processFieldValues, tiptapValuesFromMarkdown, tiptapValuesToMarkdown } from "../utils/dialogFields";
 import { buildUploadOptions } from "../utils/upload";
 import type { EndpointsConfig, FilesConfig, KirbytagsMap, ParsedKirbyTag, DialogFieldConfig, UploadsConfig } from "../types";
 
@@ -121,7 +122,7 @@ const upload = async (editor: Editor, options: FileDialogOptions, files?: FileLi
 			panel.notification.error(panel.t("tiptap.upload.error.noData"));
 			return;
 		}
-		editor.commands.insertContent(tags.join(" "));
+		editor.commands.insertContent({ type: "text", text: tags.join(" ") });
 	};
 
 	const uploadOptions = buildUploadOptions(endpoints, uploads, panel, {
@@ -171,7 +172,7 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 	}
 
 	const { _type, uuid, href, value: tagValue, ...attributes } = initial;
-	const fields = { ...(files?.fields as Record<string, DialogFieldConfig>) };
+	const fields = dialogFields(files?.fields as Record<string, DialogFieldConfig>, endpoints);
 
 
 	panel.dialog.open({
@@ -181,22 +182,28 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 			endpoint: `${endpoints.field}/files`,
 			value,
 			fields,
-			initialFieldValues: processFieldValues(attributes, fields),
+			initialFieldValues: await tiptapValuesFromMarkdown(processFieldValues(attributes, fields), fields, endpoints),
 			submitButton: panel.t(context.isEditing ? "change" : "insert"),
 			uploads: options.uploads,
 		},
 		on: {
 			cancel: () => restoreSelection(),
 			drop: (files: FileList) => upload(editor, options, files),
-			submit: (picked: PickedFile[], fieldValues?: Record<string, unknown>) => {
+			submit: async (picked: PickedFile[], submitted?: Record<string, unknown>) => {
 				if (!picked?.length) {
 					panel.notification.error(panel.t("error.validation.required"));
 					return;
 				}
 
+				const fieldValues = await tiptapValuesToMarkdown(submitted ?? {}, fields, endpoints);
+				if (typeof fieldValues === "string") {
+					panel.notification.error(invalidField(fieldValues, fields));
+					return;
+				}
+
 				const unsavable = unsavableValue(
 					tagName(picked[0].dragText),
-					fieldValues ?? {},
+					fieldValues,
 					fields,
 					kirbytagAttributes,
 					options.format
@@ -219,7 +226,7 @@ const openDialog = async (editor: Editor, options: FileDialogOptions): Promise<v
 					if (context.isEditing && context.replaceRange) {
 						replaceTag(editor, context.replaceRange, content);
 					} else {
-						editor.commands.insertContent(content);
+						editor.commands.insertContent({ type: "text", text: content });
 					}
 				});
 			},

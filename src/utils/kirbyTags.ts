@@ -309,6 +309,12 @@ export const isUnsavable = (
 	(format === "markdown" && /\n\s*\n/.test(value));
 
 /**
+ * Kirby's own message for an invalid field, with the field's label
+ */
+export const invalidField = (name: string, fields: Record<string, { label?: string }>): string =>
+	`${fields[name]?.label ?? name}: ${window.panel.t("field.invalid")}`;
+
+/**
  * The warning for the first value that can't be saved in a KirbyTag
  * as it is, or null when all of them can
  */
@@ -322,7 +328,7 @@ export const unsavableValue = (
 	for (const [name, value] of Object.entries(values)) {
 		const text = Array.isArray(value) ? value.join(" ") : value;
 		if (typeof text === "string" && isUnsavable(type, text, tags, format)) {
-			return `${fields[name]?.label ?? name}: ${window.panel.t("field.invalid")}`;
+			return invalidField(name, fields);
 		}
 	}
 	return null;
@@ -594,7 +600,7 @@ export const replaceTag = (
 	content: string
 ): void => {
 	if (editor.state.doc.textBetween(range.from, range.to) !== content) {
-		editor.chain().focus().deleteRange(range).insertContent(content).run();
+		editor.chain().focus().deleteRange(range).insertContent({ type: "text", text: content }).run();
 	} else {
 		editor.commands.focus();
 	}
